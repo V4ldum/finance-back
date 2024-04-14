@@ -1,7 +1,6 @@
-use axum::{extract, Json};
 use axum::extract::Path;
-use axum::http::StatusCode;
-use serde::Deserialize;
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::Json;
 
 use crate::database::Database;
 use crate::error::APIError;
@@ -13,10 +12,14 @@ mod trade_values;
 type APIResult<T> = Result<Json<T>, (StatusCode, Json<APIError>)>;
 
 fn check_api_key(
-    key: &Option<String>,
+    key: Option<&HeaderValue>,
     database: &Database,
 ) -> Result<(), (StatusCode, Json<APIError>)> {
     if let Some(key) = key {
+        let Ok(key) = key.to_str() else {
+            return Err((StatusCode::UNAUTHORIZED, Json(APIError::bad_api_key())));
+        };
+
         let Ok(is_valid) = database.check_api_key(key) else {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -33,17 +36,11 @@ fn check_api_key(
 
     Ok(())
 }
-
-#[derive(Deserialize, Debug)]
-pub struct ApiKeyParam {
-    pub key: Option<String>,
-}
-
 pub async fn health_check() -> &'static str {
     "API is working!"
 }
 
-pub async fn trade_values(params: extract::Query<ApiKeyParam>) -> APIResult<TradeValues> {
+pub async fn trade_values(headers: HeaderMap) -> APIResult<TradeValues> {
     let Ok(database) = Database::build() else {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -51,7 +48,7 @@ pub async fn trade_values(params: extract::Query<ApiKeyParam>) -> APIResult<Trad
         ));
     };
 
-    check_api_key(&params.key, &database)?;
+    check_api_key(headers.get("X-API-KEY"), &database)?;
 
     let mut prices = database.query_trade_values().unwrap();
 
@@ -66,10 +63,7 @@ pub async fn trade_values(params: extract::Query<ApiKeyParam>) -> APIResult<Trad
     }))
 }
 
-pub async fn trade_value(
-    Path(key): Path<String>,
-    params: extract::Query<ApiKeyParam>,
-) -> APIResult<TradeValue> {
+pub async fn trade_value(Path(key): Path<String>, headers: HeaderMap) -> APIResult<TradeValue> {
     let Ok(database) = Database::build() else {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -77,7 +71,7 @@ pub async fn trade_value(
         ));
     };
 
-    check_api_key(&params.key, &database)?;
+    check_api_key(headers.get("X-API-KEY"), &database)?;
 
     let value = match key.as_str() {
         "gold" => database.query_trade_value("Gold"),

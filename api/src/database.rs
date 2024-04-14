@@ -25,8 +25,6 @@ impl Database {
             let value: f64 = row.get(1).expect("3 columns were queries");
             let date: String = row.get(2).expect("3 columns were queries");
 
-            println!("{name} {value} {date}");
-
             Ok((name, value, date))
         })?;
 
@@ -68,9 +66,6 @@ impl Database {
 
         let count = stmt.query_row([key], |row| {
             let count: i32 = row.get(0)?;
-
-            println!("{count}");
-
             Ok(count)
         });
 
