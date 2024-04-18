@@ -1,18 +1,17 @@
-use axum::{Router, routing::get};
+use std::error::Error;
 
-use finance_api::*;
+use sea_orm::Database;
+
+use finance_api::run;
 
 #[tokio::main]
-async fn main() {
-    let app = Router::new()
-        .route("/health", get(health_check))
-        .route("/trade_values", get(trade_values))
-        .route("/trade_values/:value", get(trade_value));
+async fn main() -> Result<(), Box<dyn Error>> {
+    dotenvy::dotenv()?;
+    let database_url = dotenvy::var("DATABASE_URL")?;
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:7878")
-        .await
-        .expect("The listener should be able to bind to this port");
-    axum::serve(listener, app)
-        .await
-        .expect("The server should launch successfully");
+    let db = Database::connect(database_url).await?;
+
+    run(db).await;
+
+    Ok(())
 }

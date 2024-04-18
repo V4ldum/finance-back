@@ -3,7 +3,7 @@ use std::error::Error;
 use reqwest::Client;
 use serde_json::json;
 
-use crate::currencies_values::currencies_price::CurrenciesPrice;
+use currencies_price::CurrenciesPrice;
 
 mod currencies_price;
 

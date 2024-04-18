@@ -4,7 +4,7 @@ use chrono::Utc;
 use reqwest::Client;
 use serde_json::json;
 
-pub use metal_price::*;
+use metal_price::MetalPrice;
 
 mod metal_price;
 

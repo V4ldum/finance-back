@@ -4,7 +4,7 @@ use chrono::Utc;
 use reqwest::Client;
 use serde_json::json;
 
-pub use sp500_price::*;
+use sp500_price::SP500Price;
 
 mod sp500_price;
 

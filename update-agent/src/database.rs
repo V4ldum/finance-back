@@ -1,53 +1,63 @@
+use std::error::Error;
+
 use chrono::Utc;
-use rusqlite::Connection;
+use sea_orm::{ActiveModelTrait, ConnectionTrait, DatabaseConnection, EntityTrait, Schema};
+use sea_orm::ActiveValue::Set;
+
+use crate::database::db::prelude::Prices;
+use crate::database::db::prices;
+
+mod db;
 
 pub struct Database {
-    connection: Connection,
+    db: DatabaseConnection,
 }
 
 impl Database {
-    pub fn build() -> Result<Self, rusqlite::Error> {
-        let database = "database.db";
-        let conn = Connection::open(database)?;
+    pub async fn build() -> Result<Self, Box<dyn Error>> {
+        dotenvy::dotenv()?;
+        let database_url = dotenvy::var("DATABASE_URL")?;
 
-        conn.execute(
-            "\
-            CREATE TABLE IF NOT EXISTS prices (\
-                name VARCHAR(10) PRIMARY KEY,\
-                value REAL NOT NULL,\
-                date DATE NOT NULL\
-            )",
-            (),
-        )?;
+        let db = sea_orm::Database::connect(database_url).await?;
 
-        Ok(Database { connection: conn })
+        let builder = db.get_database_backend();
+        let schema = Schema::new(builder);
+        let statement = builder.build(schema.create_table_from_entity(Prices).if_not_exists());
+        db.execute(statement).await?;
+
+        Ok(Database { db })
     }
 
-    pub fn update_value(&self, key: &str, price: f64) -> Result<(), rusqlite::Error> {
+    pub async fn update_value(&self, key: &str, price: f64) -> Result<(), Box<dyn Error>> {
+        let price = (price * 100.0).round() / 100.0; // Rounding price to 2 digits after the decimal point
+
         let date = Utc::now().to_rfc3339();
         let date = date
             .split('T')
             .next()
             .expect("The first part of the RFC3339 date should be found");
 
-        let rows_number = self
-            .connection
-            .prepare("SELECT name FROM prices WHERE name=?1")?
-            .query_map((key,), |_| Ok(()))?
-            .count();
+        let entry = Prices::find_by_id(key).one(&self.db).await?;
 
-        if rows_number == 0 {
-            // No data found, creating entry
-            self.connection.execute(
-                "INSERT INTO prices (name, value, date) VALUES(?1, ROUND(?2, 2), ?3)",
-                (key, price, date),
-            )?;
-        } else {
-            // Data found, updating entry
-            self.connection.execute(
-                "UPDATE prices SET value=ROUND(?2, 2), date=?3 WHERE name=?1",
-                (key, price, date),
-            )?;
+        match entry {
+            Some(_) => {
+                prices::ActiveModel {
+                    name: Set(key.to_owned()),
+                    value: Set(price),
+                    date: Set(date.parse().expect("Date should be properly formated")),
+                }
+                .update(&self.db)
+                .await?;
+            }
+            None => {
+                prices::ActiveModel {
+                    name: Set(key.to_owned()),
+                    value: Set(price),
+                    date: Set(date.parse().expect("Date should be properly formated")),
+                }
+                .insert(&self.db)
+                .await?;
+            }
         }
 
         Ok(())
