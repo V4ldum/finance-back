@@ -2,12 +2,12 @@ use std::error::Error;
 
 use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, DatabaseConnection, EntityTrait, Schema};
-use sea_orm::ActiveValue::Set;
+use sea_orm::ActiveValue::{Set, Unchanged};
 
-use crate::database::db::prelude::Prices;
-use crate::database::db::prices;
+use crate::database::generated::prelude::Prices;
+use crate::database::generated::prices;
 
-mod db;
+mod generated;
 
 pub struct Database {
     db: DatabaseConnection,
@@ -41,19 +41,21 @@ impl Database {
 
         match entry {
             Some(_) => {
+                // UPDATE
                 prices::ActiveModel {
-                    name: Set(key.to_owned()),
+                    name: Unchanged(key.to_owned()),
                     value: Set(price),
-                    date: Set(date.parse().expect("Date should be properly formated")),
+                    date: Set(date.parse().expect("Date should be properly formatted")),
                 }
                 .update(&self.db)
                 .await?;
             }
             None => {
+                // INSERT
                 prices::ActiveModel {
-                    name: Set(key.to_owned()),
+                    name: Unchanged(key.to_owned()),
                     value: Set(price),
-                    date: Set(date.parse().expect("Date should be properly formated")),
+                    date: Set(date.parse().expect("Date should be properly formatted")),
                 }
                 .insert(&self.db)
                 .await?;

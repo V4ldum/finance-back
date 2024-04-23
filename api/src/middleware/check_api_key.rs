@@ -1,18 +1,17 @@
-use axum::Extension;
-use axum::extract::Request;
+use axum::extract::{Request, State};
+use axum::http::HeaderMap;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use sea_orm::{DatabaseConnection, EntityTrait};
 
-use crate::database::prelude::ApiKeys;
-use crate::utils::error::APIError;
+use crate::database::Database;
+use crate::utils::api_error::APIError;
 
 pub async fn check_api_key(
-    Extension(db): Extension<DatabaseConnection>,
+    State(database): State<Database>,
+    headers: HeaderMap,
     request: Request,
     next: Next,
 ) -> Response {
-    let headers = request.headers();
     let Some(key) = headers.get("X-API-KEY") else {
         return APIError::no_api_key().into_response();
     };
@@ -20,7 +19,7 @@ pub async fn check_api_key(
         return APIError::bad_api_key().into_response();
     };
 
-    let Ok(found_key) = ApiKeys::find_by_id(key).one(&db).await else {
+    let Ok(found_key) = database.find_api_key(&key).await else {
         return APIError::database_error().into_response();
     };
 

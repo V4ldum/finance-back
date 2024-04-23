@@ -1,11 +1,10 @@
-use axum::{Extension, Json};
-use axum::extract::Path;
+use axum::extract::{Path, State};
+use axum::Json;
 use axum::response::{IntoResponse, Response};
-use sea_orm::{DatabaseConnection, EntityTrait};
 use serde::Serialize;
 
-use crate::database::prelude::Prices;
-use crate::utils::error::APIError;
+use crate::database::Database;
+use crate::utils::api_error::APIError;
 
 #[derive(Serialize)]
 pub struct TradeValues {
@@ -19,9 +18,9 @@ pub struct TradeValue {
     pub last_update: String,
 }
 
-pub async fn trade_values_with_param(
+pub async fn get_one_trade_value(
     Path(query): Path<String>,
-    Extension(db): Extension<DatabaseConnection>,
+    State(database): State<Database>,
 ) -> Response {
     let query_key = match query.as_str() {
         "gold" => "Gold",
@@ -32,7 +31,7 @@ pub async fn trade_values_with_param(
         }
     };
 
-    let Ok(value) = Prices::find_by_id(query_key).one(&db).await else {
+    let Ok(value) = database.find_one_trade_value(query_key).await else {
         return APIError::database_error().into_response();
     };
 
@@ -46,8 +45,8 @@ pub async fn trade_values_with_param(
     }
 }
 
-pub async fn trade_values(Extension(db): Extension<DatabaseConnection>) -> Response {
-    let Ok(prices) = Prices::find().all(&db).await else {
+pub async fn get_all_trade_values(State(database): State<Database>) -> Response {
+    let Ok(prices) = database.find_all_trade_values().await else {
         return APIError::database_error().into_response();
     };
 
