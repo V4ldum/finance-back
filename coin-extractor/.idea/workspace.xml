@@ -7,25 +7,11 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d50c7cf5-ed22-41e9-8b18-65bbc85d586a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/0efd5cd2-e7e3-4cc0-8214-5896fcab3298.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/0efd5cd2-e7e3-4cc0-8214-5896fcab3298/storage_v2/_src_/schema/main.uQUzAA.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/1554df65-9feb-4faa-a567-22b6c9686d36.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/1554df65-9feb-4faa-a567-22b6c9686d36/storage_v2/_src_/schema/main.uQUzAA.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/coin_query.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/generated/coin_images.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/generated/coins.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/generated/mod.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/generated/prelude.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/program_parameters.rs" afterDir="false" />
+    <list default="true" id="d50c7cf5-ed22-41e9-8b18-65bbc85d586a" name="Changes" comment="coin extractor">
+      <change afterPath="$PROJECT_DIR$/dump.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/4f68f8b1-44bd-497d-bb0f-89b047716d4f.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/4f68f8b1-44bd-497d-bb0f-89b047716d4f.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/coin_query.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/coin_query.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,7 +64,7 @@
     "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
     "org.rust.first.attach.projects": "true",
     "rearrange.code.on.save": "true",
-    "settings.editor.selected.configurable": "preferences.general",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -146,11 +132,24 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1713891512134</updated>
-      <workItem from="1713891513227" duration="11293000" />
+      <workItem from="1713891513227" duration="24198000" />
     </task>
+    <task id="LOCAL-00001" summary="coin extractor">
+      <option name="closed" value="true" />
+      <created>1713905938436</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1713905938436</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="coin extractor" />
+    <option name="LAST_COMMIT_MESSAGE" value="coin extractor" />
   </component>
 </project>

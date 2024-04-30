@@ -1,8 +1,8 @@
 use std::fmt::Formatter;
 use std::ops::Deref;
 
+use serde::de::MapAccess;
 use serde::{Deserialize, Deserializer};
-use serde::de::{MapAccess, Unexpected};
 
 #[derive(Deserialize, Debug)]
 pub struct CoinQuery {
@@ -82,24 +82,33 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                 };
 
                 let parts: Vec<_> = text.split_whitespace().collect();
-                if parts.len() != 2 {
+                if parts.len() < 2 {
                     return Err(serde::de::Error::invalid_length(
                         parts.len(),
-                        &"2 parts expected",
+                        &"2+ parts expected",
                     ));
                 }
 
                 let composition =
-                    <&str>::deref(parts.first().expect("We should have 2 parts")).to_owned();
-                let mut purity =
-                    <&str>::deref(parts.last().expect("We should have 2 parts")).to_owned();
-                let last_char_purity = purity.pop().expect("purity should not be empty");
+                    <&str>::deref(parts.first().expect("We should have parts")).to_owned();
+                let mut purity = <&str>::deref(
+                    parts
+                        .iter()
+                        .find(|&&e| e.ends_with('‰'))
+                        .expect("the char ‰ was expected"),
+                )
+                .to_owned();
+                purity.pop().expect("purity should not be empty");
 
-                if last_char_purity != '‰' {
-                    return Err(serde::de::Error::invalid_value(
-                        Unexpected::Char(last_char_purity),
-                        &"the char ‰ was expected",
-                    ));
+                if purity.contains(',') {
+                    purity = <&str>::deref(
+                        purity
+                            .split(',')
+                            .collect::<Vec<_>>()
+                            .first()
+                            .expect("purity should not be empty"),
+                    )
+                    .to_owned();
                 }
 
                 Ok(CoinQueryComposition {
