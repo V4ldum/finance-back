@@ -1,8 +1,8 @@
 use std::fmt::Formatter;
 use std::ops::Deref;
 
-use serde::de::MapAccess;
 use serde::{Deserialize, Deserializer};
+use serde::de::MapAccess;
 
 #[derive(Deserialize, Debug)]
 pub struct CoinQuery {
@@ -66,6 +66,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
             {
                 let mut text: Option<String> = None;
 
+                // Search for the correct key : "text"
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
                         "text" => {
@@ -81,6 +82,9 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                     return Err(serde::de::Error::missing_field("text"));
                 };
 
+                // Split around whitespaces. First part should be the metal (Gold or Silver), second part should
+                // be the purity (formatted as follows: XXX,X‰).
+                // There can be additional part after than, we don't care about them
                 let parts: Vec<_> = text.split_whitespace().collect();
                 if parts.len() < 2 {
                     return Err(serde::de::Error::invalid_length(
@@ -89,6 +93,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                     ));
                 }
 
+                // Get metal & purity
                 let composition =
                     <&str>::deref(parts.first().expect("We should have parts")).to_owned();
                 let mut purity = <&str>::deref(
@@ -98,18 +103,11 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                         .expect("the char ‰ was expected"),
                 )
                 .to_owned();
-                purity.pop().expect("purity should not be empty");
+                purity.pop().expect("purity should not be empty"); // Remove the ‰ sign to parse it to int
 
-                if purity.contains(',') {
-                    purity = <&str>::deref(
-                        purity
-                            .split(',')
-                            .collect::<Vec<_>>()
-                            .first()
-                            .expect("purity should not be empty"),
-                    )
-                    .to_owned();
-                }
+                // Parse it first to float in case there is a comma, multiply it by 10 then hard cast it to i32
+                let purity: f32 = purity.parse().expect("purity should be a unsigned int");
+                let purity = (purity * 10.0) as i32;
 
                 Ok(CoinQueryComposition {
                     //text,
@@ -119,7 +117,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                         _ => panic!("Unexpected composition"),
                     }
                     .into(),
-                    purity: purity.parse().expect("purity should be a unsigned int"),
+                    purity,
                 })
             }
         }

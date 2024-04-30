@@ -5,10 +5,12 @@ use middleware::from_fn_with_state;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::middleware::check_api_key::check_api_key;
+use crate::routes::coins::search_coin;
 use crate::routes::health_check::health_check;
 use crate::routes::trade_values::{get_all_trade_values, get_one_trade_value};
 use crate::state::AppState;
 
+mod coins;
 mod health_check;
 mod trade_values;
 
@@ -21,6 +23,7 @@ pub fn router(state: AppState) -> Router {
         .route("/trade_values", get(get_all_trade_values))
         .route("/trade_values/:query", get(get_one_trade_value))
         .route_layer(from_fn_with_state(state.clone(), check_api_key))
+        .route("/coins/search", get(search_coin))
         .with_state(state)
         .route("/health", get(health_check))
         .layer(cors)

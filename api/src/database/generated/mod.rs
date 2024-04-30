@@ -3,4 +3,6 @@
 pub mod prelude;
 
 pub mod api_keys;
+pub mod coin_images;
+pub mod coins;
 pub mod prices;
