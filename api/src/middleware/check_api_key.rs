@@ -4,7 +4,7 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 
 use crate::database::Database;
-use crate::utils::api_error::APIError;
+use crate::util::api_error::APIError;
 
 pub async fn check_api_key(
     State(database): State<Database>,
@@ -19,7 +19,7 @@ pub async fn check_api_key(
         return APIError::bad_api_key().into_response();
     };
 
-    let Ok(found_key) = database.find_api_key(&key).await else {
+    let Ok(found_key) = database.get_user(&key).await else {
         return APIError::database_error().into_response();
     };
 

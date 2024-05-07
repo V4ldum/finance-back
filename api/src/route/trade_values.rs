@@ -4,7 +4,7 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 use crate::database::Database;
-use crate::utils::api_error::APIError;
+use crate::util::api_error::APIError;
 
 #[derive(Serialize)]
 pub struct TradeValues {

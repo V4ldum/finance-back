@@ -38,6 +38,12 @@ impl APIError {
             reason: String::from("Invalid API Key"),
         }
     }
+    pub fn bad_id(id: &str) -> Self {
+        APIError {
+            code: StatusCode::BAD_REQUEST,
+            reason: format!("The provided id is invalid: {id}"),
+        }
+    }
 }
 
 impl IntoResponse for APIError {

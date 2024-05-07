@@ -2,7 +2,10 @@
 
 pub mod prelude;
 
-pub mod api_keys;
+pub mod cash_assets;
+pub mod coin_assets;
 pub mod coin_images;
 pub mod coins;
 pub mod prices;
+pub mod raw_assets;
+pub mod users;

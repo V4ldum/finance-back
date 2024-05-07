@@ -26,6 +26,8 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_many = "super::coin_assets::Entity")]
+    CoinAssets,
     #[sea_orm(
         belongs_to = "super::coin_images::Entity",
         from = "Column::Edge",
@@ -50,6 +52,21 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     CoinImages1,
+}
+
+impl Related<super::coin_assets::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::CoinAssets.def()
+    }
+}
+
+impl Related<super::users::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::coin_assets::Relation::Users.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::coin_assets::Relation::Coins.def().rev())
+    }
 }
 
 impl ActiveModelBehavior for ActiveModel {}
