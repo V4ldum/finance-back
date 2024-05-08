@@ -19,7 +19,7 @@ pub async fn check_api_key(
         return APIError::bad_api_key().into_response();
     };
 
-    let Ok(found_key) = database.get_user(&key).await else {
+    let Ok(found_key) = database.get_user(key).await else {
         return APIError::database_error().into_response();
     };
 

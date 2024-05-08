@@ -44,6 +44,12 @@ impl APIError {
             reason: format!("The provided id is invalid: {id}"),
         }
     }
+    pub fn invalid_value(reason: &str) -> Self {
+        APIError {
+            code: StatusCode::BAD_REQUEST,
+            reason: format!("Invalid value: {reason}"),
+        }
+    }
 }
 
 impl IntoResponse for APIError {
