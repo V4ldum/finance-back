@@ -1,12 +1,12 @@
 use std::error::Error;
 
+use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::{ColumnTrait, DbErr, EntityTrait, QueryFilter};
-use sea_orm::ActiveValue::Set;
 
-use crate::database::Database;
 use crate::database::generated::coin_assets;
 use crate::database::generated::coin_assets::Model as CoinAssetsModel;
 use crate::database::generated::prelude::CoinAssets;
+use crate::database::Database;
 
 impl Database {
     pub async fn get_coin_assets(
@@ -46,6 +46,39 @@ impl Database {
         };
 
         CoinAssets::insert(add_coin_asset).exec(&self.db).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_coin_asset(
+        &self,
+        coin_id: i32,
+        user_id: i32,
+        possessed: i32,
+    ) -> Result<(), Box<dyn Error>> {
+        let update_coin_asset = coin_assets::ActiveModel {
+            coin_id: Unchanged(coin_id),
+            user_id: Unchanged(user_id),
+            possessed: Set(possessed),
+        };
+
+        CoinAssets::update(update_coin_asset).exec(&self.db).await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_coin_asset(
+        &self,
+        coin_id: i32,
+        user_id: i32,
+    ) -> Result<(), Box<dyn Error>> {
+        let delete_coin_asset = coin_assets::ActiveModel {
+            coin_id: Unchanged(coin_id),
+            user_id: Unchanged(user_id),
+            ..Default::default()
+        };
+
+        CoinAssets::delete(delete_coin_asset).exec(&self.db).await?;
 
         Ok(())
     }

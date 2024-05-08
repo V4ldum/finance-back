@@ -1,6 +1,6 @@
 use axum::http::StatusCode;
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use serde::Serialize;
 
 pub struct APIError {
@@ -40,7 +40,7 @@ impl APIError {
     }
     pub fn bad_id(id: &str) -> Self {
         APIError {
-            code: StatusCode::BAD_REQUEST,
+            code: StatusCode::NOT_FOUND,
             reason: format!("The provided id is invalid: {id}"),
         }
     }

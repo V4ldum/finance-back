@@ -1,7 +1,7 @@
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use serde::Deserialize;
 
 use crate::database::Database;
@@ -97,4 +97,20 @@ pub async fn create_raw_asset(
     };
 
     StatusCode::CREATED.into_response()
+}
+
+pub async fn update_raw_asset(
+    Path(id): Path<String>,
+    State(database): State<Database>,
+    headers: HeaderMap,
+) -> Response {
+    todo!()
+}
+
+pub async fn delete_raw_asset(
+    Path(id): Path<String>,
+    State(database): State<Database>,
+    headers: HeaderMap,
+) -> Response {
+    todo!()
 }

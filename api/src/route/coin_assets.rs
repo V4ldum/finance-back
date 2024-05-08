@@ -1,7 +1,7 @@
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use sea_orm::DbErr;
 use serde::Deserialize;
 
@@ -92,4 +92,69 @@ pub async fn create_coin_asset(
     }
 
     StatusCode::CREATED.into_response()
+}
+
+#[derive(Deserialize)]
+pub struct UpdateCoinAssetRequest {
+    possessed: i32,
+}
+
+pub async fn update_coin_asset(
+    Path(id): Path<String>,
+    State(database): State<Database>,
+    headers: HeaderMap,
+    Json(request): Json<UpdateCoinAssetRequest>,
+) -> Response {
+    let user_id = match get_user_id_from_headers(&headers, &database).await {
+        Ok(user_id) => user_id,
+        Err(err) => {
+            return err.into_response();
+        }
+    };
+
+    let Ok(coin_id) = id.parse::<i32>() else {
+        return APIError::bad_id(&id).into_response();
+    };
+
+    let Ok(coin_asset) = database.find_coin_asset(coin_id, user_id).await else {
+        return APIError::database_error().into_response();
+    };
+
+    let Some(coin_asset) = coin_asset else {
+        return APIError::bad_id(&coin_id.to_string()).into_response();
+    };
+
+    if coin_asset.possessed != request.possessed {
+        let Ok(_) = database
+            .update_coin_asset(coin_id, user_id, request.possessed)
+            .await
+        else {
+            return APIError::database_error().into_response();
+        };
+    }
+
+    StatusCode::NO_CONTENT.into_response()
+}
+
+pub async fn delete_coin_asset(
+    Path(id): Path<String>,
+    State(database): State<Database>,
+    headers: HeaderMap,
+) -> Response {
+    let user_id = match get_user_id_from_headers(&headers, &database).await {
+        Ok(user_id) => user_id,
+        Err(err) => {
+            return err.into_response();
+        }
+    };
+
+    let Ok(coin_id) = id.parse::<i32>() else {
+        return APIError::bad_id(&id).into_response();
+    };
+
+    let Ok(_) = database.delete_coin_asset(coin_id, user_id).await else {
+        return APIError::database_error().into_response();
+    };
+
+    StatusCode::NO_CONTENT.into_response()
 }
