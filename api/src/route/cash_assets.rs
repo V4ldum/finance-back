@@ -79,12 +79,52 @@ pub async fn create_cash_asset(
     StatusCode::CREATED.into_response()
 }
 
+#[derive(Deserialize)]
+pub struct UpdateCashAssetRequest {
+    name: Option<String>,
+    possessed: Option<i32>,
+    unit_value: Option<i32>,
+}
+
 pub async fn update_cash_asset(
     Path(id): Path<String>,
     State(database): State<Database>,
     headers: HeaderMap,
+    Json(request): Json<UpdateCashAssetRequest>,
 ) -> Response {
-    todo!()
+    let user_id = match get_user_id_from_headers(&headers, &database).await {
+        Ok(user_id) => user_id,
+        Err(err) => {
+            return err.into_response();
+        }
+    };
+
+    let Ok(id) = id.parse::<i32>() else {
+        return APIError::bad_id(&id).into_response();
+    };
+
+    if request.possessed.is_some() && request.possessed.unwrap() < 1 {
+        return APIError::invalid_value("possessed must be > 1").into_response();
+    }
+
+    if request.unit_value.is_some() && request.unit_value.unwrap() < 0 {
+        return APIError::invalid_value("unit_value must be > 0").into_response();
+    }
+
+    let Ok(_) = database
+        .update_cash_asset(
+            id,
+            user_id,
+            request.name,
+            request.possessed,
+            request.unit_value,
+        )
+        .await
+    else {
+        return APIError::database_error().into_response();
+    };
+
+    StatusCode::NO_CONTENT.into_response()
 }
 
 pub async fn delete_cash_asset(
@@ -92,5 +132,20 @@ pub async fn delete_cash_asset(
     State(database): State<Database>,
     headers: HeaderMap,
 ) -> Response {
-    todo!()
+    let user_id = match get_user_id_from_headers(&headers, &database).await {
+        Ok(user_id) => user_id,
+        Err(err) => {
+            return err.into_response();
+        }
+    };
+
+    let Ok(id) = id.parse::<i32>() else {
+        return APIError::bad_id(&id).into_response();
+    };
+
+    let Ok(_) = database.delete_cash_asset(id, user_id).await else {
+        return APIError::database_error().into_response();
+    };
+
+    StatusCode::NO_CONTENT.into_response()
 }

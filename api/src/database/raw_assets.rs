@@ -1,11 +1,11 @@
 use std::error::Error;
 
+use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-use sea_orm::ActiveValue::Set;
 
-use crate::database::Database;
 use crate::database::generated::prelude::RawAssets;
 use crate::database::generated::raw_assets;
+use crate::database::Database;
 
 impl Database {
     pub async fn get_raw_assets(
@@ -53,6 +53,59 @@ impl Database {
         };
 
         RawAssets::insert(add_raw_asset).exec(&self.db).await?;
+
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn update_raw_asset(
+        &self,
+        id: i32,
+        user_id: i32,
+        name: Option<String>,
+        possessed: Option<i32>,
+        unit_weight: Option<i32>,
+        composition: Option<String>,
+        purity: Option<i32>,
+    ) -> Result<(), Box<dyn Error>> {
+        let update_raw_asset = raw_assets::ActiveModel {
+            id: Unchanged(id),
+            id_user: Unchanged(user_id),
+            name: match name {
+                Some(name) => Set(name),
+                None => Default::default(),
+            },
+            possessed: match possessed {
+                Some(possessed) => Set(possessed),
+                None => Default::default(),
+            },
+            unit_weight: match unit_weight {
+                Some(unit_weight) => Set(unit_weight),
+                None => Default::default(),
+            },
+            composition: match composition {
+                Some(composition) => Set(composition),
+                None => Default::default(),
+            },
+            purity: match purity {
+                Some(purity) => Set(purity),
+                None => Default::default(),
+            },
+        };
+
+        RawAssets::update(update_raw_asset).exec(&self.db).await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_raw_asset(&self, id: i32, user_id: i32) -> Result<(), Box<dyn Error>> {
+        let delete_raw_asset = raw_assets::ActiveModel {
+            id: Unchanged(id),
+            id_user: Unchanged(user_id),
+            ..Default::default()
+        };
+
+        RawAssets::delete(delete_raw_asset).exec(&self.db).await?;
 
         Ok(())
     }

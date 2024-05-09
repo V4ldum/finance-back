@@ -1,11 +1,11 @@
 use std::error::Error;
 
+use sea_orm::ActiveValue::{Set, Unchanged};
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-use sea_orm::ActiveValue::Set;
 
-use crate::database::Database;
 use crate::database::generated::cash_assets;
 use crate::database::generated::prelude::CashAssets;
+use crate::database::Database;
 
 impl Database {
     pub async fn get_cash_assets(
@@ -49,6 +49,48 @@ impl Database {
         };
 
         CashAssets::insert(add_cash_asset).exec(&self.db).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_cash_asset(
+        &self,
+        id: i32,
+        user_id: i32,
+        name: Option<String>,
+        possessed: Option<i32>,
+        unit_value: Option<i32>,
+    ) -> Result<(), Box<dyn Error>> {
+        let update_cash_asset = cash_assets::ActiveModel {
+            id: Unchanged(id),
+            id_user: Unchanged(user_id),
+            name: match name {
+                Some(name) => Set(name),
+                None => Default::default(),
+            },
+            possessed: match possessed {
+                Some(possessed) => Set(possessed),
+                None => Default::default(),
+            },
+            unit_value: match unit_value {
+                Some(unit_value) => Set(unit_value),
+                None => Default::default(),
+            },
+        };
+
+        CashAssets::update(update_cash_asset).exec(&self.db).await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_cash_asset(&self, id: i32, user_id: i32) -> Result<(), Box<dyn Error>> {
+        let delete_cash_asset = cash_assets::ActiveModel {
+            id: Unchanged(id),
+            id_user: Unchanged(user_id),
+            ..Default::default()
+        };
+
+        CashAssets::delete(delete_cash_asset).exec(&self.db).await?;
 
         Ok(())
     }
