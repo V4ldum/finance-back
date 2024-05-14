@@ -23,7 +23,7 @@ impl APIError {
     pub fn unknown_query(query: &str) -> Self {
         APIError {
             code: StatusCode::BAD_REQUEST,
-            reason: format!("Unknown query : {query}"),
+            reason: format!("Unknown query: {query}"),
         }
     }
     pub fn no_api_key() -> Self {
