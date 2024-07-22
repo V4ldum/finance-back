@@ -21,7 +21,7 @@ pub async fn get_sp500_price() -> Result<SP500Price, Box<dyn Error>> {
     });
 
     let result = Client::new()
-        .post("https://kitco-gcdn-prod.stellate.sh/")
+        .post("https://kdb-gw.prod.kitco.com/")
         .json(&json_body)
         .send()
         .await?;

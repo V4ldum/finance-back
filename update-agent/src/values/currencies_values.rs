@@ -18,7 +18,7 @@ pub async fn get_usd_to_eur_exchange_rate() -> Result<CurrenciesPrice, Box<dyn E
     });
 
     let result = Client::new()
-        .post("https://kitco-gcdn-prod.stellate.sh/")
+        .post("https://kdb-gw.prod.kitco.com/")
         .json(&json_body)
         .send()
         .await?;

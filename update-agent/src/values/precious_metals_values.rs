@@ -22,7 +22,7 @@ pub async fn get_metal_price(metal_symbol: &str) -> Result<MetalPrice, Box<dyn E
     });
 
     let result = Client::new()
-        .post("https://kitco-gcdn-prod.stellate.sh/")
+        .post("https://kdb-gw.prod.kitco.com/")
         .json(&json_body)
         .send()
         .await?;
