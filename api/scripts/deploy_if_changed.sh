@@ -21,12 +21,12 @@ elif [ $LOCAL = $BASE ]; then
 
         if [ $DIFF_API = 0 ]; then
                 echo "$(date --utc +%FT%TZ): Changes detected in api/, deploying new version: $BUILD_VERSION"
-                api/scripts/finance/deploy.sh
+                api/scripts/deploy.sh
         fi
 
         if [ $DIFF_UPDATE_AGENT = 0 ]; then
                 echo "$(date -utc +%FT%TZ): Changes detected in update-agent/, deploying new version: $BUILD_VERSION"
-                update-agent/scripts/finance/deploy.sh
+                update-agent/scripts/deploy.sh
         fi
 elif [ $REMOTE = $BASE ]; then
         BUILD_VERSION=$(git rev-parse HEAD)
@@ -36,12 +36,12 @@ elif [ $REMOTE = $BASE ]; then
 
         if [ $DIFF_API = 0 ]; then
                 echo "$(date -utc +%FT%TZ): Changes detected in api/, deploying new version: $BUILD_VERSION"
-                api/scripts/finance/deploy.sh
+                api/scripts/deploy.sh
         fi
 
         if [ $DIFF_UPDATE_AGENT = 0 ]; then
                 echo "$(date -utc +%FT%TZ): Changes detected in update-agent/, deploying new version: $BUILD_VERSION"
-                update-agent/scripts/finance/deploy-update.sh
+                update-agent/scripts/deploy-update.sh
         fi
 else
         echo "$(date --utc +%FT%TZ): Git is diverged, this is unexpected."
