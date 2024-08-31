@@ -1,4 +1,4 @@
-FROM messense/rust-musl-cross:aarch64-musl as build
+FROM messense/rust-musl-cross:aarch64-musl AS build
 # ENV SQLX_OFFLINE=true
 WORKDIR /api
 COPY . .

@@ -1,4 +1,4 @@
-FROM messense/rust-musl-cross:aarch64-musl as build
+FROM messense/rust-musl-cross:aarch64-musl AS build
 WORKDIR /update-agent
 COPY . .
 RUN cargo build --release --target aarch64-unknown-linux-musl
