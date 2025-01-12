@@ -5,7 +5,7 @@ use crate::database::Database;
 
 impl Database {
     pub async fn get_user(&self, key: &str) -> Result<Option<Users>, Box<dyn Error>> {
-        let result = sqlx::query!("SELECT * FROM users WHERE id = $1", key)
+        let result = sqlx::query!("SELECT * FROM users WHERE api_key = $1", key)
             .fetch_optional(&self.db)
             .await?;
 
