@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT * FROM prices WHERE name = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "value",
+        "ordinal": 1,
+        "type_info": "Float"
+      },
+      {
+        "name": "date",
+        "ordinal": 2,
+        "type_info": "Date"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "7ed364912edbfa61a13323b9bef76e9de9f0d0f74dc74a829860e045b482c022"
+}

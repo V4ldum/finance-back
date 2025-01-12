@@ -1,4 +1,5 @@
 FROM messense/rust-musl-cross:aarch64-musl AS build
+ENV SQLX_OFFLINE=true
 WORKDIR /update-agent
 COPY . .
 RUN cargo build --release --target aarch64-unknown-linux-musl

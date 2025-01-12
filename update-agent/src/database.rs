@@ -1,16 +1,11 @@
 use std::error::Error;
 
-use chrono::Utc;
-use sea_orm::{ActiveModelTrait, ConnectionTrait, DatabaseConnection, EntityTrait, Schema};
-use sea_orm::ActiveValue::{Set, Unchanged};
-
-use crate::database::generated::prelude::Prices;
-use crate::database::generated::prices;
-
-mod generated;
+use chrono::{NaiveDate, Utc};
+use sqlx::migrate::MigrateDatabase;
+use sqlx::{Sqlite, SqlitePool};
 
 pub struct Database {
-    db: DatabaseConnection,
+    db: SqlitePool,
 }
 
 impl Database {
@@ -18,12 +13,11 @@ impl Database {
         dotenvy::dotenv()?;
         let database_url = dotenvy::var("DATABASE_URL")?;
 
-        let db = sea_orm::Database::connect(database_url).await?;
+        if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
+            panic!("Database not found")
+        }
 
-        let builder = db.get_database_backend();
-        let schema = Schema::new(builder);
-        let statement = builder.build(schema.create_table_from_entity(Prices).if_not_exists());
-        db.execute(statement).await?;
+        let db = SqlitePool::connect(&database_url).await?;
 
         Ok(Database { db })
     }
@@ -36,28 +30,43 @@ impl Database {
             .split('T')
             .next()
             .expect("The first part of the RFC3339 date should be found");
+        let date = date.parse::<NaiveDate>().expect("Date should be properly formatted");
 
-        let entry = Prices::find_by_id(key).one(&self.db).await?;
+        let entry = sqlx::query!(
+            r#"
+            SELECT * FROM prices WHERE name = $1
+            "#,
+            key
+        )
+        .fetch_optional(&self.db)
+        .await?;
 
         match entry {
             Some(_) => {
                 // UPDATE
-                prices::ActiveModel {
-                    name: Unchanged(key.to_owned()),
-                    value: Set(price),
-                    date: Set(date.parse().expect("Date should be properly formatted")),
-                }
-                .update(&self.db)
+                sqlx::query!(
+                    r#"
+                    UPDATE prices SET value = $1, date = $2 WHERE name = $3
+                    "#,
+                    price,
+                    date,
+                    key
+                )
+                .execute(&self.db)
                 .await?;
             }
             None => {
                 // INSERT
-                prices::ActiveModel {
-                    name: Unchanged(key.to_owned()),
-                    value: Set(price),
-                    date: Set(date.parse().expect("Date should be properly formatted")),
-                }
-                .insert(&self.db)
+                sqlx::query!(
+                    r#"
+                    INSERT INTO prices (name, value, date)
+                    VALUES($1, $2, $3)
+                    "#,
+                    key,
+                    price,
+                    date,
+                )
+                .execute(&self.db)
                 .await?;
             }
         }

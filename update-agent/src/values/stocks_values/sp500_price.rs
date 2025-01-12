@@ -19,7 +19,7 @@ pub struct SP500PriceQuote {
 
 #[derive(Deserialize, Debug)]
 pub struct SP500PriceResult {
-    pub name: String,
+    // pub name: String,
     #[serde(rename = "lastPrice")]
     pub last_price: f64, // this is in USD
 }
@@ -36,8 +36,5 @@ where
         )));
     }
 
-    Ok(result_vec
-        .into_iter()
-        .next()
-        .expect("There should be one element here"))
+    Ok(result_vec.into_iter().next().expect("There should be one element here"))
 }

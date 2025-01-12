@@ -1,24 +1,31 @@
 use std::error::Error;
 
-use sea_orm::EntityTrait;
-
+use crate::database::tables::price::Price;
 use crate::database::Database;
-use crate::database::generated::prelude::Prices;
-use crate::database::generated::prices::Model as PricesModel;
 
 impl Database {
-    pub async fn find_one_trade_value(
-        &self,
-        query: &str,
-    ) -> Result<Option<PricesModel>, Box<dyn Error>> {
-        let result = Prices::find_by_id(query).one(&self.db).await?;
+    pub async fn find_one_trade_value(&self, query: &str) -> Result<Option<Price>, Box<dyn Error>> {
+        let result = sqlx::query!("SELECT * FROM prices WHERE name = $1", query)
+            .fetch_optional(&self.db)
+            .await?;
 
-        Ok(result)
+        Ok(result.map(|record| Price {
+            name: record.name,
+            value: record.value,
+            date: record.date,
+        }))
     }
 
-    pub async fn find_all_trade_values(&self) -> Result<Vec<PricesModel>, Box<dyn Error>> {
-        let result = Prices::find().all(&self.db).await?;
+    pub async fn find_all_trade_values(&self) -> Result<Vec<Price>, Box<dyn Error>> {
+        let result = sqlx::query!("SELECT * FROM prices").fetch_all(&self.db).await?;
 
-        Ok(result)
+        Ok(result
+            .into_iter()
+            .map(|record| Price {
+                name: record.name,
+                value: record.value,
+                date: record.date,
+            })
+            .collect())
     }
 }

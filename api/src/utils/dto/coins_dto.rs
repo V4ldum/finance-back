@@ -2,7 +2,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct CoinDataDto {
-    pub id: i32,
+    pub id: i64,
     pub numista_id: String,
     pub name: String,
     pub weight: f64,
@@ -11,7 +11,7 @@ pub struct CoinDataDto {
     pub min_year: String,
     pub max_year: Option<String>,
     pub composition: String,
-    pub purity: i32,
+    pub purity: i64,
     pub obverse: Option<CoinSideDataDto>,
     pub reverse: Option<CoinSideDataDto>,
     pub edge: Option<CoinSideDataDto>,

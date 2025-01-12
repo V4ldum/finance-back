@@ -1,8 +1,8 @@
 use std::fmt::Formatter;
 use std::ops::Deref;
 
-use serde::{Deserialize, Deserializer};
 use serde::de::MapAccess;
+use serde::{Deserialize, Deserializer};
 
 #[derive(Deserialize, Debug)]
 pub struct CoinQuery {
@@ -87,15 +87,11 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                 // There can be additional part after than, we don't care about them
                 let parts: Vec<_> = text.split_whitespace().collect();
                 if parts.len() < 2 {
-                    return Err(serde::de::Error::invalid_length(
-                        parts.len(),
-                        &"2+ parts expected",
-                    ));
+                    return Err(serde::de::Error::invalid_length(parts.len(), &"2+ parts expected"));
                 }
 
                 // Get metal & purity
-                let composition =
-                    <&str>::deref(parts.first().expect("We should have parts")).to_owned();
+                let composition = <&str>::deref(parts.first().expect("We should have parts")).to_owned();
                 let mut purity = <&str>::deref(
                     parts
                         .iter()

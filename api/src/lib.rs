@@ -1,12 +1,14 @@
-use crate::route::router;
 use crate::state::AppState;
 
-pub mod database;
 mod middleware;
-mod route;
 
+mod database;
+mod routes;
 pub mod state;
-mod util;
+mod utils;
+
+pub use crate::database::Database;
+use crate::routes::router;
 
 pub async fn run(state: AppState) {
     let router = router(state);

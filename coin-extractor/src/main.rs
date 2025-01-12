@@ -2,10 +2,11 @@ use std::env;
 use std::error::Error;
 use std::process::exit;
 
-use sea_orm::Database;
-
 use coin_extractor::program_parameters::ProgramParameters;
 use coin_extractor::run;
+
+use sqlx::migrate::MigrateDatabase;
+use sqlx::{Connection, Sqlite, SqliteConnection};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -22,20 +23,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let first_arg = &args[1];
     let Ok(coin_id) = first_arg.parse() else {
-        eprintln!(
-            "Invalid argument {}, argument should be a number",
-            first_arg
-        );
+        eprintln!("Invalid argument {}, argument should be a number", first_arg);
         exit(1);
     };
 
-    let db = Database::connect(database_url).await?;
+    if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
+        panic!("Database not found")
+    }
 
-    let params = ProgramParameters {
-        coin_id,
-        api_key,
-        db,
-    };
+    let db = SqliteConnection::connect(&database_url).await?;
+
+    let params = ProgramParameters { coin_id, api_key, db };
 
     run(params).await
 }

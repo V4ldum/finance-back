@@ -1,84 +1,76 @@
+use crate::database::tables::coin_asset::CoinAsset;
+use crate::database::Database;
 use std::error::Error;
 
-use sea_orm::ActiveValue::{Set, Unchanged};
-use sea_orm::{ColumnTrait, DbErr, EntityTrait, QueryFilter};
-
-use crate::database::generated::coin_assets;
-use crate::database::generated::coin_assets::Model as CoinAssetsModel;
-use crate::database::generated::prelude::CoinAssets;
-use crate::database::Database;
-
 impl Database {
-    pub async fn get_coin_assets(
-        &self,
-        id_user: i32,
-    ) -> Result<Vec<CoinAssetsModel>, Box<dyn Error>> {
-        let coin_assets = CoinAssets::find()
-            .filter(coin_assets::Column::UserId.eq(id_user))
-            .all(&self.db)
+    pub async fn get_coin_assets(&self, id_user: i64) -> Result<Vec<CoinAsset>, Box<dyn Error>> {
+        let coin_assets = sqlx::query!("SELECT * FROM coin_assets WHERE user_id = $1", id_user)
+            .fetch_all(&self.db)
             .await?;
 
-        Ok(coin_assets)
+        Ok(coin_assets
+            .into_iter()
+            .map(|record| CoinAsset {
+                coin_id: record.coin_id,
+                user_id: record.user_id,
+                possessed: record.possessed,
+            })
+            .collect())
     }
 
-    pub async fn find_coin_asset(
-        &self,
-        coin_id: i32,
-        user_id: i32,
-    ) -> Result<Option<CoinAssetsModel>, Box<dyn Error>> {
-        let coin_asset = CoinAssets::find_by_id((coin_id, user_id))
-            .one(&self.db)
-            .await?;
+    pub async fn find_coin_asset(&self, coin_id: i64, user_id: i64) -> Result<Option<CoinAsset>, Box<dyn Error>> {
+        let coin_asset = sqlx::query!(
+            "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
+            coin_id,
+            user_id
+        )
+        .fetch_optional(&self.db)
+        .await?;
 
-        Ok(coin_asset)
+        Ok(coin_asset.map(|record| CoinAsset {
+            coin_id: record.coin_id,
+            user_id: record.user_id,
+            possessed: record.possessed,
+        }))
     }
 
-    pub async fn add_coin_asset(
-        &self,
-        coin_id: i32,
-        user_id: i32,
-        possessed: i32,
-    ) -> Result<(), DbErr> {
-        let add_coin_asset = coin_assets::ActiveModel {
-            coin_id: Set(coin_id),
-            user_id: Set(user_id),
-            possessed: Set(possessed),
-        };
-
-        CoinAssets::insert(add_coin_asset).exec(&self.db).await?;
+    pub async fn add_coin_asset(&self, coin_id: i64, user_id: i64, possessed: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO coin_assets (coin_id, user_id, possessed)
+            VALUES ($1, $2, $3)
+            "#,
+            coin_id,
+            user_id,
+            possessed
+        )
+        .execute(&self.db)
+        .await?;
 
         Ok(())
     }
 
-    pub async fn update_coin_asset(
-        &self,
-        coin_id: i32,
-        user_id: i32,
-        possessed: i32,
-    ) -> Result<(), Box<dyn Error>> {
-        let update_coin_asset = coin_assets::ActiveModel {
-            coin_id: Unchanged(coin_id),
-            user_id: Unchanged(user_id),
-            possessed: Set(possessed),
-        };
-
-        CoinAssets::update(update_coin_asset).exec(&self.db).await?;
+    pub async fn update_coin_asset(&self, coin_id: i64, user_id: i64, possessed: i64) -> Result<(), Box<dyn Error>> {
+        sqlx::query!(
+            "UPDATE coin_assets SET possessed = $1 WHERE coin_id = $2 AND user_id = $3",
+            possessed,
+            coin_id,
+            user_id
+        )
+        .execute(&self.db)
+        .await?;
 
         Ok(())
     }
 
-    pub async fn delete_coin_asset(
-        &self,
-        coin_id: i32,
-        user_id: i32,
-    ) -> Result<(), Box<dyn Error>> {
-        let delete_coin_asset = coin_assets::ActiveModel {
-            coin_id: Unchanged(coin_id),
-            user_id: Unchanged(user_id),
-            ..Default::default()
-        };
-
-        CoinAssets::delete(delete_coin_asset).exec(&self.db).await?;
+    pub async fn delete_coin_asset(&self, coin_id: i64, user_id: i64) -> Result<(), Box<dyn Error>> {
+        sqlx::query!(
+            "DELETE FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
+            coin_id,
+            user_id
+        )
+        .execute(&self.db)
+        .await?;
 
         Ok(())
     }

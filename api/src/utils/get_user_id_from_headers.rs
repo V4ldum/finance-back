@@ -1,13 +1,8 @@
+use super::api_error::APIError;
+use crate::Database;
 use axum::http::HeaderMap;
 
-use crate::database::Database;
-
-use super::api_error::APIError;
-
-pub async fn get_user_id_from_headers(
-    headers: &HeaderMap,
-    database: &Database,
-) -> Result<i32, APIError> {
+pub async fn get_user_id_from_headers(headers: &HeaderMap, database: &Database) -> Result<i64, APIError> {
     let key = headers
         .get("X-API-KEY")
         .expect("The key was confirmed present by the middleware")

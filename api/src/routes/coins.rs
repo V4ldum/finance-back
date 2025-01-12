@@ -1,21 +1,18 @@
 use axum::extract::{Path, Query, State};
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use serde::Deserialize;
 
 use crate::database::Database;
-use crate::util::api_error::APIError;
-use crate::util::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
+use crate::utils::api_error::APIError;
+use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 
 #[derive(Deserialize)]
 pub struct QueryParams {
     q: String,
 }
 
-pub async fn search_coin(
-    Query(query): Query<QueryParams>,
-    State(database): State<Database>,
-) -> Response {
+pub async fn search_coin(Query(query): Query<QueryParams>, State(database): State<Database>) -> Response {
     let Ok(coins) = database.search_coin(&query.q).await else {
         return APIError::database_error().into_response();
     };
@@ -39,7 +36,7 @@ pub async fn search_coin(
 }
 
 pub async fn get_coin(Path(id): Path<String>, State(database): State<Database>) -> Response {
-    let Ok(id) = id.parse::<i32>() else {
+    let Ok(id) = id.parse::<i64>() else {
         return APIError::bad_id(&id).into_response();
     };
 

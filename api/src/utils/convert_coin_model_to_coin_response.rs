@@ -1,13 +1,10 @@
+use crate::database::tables::coin::Coin;
 use crate::database::Database;
-use crate::database::generated::coins::Model as CoinsModel;
-use crate::util::api_error::APIError;
-use crate::util::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
+use crate::utils::api_error::APIError;
+use crate::utils::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
 
-pub async fn convert_coin_model_to_coin_response(
-    coin: CoinsModel,
-    database: &Database,
-) -> Result<CoinDataDto, APIError> {
-    let obverse = if let Some(obverse) = coin.obverse {
+pub async fn convert_coin_model_to_coin_response(coin: Coin, database: &Database) -> Result<CoinDataDto, APIError> {
+    let obverse = if let Some(obverse) = coin.obverse_id {
         let Ok(result) = database.get_coin_side(obverse).await else {
             return Err(APIError::database_error());
         };
@@ -16,7 +13,7 @@ pub async fn convert_coin_model_to_coin_response(
     } else {
         None
     };
-    let reverse = if let Some(reverse) = coin.reverse {
+    let reverse = if let Some(reverse) = coin.reverse_id {
         let Ok(result) = database.get_coin_side(reverse).await else {
             return Err(APIError::database_error());
         };
@@ -25,7 +22,7 @@ pub async fn convert_coin_model_to_coin_response(
     } else {
         None
     };
-    let edge = if let Some(edge) = coin.edge {
+    let edge = if let Some(edge) = coin.edge_id {
         let Ok(result) = database.get_coin_side(edge).await else {
             return Err(APIError::database_error());
         };

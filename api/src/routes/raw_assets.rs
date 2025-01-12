@@ -5,15 +5,11 @@ use axum::Json;
 use serde::Deserialize;
 
 use crate::database::Database;
-use crate::util::api_error::APIError;
-use crate::util::dto::assets_dto::RawAssetsDto;
-use crate::util::get_user_id_from_headers::get_user_id_from_headers;
+use crate::utils::api_error::APIError;
+use crate::utils::dto::assets_dto::RawAssetsDto;
+use crate::utils::get_user_id_from_headers::get_user_id_from_headers;
 
-pub async fn get_raw_asset(
-    Path(id): Path<String>,
-    State(database): State<Database>,
-    headers: HeaderMap,
-) -> Response {
+pub async fn get_raw_asset(Path(id): Path<String>, State(database): State<Database>, headers: HeaderMap) -> Response {
     let user_id = match get_user_id_from_headers(&headers, &database).await {
         Ok(user_id) => user_id,
         Err(err) => {
@@ -21,7 +17,7 @@ pub async fn get_raw_asset(
         }
     };
 
-    let Ok(raw_asset_id) = id.parse::<i32>() else {
+    let Ok(raw_asset_id) = id.parse::<i64>() else {
         return APIError::bad_id(&id).into_response();
     };
 
@@ -47,10 +43,10 @@ pub async fn get_raw_asset(
 #[derive(Deserialize)]
 pub struct CreateRawAssetRequest {
     name: String,
-    possessed: i32,
-    unit_weight: i32,
+    possessed: i64,
+    unit_weight: i64,
     composition: String,
-    purity: i32,
+    purity: i64,
 }
 
 pub async fn create_raw_asset(
@@ -74,8 +70,7 @@ pub async fn create_raw_asset(
     }
 
     if request.composition != "GOLD" && request.composition != "SILVER" {
-        return APIError::invalid_value("composition can either be \"GOLD\" or \"SILVER\"")
-            .into_response();
+        return APIError::invalid_value("composition can either be \"GOLD\" or \"SILVER\"").into_response();
     }
 
     if request.purity > 9999 || request.purity < 1 {
@@ -102,10 +97,10 @@ pub async fn create_raw_asset(
 #[derive(Deserialize)]
 pub struct UpdateRawAssetRequest {
     name: Option<String>,
-    possessed: Option<i32>,
-    unit_weight: Option<i32>,
+    possessed: Option<i64>,
+    unit_weight: Option<i64>,
     composition: Option<String>,
-    purity: Option<i32>,
+    purity: Option<i64>,
 }
 
 pub async fn update_raw_asset(
@@ -121,7 +116,7 @@ pub async fn update_raw_asset(
         }
     };
 
-    let Ok(id) = id.parse::<i32>() else {
+    let Ok(id) = id.parse::<i64>() else {
         return APIError::bad_id(&id).into_response();
     };
 
@@ -137,8 +132,7 @@ pub async fn update_raw_asset(
         && request.composition.as_deref().unwrap() != "GOLD"
         && request.composition.as_deref().unwrap() != "SILVER"
     {
-        return APIError::invalid_value("composition can either be \"GOLD\" or \"SILVER\"")
-            .into_response();
+        return APIError::invalid_value("composition can either be \"GOLD\" or \"SILVER\"").into_response();
     }
 
     if request.purity.is_some() && (request.purity.unwrap() > 9999 || request.purity.unwrap() < 1) {
@@ -175,7 +169,7 @@ pub async fn delete_raw_asset(
         }
     };
 
-    let Ok(id) = id.parse::<i32>() else {
+    let Ok(id) = id.parse::<i64>() else {
         return APIError::bad_id(&id).into_response();
     };
 

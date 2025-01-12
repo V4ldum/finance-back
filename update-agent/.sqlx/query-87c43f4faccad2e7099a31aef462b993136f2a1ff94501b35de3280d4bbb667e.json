@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                    UPDATE prices SET value = $1, date = $2 WHERE name = $3\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "87c43f4faccad2e7099a31aef462b993136f2a1ff94501b35de3280d4bbb667e"
+}

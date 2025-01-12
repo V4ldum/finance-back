@@ -1,10 +1,10 @@
 use axum::extract::{Path, State};
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use serde::Serialize;
 
 use crate::database::Database;
-use crate::util::api_error::APIError;
+use crate::utils::api_error::APIError;
 
 #[derive(Serialize)]
 pub struct TradeValues {
@@ -18,10 +18,7 @@ pub struct TradeValue {
     pub last_update: String,
 }
 
-pub async fn get_one_trade_value(
-    Path(query): Path<String>,
-    State(database): State<Database>,
-) -> Response {
+pub async fn get_one_trade_value(Path(query): Path<String>, State(database): State<Database>) -> Response {
     let query_key = match query.as_str() {
         "gold" => "Gold",
         "silver" => "Silver",

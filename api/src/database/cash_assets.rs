@@ -1,96 +1,116 @@
+use crate::database::tables::cash_asset::CashAsset;
+use crate::database::Database;
+use sqlx::{Execute, QueryBuilder, Sqlite};
 use std::error::Error;
 
-use sea_orm::ActiveValue::{Set, Unchanged};
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-
-use crate::database::generated::cash_assets;
-use crate::database::generated::prelude::CashAssets;
-use crate::database::Database;
-
 impl Database {
-    pub async fn get_cash_assets(
-        &self,
-        id_user: i32,
-    ) -> Result<Vec<cash_assets::Model>, Box<dyn Error>> {
-        let cash_assets = CashAssets::find()
-            .filter(cash_assets::Column::IdUser.eq(id_user))
-            .all(&self.db)
+    pub async fn get_cash_assets(&self, id_user: i64) -> Result<Vec<CashAsset>, Box<dyn Error>> {
+        let cash_assets = sqlx::query!("SELECT * FROM cash_assets WHERE id_user == $1", id_user)
+            .fetch_all(&self.db)
             .await?;
 
-        Ok(cash_assets)
+        Ok(cash_assets
+            .into_iter()
+            .map(|record| CashAsset {
+                id: record.id,
+                name: record.name,
+                possessed: record.possessed,
+                unit_value: record.unit_value,
+                id_user: record.id_user,
+            })
+            .collect())
     }
 
-    pub async fn find_cash_asset(
-        &self,
-        asset_id: i32,
-        user_id: i32,
-    ) -> Result<Option<cash_assets::Model>, Box<dyn Error>> {
-        let asset = CashAssets::find_by_id(asset_id)
-            .filter(cash_assets::Column::IdUser.eq(user_id))
-            .one(&self.db)
-            .await?;
+    pub async fn find_cash_asset(&self, asset_id: i64, user_id: i64) -> Result<Option<CashAsset>, Box<dyn Error>> {
+        let asset = sqlx::query!(
+            "SELECT * FROM cash_assets WHERE id = $1 AND id_user = $2",
+            asset_id,
+            user_id
+        )
+        .fetch_optional(&self.db)
+        .await?;
 
-        Ok(asset)
+        Ok(asset.map(|record| CashAsset {
+            id: record.id,
+            name: record.name,
+            possessed: record.possessed,
+            unit_value: record.unit_value,
+            id_user: record.id_user,
+        }))
     }
 
     pub async fn add_cash_asset(
         &self,
         name: String,
-        possessed: i32,
-        unit_value: i32,
-        user_id: i32,
+        possessed: i64,
+        unit_value: i64,
+        user_id: i64,
     ) -> Result<(), Box<dyn Error>> {
-        let add_cash_asset = cash_assets::ActiveModel {
-            name: Set(name),
-            possessed: Set(possessed),
-            unit_value: Set(unit_value),
-            id_user: Set(user_id),
-            ..Default::default()
-        };
-
-        CashAssets::insert(add_cash_asset).exec(&self.db).await?;
-
+        sqlx::query!(
+            r#"
+            INSERT INTO cash_assets (name, possessed, unit_value, id_user)
+            VALUES ($1, $2, $3, $4)
+            "#,
+            name,
+            possessed,
+            unit_value,
+            user_id
+        )
+        .execute(&self.db)
+        .await?;
         Ok(())
     }
 
     pub async fn update_cash_asset(
         &self,
-        id: i32,
-        user_id: i32,
+        id: i64,
+        user_id: i64,
         name: Option<String>,
-        possessed: Option<i32>,
-        unit_value: Option<i32>,
+        possessed: Option<i64>,
+        unit_value: Option<i64>,
     ) -> Result<(), Box<dyn Error>> {
-        let update_cash_asset = cash_assets::ActiveModel {
-            id: Unchanged(id),
-            id_user: Unchanged(user_id),
-            name: match name {
-                Some(name) => Set(name),
-                None => Default::default(),
-            },
-            possessed: match possessed {
-                Some(possessed) => Set(possessed),
-                None => Default::default(),
-            },
-            unit_value: match unit_value {
-                Some(unit_value) => Set(unit_value),
-                None => Default::default(),
-            },
-        };
+        match (name, possessed, unit_value) {
+            (None, None, None) => return Ok(()), // No update necessary
+            (name, possessed, unit_value) => {
+                let mut query: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE cash_assets SET ");
+                let mut and = false;
 
-        CashAssets::update(update_cash_asset).exec(&self.db).await?;
+                if let Some(name) = name {
+                    query.push("name = ");
+                    query.push_bind(name);
+                    and = true;
+                }
+                if let Some(possessed) = possessed {
+                    if and {
+                        query.push(", ");
+                    }
+                    query.push("possessed = ");
+                    query.push_bind(possessed);
+                    and = true;
+                }
+                if let Some(unit_value) = unit_value {
+                    if and {
+                        query.push(", ");
+                    }
+                    query.push("unit_value = ");
+                    query.push_bind(unit_value);
+                }
+                query.push(" WHERE id = ");
+                query.push_bind(id);
+                query.push(" AND id_user = ");
+                query.push_bind(user_id);
+
+                sqlx::query(query.build().sql()).execute(&self.db).await?;
+            }
+        }
 
         Ok(())
     }
 
-    pub async fn delete_cash_asset(&self, id: i32, user_id: i32) -> Result<(), Box<dyn Error>> {
-        let delete_cash_asset = cash_assets::ActiveModel {
-            id: Unchanged(id),
-            id_user: Unchanged(user_id),
-            ..Default::default()
-        };
-
-        CashAssets::delete(delete_cash_asset).exec(&self.db).await?;
+    pub async fn delete_cash_asset(&self, id: i64, user_id: i64) -> Result<(), Box<dyn Error>> {
+        sqlx::query!("DELETE FROM cash_assets WHERE id = $1 AND id_user = $2", id, user_id)
+            .execute(&self.db)
+            .await?;
 
         Ok(())
     }

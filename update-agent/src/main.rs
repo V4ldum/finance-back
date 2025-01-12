@@ -18,9 +18,7 @@ async fn main() {
 
     match gold_price {
         Ok(gold_price) => {
-            let gold_result = database
-                .update_value("Gold", gold_price.data.quote.result.bid)
-                .await;
+            let gold_result = database.update_value("Gold", gold_price.data.quote.result.bid).await;
 
             if let Err(err) = gold_result {
                 eprintln!("An error occurred updating gold price : {err}");
@@ -52,8 +50,7 @@ async fn main() {
                         .update_value(
                             "SP500",
                             // EUR = USD / Rate, SP500 quote is in USD
-                            sp500_price.data.quote.result.last_price
-                                / currencies_price.data.quote.result.last_price,
+                            sp500_price.data.quote.result.last_price / currencies_price.data.quote.result.last_price,
                         )
                         .await;
                     if let Err(err) = sp_result {

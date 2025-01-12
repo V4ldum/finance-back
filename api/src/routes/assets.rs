@@ -1,12 +1,12 @@
 use axum::extract::State;
 use axum::http::HeaderMap;
-use axum::Json;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 
 use crate::database::Database;
-use crate::util::api_error::APIError;
-use crate::util::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::util::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, RawAssetsDto};
+use crate::utils::api_error::APIError;
+use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
+use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, RawAssetsDto};
 
 pub async fn get_assets(State(database): State<Database>, headers: HeaderMap) -> Response {
     let key = headers

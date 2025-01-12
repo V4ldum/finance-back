@@ -1,10 +1,9 @@
+use crate::utils::api_error::APIError;
+use crate::Database;
 use axum::extract::{Request, State};
 use axum::http::HeaderMap;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-
-use crate::database::Database;
-use crate::util::api_error::APIError;
 
 pub async fn check_api_key(
     State(database): State<Database>,

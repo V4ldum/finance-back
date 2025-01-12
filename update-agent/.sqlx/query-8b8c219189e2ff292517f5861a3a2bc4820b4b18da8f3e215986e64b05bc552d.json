@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                    INSERT INTO prices (name, value, date)\n                    VALUES($1, $2, $3)\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "8b8c219189e2ff292517f5861a3a2bc4820b4b18da8f3e215986e64b05bc552d"
+}

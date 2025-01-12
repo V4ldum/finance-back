@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::util::dto::coins_dto::CoinDataDto;
+use crate::utils::dto::coins_dto::CoinDataDto;
 
 #[derive(Serialize)]
 pub struct AssetsDto {
@@ -11,24 +11,24 @@ pub struct AssetsDto {
 
 #[derive(Serialize)]
 pub struct RawAssetsDto {
-    pub id: i32,
+    pub id: i64,
     pub name: String,
-    pub possessed: i32,
-    pub unit_weight: i32,
+    pub possessed: i64,
+    pub unit_weight: i64,
     pub composition: String,
-    pub purity: i32,
+    pub purity: i64,
 }
 
 #[derive(Serialize)]
 pub struct CashAssetsDto {
-    pub id: i32,
+    pub id: i64,
     pub name: String,
-    pub possessed: i32,
-    pub unit_value: i32,
+    pub possessed: i64,
+    pub unit_value: i64,
 }
 
 #[derive(Serialize)]
 pub struct CoinAssetsDto {
-    pub possessed: i32,
+    pub possessed: i64,
     pub coin_data: CoinDataDto,
 }
