@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE coin_assets SET possessed = $1 WHERE coin_id = $2 AND user_id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "a28dd7a7a42c52eb1f4c26d30b1481e6b0ccd52cce250e92cbdfe359a1e330b9"
+}

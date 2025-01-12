@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO cash_assets (name, possessed, unit_value, id_user)\n            VALUES ($1, $2, $3, $4)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "ae6aeff2d3557187d3ef1ce1b2c8a9fa43566e9bb1be3b6906486b1db361eaa5"
+}

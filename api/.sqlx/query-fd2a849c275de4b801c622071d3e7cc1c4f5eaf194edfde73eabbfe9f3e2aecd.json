@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM cash_assets WHERE id = $1 AND id_user = $2",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "possessed",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "unit_value",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "id_user",
+        "ordinal": 4,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "fd2a849c275de4b801c622071d3e7cc1c4f5eaf194edfde73eabbfe9f3e2aecd"
+}

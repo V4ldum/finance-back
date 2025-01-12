@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM raw_assets WHERE id_user = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "possessed",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "unit_weight",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "composition",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "purity",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "id_user",
+        "ordinal": 6,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d0b1f4d56f4d852dcd7f41bbdffddd3614f36a5e3510cdf369a707230d41a307"
+}

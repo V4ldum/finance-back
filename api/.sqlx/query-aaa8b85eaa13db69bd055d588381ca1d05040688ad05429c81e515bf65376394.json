@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM raw_assets WHERE id = $1 AND id_user = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "aaa8b85eaa13db69bd055d588381ca1d05040688ad05429c81e515bf65376394"
+}

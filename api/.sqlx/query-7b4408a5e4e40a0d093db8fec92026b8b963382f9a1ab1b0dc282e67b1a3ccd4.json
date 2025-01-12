@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM coin_images WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "image_url",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "thumbnail_url",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "lettering",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "copyright",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "7b4408a5e4e40a0d093db8fec92026b8b963382f9a1ab1b0dc282e67b1a3ccd4"
+}
