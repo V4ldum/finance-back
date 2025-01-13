@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM users WHERE id = $1",
+  "query": "SELECT * FROM users WHERE api_key = $1",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "843923b9a0257cf80f1dff554e7dc8fdfc05f489328e8376513124dfb42996e3"
+  "hash": "4c1de95cd5051bb191387c7854e5d6bc14b496db54dbea4e9144fca5f5eb3d29"
 }
