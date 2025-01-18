@@ -9,7 +9,7 @@ pub struct Coin {
     pub max_year: Option<String>,
     pub composition: String,
     pub purity: i64,
-    pub obverse_id: Option<i64>,
-    pub reverse_id: Option<i64>,
-    pub edge_id: Option<i64>,
+    pub obverse: Option<i64>,
+    pub reverse: Option<i64>,
+    pub edge: Option<i64>,
 }

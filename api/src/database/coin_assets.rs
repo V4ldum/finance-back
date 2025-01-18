@@ -4,22 +4,16 @@ use std::error::Error;
 
 impl Database {
     pub async fn get_coin_assets(&self, id_user: i64) -> Result<Vec<CoinAsset>, Box<dyn Error>> {
-        let coin_assets = sqlx::query!("SELECT * FROM coin_assets WHERE user_id = $1", id_user)
+        let coin_assets = sqlx::query_as!(CoinAsset, "SELECT * FROM coin_assets WHERE user_id = $1", id_user)
             .fetch_all(&self.db)
             .await?;
 
-        Ok(coin_assets
-            .into_iter()
-            .map(|record| CoinAsset {
-                coin_id: record.coin_id,
-                user_id: record.user_id,
-                possessed: record.possessed,
-            })
-            .collect())
+        Ok(coin_assets)
     }
 
     pub async fn find_coin_asset(&self, coin_id: i64, user_id: i64) -> Result<Option<CoinAsset>, Box<dyn Error>> {
-        let coin_asset = sqlx::query!(
+        let coin_asset = sqlx::query_as!(
+            CoinAsset,
             "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
             coin_id,
             user_id
@@ -27,11 +21,7 @@ impl Database {
         .fetch_optional(&self.db)
         .await?;
 
-        Ok(coin_asset.map(|record| CoinAsset {
-            coin_id: record.coin_id,
-            user_id: record.user_id,
-            possessed: record.possessed,
-        }))
+        Ok(coin_asset)
     }
 
     pub async fn add_coin_asset(&self, coin_id: i64, user_id: i64, possessed: i64) -> Result<(), sqlx::Error> {

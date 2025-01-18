@@ -5,26 +5,16 @@ use std::error::Error;
 
 impl Database {
     pub async fn get_raw_assets(&self, id_user: i64) -> Result<Vec<RawAsset>, Box<dyn Error>> {
-        let raw_assets = sqlx::query!("SELECT * FROM raw_assets WHERE id_user = $1", id_user)
+        let raw_assets = sqlx::query_as!(RawAsset, "SELECT * FROM raw_assets WHERE id_user = $1", id_user)
             .fetch_all(&self.db)
             .await?;
 
-        Ok(raw_assets
-            .into_iter()
-            .map(|record| RawAsset {
-                id: record.id,
-                name: record.name,
-                possessed: record.possessed,
-                unit_weight: record.unit_weight,
-                composition: record.composition,
-                purity: record.purity,
-                id_user: record.id_user,
-            })
-            .collect())
+        Ok(raw_assets)
     }
 
     pub async fn find_raw_asset(&self, asset_id: i64, user_id: i64) -> Result<Option<RawAsset>, Box<dyn Error>> {
-        let asset = sqlx::query!(
+        let asset = sqlx::query_as!(
+            RawAsset,
             "SELECT * FROM raw_assets WHERE id_user = $1 AND id = $2",
             user_id,
             asset_id
@@ -32,15 +22,7 @@ impl Database {
         .fetch_optional(&self.db)
         .await?;
 
-        Ok(asset.map(|record| RawAsset {
-            id: record.id,
-            name: record.name,
-            possessed: record.possessed,
-            unit_weight: record.unit_weight,
-            composition: record.composition,
-            purity: record.purity,
-            id_user: record.id_user,
-        }))
+        Ok(asset)
     }
 
     pub async fn add_raw_asset(
