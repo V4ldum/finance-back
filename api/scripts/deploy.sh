@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-HOME="/home/finance"
+HOME="/root/finance"
 
 cd "$HOME/finance-back/api"
 git pull
