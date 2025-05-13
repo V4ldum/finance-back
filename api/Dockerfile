@@ -1,6 +1,6 @@
 FROM rust:alpine AS build
 ENV SQLX_OFFLINE=true
-WORKDIR /api
+WORKDIR /work
 COPY . .
 
 RUN apk update
@@ -12,9 +12,9 @@ RUN cargo build --release --locked -q
 
 
 FROM gcr.io/distroless/static-debian12:nonroot
-WORKDIR /api
+WORKDIR /app
 
-COPY --from=build /api/target/release/finance-api finance-api
+COPY --from=build /work/target/release/finance-api finance-api
 
 EXPOSE 7878
-ENTRYPOINT ["./finance-api"]
+ENTRYPOINT ["/app/finance-api"]
