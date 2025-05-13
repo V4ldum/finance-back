@@ -14,7 +14,7 @@ RUN cargo build --release --locked -q
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 
-COPY --from=build /work/target/release/finance-api finance-api
+COPY --from=build /work/target/release/finance-api .
 
 EXPOSE 7878
 ENTRYPOINT ["/app/finance-api"]
