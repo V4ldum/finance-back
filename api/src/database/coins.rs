@@ -6,9 +6,13 @@ use crate::database::Database;
 
 impl Database {
     pub async fn search_coin(&self, query: &str) -> Result<Vec<Coin>, Box<dyn Error>> {
-        let result = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE instr(name, $1) > 0", query)
-            .fetch_all(&self.db)
-            .await?;
+        let result = sqlx::query_as!(
+            Coin,
+            "SELECT * FROM coins WHERE instr(LOWER(name), LOWER($1)) > 0",
+            query
+        )
+        .fetch_all(&self.db)
+        .await?;
 
         Ok(result)
     }

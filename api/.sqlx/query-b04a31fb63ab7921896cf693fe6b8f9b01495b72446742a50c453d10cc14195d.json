@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM coins WHERE instr(name, $1) > 0",
+  "query": "SELECT * FROM coins WHERE instr(LOWER(name), LOWER($1)) > 0",
   "describe": {
     "columns": [
       {
@@ -88,5 +88,5 @@
       true
     ]
   },
-  "hash": "5fdc8b5795ab19d758299e675e90ab2b746e876eee63336f4266dc29a4a154d4"
+  "hash": "b04a31fb63ab7921896cf693fe6b8f9b01495b72446742a50c453d10cc14195d"
 }
