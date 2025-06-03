@@ -22,7 +22,7 @@ FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 
 COPY --from=build /work/target/release/finance-api .
-COPY --from=build /work/libsqlite3_unaccent/target/release/libsqlite3_unaccent.so .
+COPY --from=build /work/sqlite3_unaccent/target/release/libsqlite3_unaccent.so .
 
 EXPOSE 7878
 ENTRYPOINT ["/app/finance-api"]
