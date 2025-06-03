@@ -1,28 +1,26 @@
-FROM rust:bookworm-slim AS build
+FROM rust:slim AS build
 ENV SQLX_OFFLINE=true
 WORKDIR /work
 COPY . .
 
 # Dependencies
-#RUN apk update
-#RUN apk upgrade --no-cache
-#RUN apk add --no-cache curl lld mold musl musl-dev libc-dev cmake clang clang-dev openssl file \
-#        libressl-dev git make build-base bash curl wget zip gnupg coreutils gcc g++ zstd binutils \
-#        ca-certificates upx
+#RUN apt update
+#RUN apt install -y --no-install-recommends curl git
+#RUN rm -rf /var/lib/apt/lists/*
 
 # Build
 WORKDIR /work/sqlite3_unaccent
-RUN cargo build --release --locked -q
+RUN cargo build --release --locked -q # Building sqlite extension
 
 WORKDIR /work
 RUN cargo build --release --locked -q
 
 
-FROM gcr.io/distroless/base-nossl-debian12:nonroot
+FROM gcr.io/distroless/cc-debian12:nonroot
 WORKDIR /app
 
 COPY --from=build /work/target/release/finance-api .
-COPY --from=build /work/sqlite3_unaccent/target/release/libsqlite3_unaccent.so .
+COPY --from=build /work/sqlite3_unaccent/target/release/libsqlite3_unaccent.so /usr/lib/
 
 EXPOSE 7878
 ENTRYPOINT ["/app/finance-api"]
