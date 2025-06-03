@@ -1,5 +1,6 @@
 FROM rust:alpine AS build
 ENV SQLX_OFFLINE=true
+ENV RUSTFLAGS="-C target-feature=-crt-static"
 WORKDIR /work
 COPY . .
 
