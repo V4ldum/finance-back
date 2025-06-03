@@ -64,7 +64,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libsqlite_unaccent"
+name = "libsqlite3_unaccent"
 version = "0.1.0"
 dependencies = [
  "deunicode",
