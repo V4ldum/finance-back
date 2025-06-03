@@ -6,13 +6,13 @@ use crate::database::Database;
 
 impl Database {
     pub async fn search_coin(&self, query: &str) -> Result<Vec<Coin>, Box<dyn Error>> {
-        let result = sqlx::query_as!(
-            Coin,
-            "SELECT * FROM coins WHERE instr(LOWER(name), LOWER($1)) > 0",
-            query
-        )
-        .fetch_all(&self.db)
-        .await?;
+        // TODO migrate back to query_as! macro then comptime extension is merged :
+        // - https://github.com/launchbadge/sqlx/issues/3330
+        // - https://github.com/launchbadge/sqlx/pull/3713
+        let result = sqlx::query_as("SELECT * FROM coins WHERE instr(UNACCENT(LOWER(name)), UNACCENT(LOWER(?))) > 0")
+            .bind(query)
+            .fetch_all(&self.db)
+            .await?;
 
         Ok(result)
     }

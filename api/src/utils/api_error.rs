@@ -54,12 +54,6 @@ impl APIError {
 
 impl IntoResponse for APIError {
     fn into_response(self) -> Response {
-        (
-            self.code,
-            Json(ApiErrorResponse {
-                reason: self.reason,
-            }),
-        )
-            .into_response()
+        (self.code, Json(ApiErrorResponse { reason: self.reason })).into_response()
     }
 }

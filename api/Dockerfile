@@ -11,6 +11,10 @@ RUN apk add --no-cache curl lld mold musl musl-dev libc-dev cmake clang clang-de
         ca-certificates upx
 
 # Build
+WORKDIR /work/libsqlite3_unaccent
+RUN cargo build --release --locked -q
+RUN ls target/release
+WORKDIR /work
 RUN cargo build --release --locked -q
 
 
@@ -18,6 +22,7 @@ FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 
 COPY --from=build /work/target/release/finance-api .
+COPY --from=build /work/libsqlite3_unaccent/target/release/libsqlite3_unaccent.so .
 
 EXPOSE 7878
 ENTRYPOINT ["/app/finance-api"]

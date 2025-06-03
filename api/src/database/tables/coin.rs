@@ -1,3 +1,7 @@
+use sqlx::FromRow;
+
+// TODO remove derive. Check Search Coin function for details.
+#[derive(FromRow)]
 pub struct Coin {
     pub id: i64,
     pub numista_id: String,
