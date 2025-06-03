@@ -64,14 +64,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libsqlite3_unaccent"
-version = "0.1.0"
-dependencies = [
- "deunicode",
- "rusqlite",
-]
-
-[[package]]
 name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -124,6 +116,14 @@ name = "smallvec"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
+
+[[package]]
+name = "sqlite3_unaccent"
+version = "0.1.0"
+dependencies = [
+ "deunicode",
+ "rusqlite",
+]
 
 [[package]]
 name = "syn"

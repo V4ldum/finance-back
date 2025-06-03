@@ -1,5 +1,5 @@
 [package]
-name = "libsqlite3_unaccent"
+name = "sqlite3_unaccent"
 version = "0.1.0"
 edition = "2021"
 

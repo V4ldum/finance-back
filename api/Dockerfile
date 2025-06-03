@@ -1,6 +1,5 @@
 FROM rust:alpine AS build
 ENV SQLX_OFFLINE=true
-ENV RUSTFLAGS="-C target-feature=-crt-static"
 WORKDIR /work
 COPY . .
 
@@ -12,9 +11,9 @@ RUN apk add --no-cache curl lld mold musl musl-dev libc-dev cmake clang clang-de
         ca-certificates upx
 
 # Build
-WORKDIR /work/libsqlite3_unaccent
-RUN cargo build --release --locked -q
-RUN ls target/release
+WORKDIR /work/sqlite3_unaccent
+RUN RUSTFLAGS="-C target-feature=-crt-static" cargo build --release --locked -q
+
 WORKDIR /work
 RUN cargo build --release --locked -q
 
