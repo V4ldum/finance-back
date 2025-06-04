@@ -3,11 +3,6 @@ ENV SQLX_OFFLINE=true
 WORKDIR /work
 COPY . .
 
-# Dependencies
-#RUN apt update
-#RUN apt install -y --no-install-recommends curl git
-#RUN rm -rf /var/lib/apt/lists/*
-
 # Build
 WORKDIR /work/sqlite3_unaccent
 RUN cargo build --release --locked -q # Building sqlite extension
