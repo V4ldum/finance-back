@@ -11,16 +11,21 @@ permissions:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Analyze project source
         run: cargo check --keep-going
-        working-directory: api
 
   build-and-push-image:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
     needs:
       - run-tests
     steps:
@@ -39,7 +44,6 @@ jobs:
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
-        working-directory: api
         with:
           context: .
           push: true
