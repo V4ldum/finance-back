@@ -1,0 +1,53 @@
+name: pipeline
+on:
+ push:
+   branches:
+     - "main"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: CD API
+        run: cd api
+
+      - name: Analyze project source
+        run: cargo check --keep-going
+
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    needs:
+      - run-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx # For cross-platform support
+        uses: docker/setup-buildx-action@v3
+
+      - name: CD API
+        run: cd api
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/v4ldum/finance:latest
+            ghcr.io/v4ldum/finance:${{ github.sha }}
