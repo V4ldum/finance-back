@@ -15,11 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: CD API
-        run: cd api
-
       - name: Analyze project source
         run: cargo check --keep-going
+        working-directory: api
 
   build-and-push-image:
     runs-on: ubuntu-latest
@@ -39,11 +37,9 @@ jobs:
       - name: Set up Docker Buildx # For cross-platform support
         uses: docker/setup-buildx-action@v3
 
-      - name: CD API
-        run: cd api
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
+        working-directory: api
         with:
           context: .
           push: true
