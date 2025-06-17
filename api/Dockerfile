@@ -5,12 +5,10 @@ COPY . .
 
 # Build
 WORKDIR /work/sqlite3_unaccent
-RUN rustup target add aarch64-unknown-linux-gnu
-RUN cargo build --release --locked -q # Building sqlite extension
+RUN cargo build --release --locked -q --target aarch64-unknown-linux-gnu # Building sqlite extension
 
 WORKDIR /work
-RUN rustup target add aarch64-unknown-linux-gnu
-RUN cargo build --release --locked -q
+RUN cargo build --release --locked -q --target aarch64-unknown-linux-gnu
 
 
 FROM gcr.io/distroless/cc-debian12:nonroot
