@@ -22,7 +22,7 @@ jobs:
         run: cargo check --keep-going
 
   build-and-push-image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs:
       - run-tests
     steps:
