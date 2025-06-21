@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - "main"
-    paths:
-      - api/src/**
+    # paths:
+    #   - api/src/**
 
 permissions:
   contents: read
