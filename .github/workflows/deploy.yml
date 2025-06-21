@@ -124,3 +124,43 @@ jobs:
             docker compose up -d --no-deps --scale ${{ env.PROJECT }}=1 --no-recreate ${{ env.PROJECT }}
             exit 1
           fi
+
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up GitHub CLI
+        run: |
+          gh --version || sudo apt-get install -y gh
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Fetch package versions
+        id: get-versions
+        run: |
+          # Fetch all versions (sorted by creation date, newest first)
+          versions=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/${{ env.PROJECT }}/versions" \
+            | jq -r 'sort_by(.created_at) | reverse | .[].id')
+
+          # Split into "keep" and "delete" lists
+          keep=$(echo "$versions" | head -n 6)
+          delete=$(echo "$versions" | tail -n +$(( 6 + 1 )))
+
+          # Set outputs for later steps
+          echo "keep=$(echo $keep | jq -s -c '.')" >> $GITHUB_OUTPUT
+          echo "delete=$(echo $delete | jq -s -c '.')" >> $GITHUB_OUTPUT
+
+      - name: Delete old versions
+        if: steps.get-versions.outputs.delete != '[]'
+        run: |
+          for version_id in $(echo "${{ steps.get-versions.outputs.delete }}" | jq -r '.[]'); do
+            echo "Deleting version $version_id"
+            gh api \
+              -X DELETE \
+              "/user/packages/container/${{ env.PROJECT }}/versions/$version_id"
+          done
+
+      - name: Log results
+        run: |
+          echo "Kept versions: ${{ steps.get-versions.outputs.keep }}"
+          echo "Deleted versions: ${{ steps.get-versions.outputs.delete }}"
