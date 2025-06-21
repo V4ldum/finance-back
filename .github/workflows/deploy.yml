@@ -3,12 +3,15 @@ on:
   push:
     branches:
       - "main"
-    paths:
-      - api/src/**
+    # paths:
+    #   - api/src/**
 
 permissions:
   contents: read
   packages: write
+
+env:
+  PROJECT: "finance"
 
 jobs:
   run-tests:
@@ -48,8 +51,8 @@ jobs:
           push: true
           platforms: linux/arm64
           tags: |
-            ghcr.io/v4ldum/finance:latest
-            ghcr.io/v4ldum/finance:${{ github.sha }}
+            ghcr.io/v4ldum/${{ env.PROJECT }}:latest
+            ghcr.io/v4ldum/${{ env.PROJECT }}:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -89,14 +92,14 @@ jobs:
           docker login -u V4ldum -p "${{ secrets.GITHUB_TOKEN }}" ghcr.io 
           
           # Pull new image
-          docker pull ghcr.io/v4ldum/finance
+          docker pull ghcr.io/v4ldum/${{ env.PROJECT }}
 
           # Scale up container
-          docker compose up -d --no-deps --scale finance=2 --no-recreate finance
+          docker compose up -d --no-deps --scale ${{ env.PROJECT }}=2 --no-recreate ${{ env.PROJECT }}
 
           # Get container IDs
-          OLD=$(docker ps -f "name=finance" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | head -n 1 | awk '{print $1}')
-          NEW=$(docker ps --filter "name=finance" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | tail -n 1 | awk '{print $1}')
+          OLD=$(docker ps -f "name=${{ env.PROJECT }}" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | head -n 1 | awk '{print $1}')
+          NEW=$(docker ps --filter "name=${{ env.PROJECT }}" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | tail -n 1 | awk '{print $1}')
 
           # Wait for container to be up
           for attempt in {1..6}; do
@@ -112,12 +115,12 @@ jobs:
           if [ "$CODE" = "0" ]; then
             # Delete old and scale down if healthy
             docker container rm -f "$OLD"
-            docker compose up -d --no-deps --scale finance=1 --no-recreate finance
+            docker compose up -d --no-deps --scale ${{ env.PROJECT }}=1 --no-recreate ${{ env.PROJECT }}
 
-            docker rename "$NEW" finance
+            docker rename "$NEW" ${{ env.PROJECT }}
           else
             # Delete new and scale down if unhealthy
             docker container rm -f "$NEW"
-            docker compose up -d --no-deps --scale finance=1 --no-recreate finance
+            docker compose up -d --no-deps --scale ${{ env.PROJECT }}=1 --no-recreate ${{ env.PROJECT }}
             exit 1
           fi
