@@ -14,8 +14,8 @@ RUN cargo build --release --locked -q --target aarch64-unknown-linux-gnu
 FROM gcr.io/distroless/cc-debian12:nonroot
 WORKDIR /app
 
-COPY --from=build /work/target/release/finance-api .
-COPY --from=build /work/sqlite3_unaccent/target/release/libsqlite3_unaccent.so /usr/lib/
+COPY --from=build /work/target/aarch-unknown-linux-gnu/release/finance-api .
+COPY --from=build /work/sqlite3_unaccent/target/aarch-unknown-linux-gnu/release/libsqlite3_unaccent.so /usr/lib/
 
 EXPOSE 7878
 ENTRYPOINT ["/app/finance-api"]
