@@ -18,5 +18,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     run(state).await;
+
     Ok(())
 }
