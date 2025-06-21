@@ -53,6 +53,9 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
     needs:
       - build-and-push-image
     steps:
@@ -82,8 +85,6 @@ jobs:
         env:
           DOCKER_HOST: ${{ secrets.SSH_HOST }}
         run: |
-          cd api
-          
           # Login to ghcr
           docker login -u V4ldum -p "${{ secrets.GITHUB_TOKEN }}" ghcr.io 
           
