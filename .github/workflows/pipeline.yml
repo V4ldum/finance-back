@@ -50,3 +50,71 @@ jobs:
           tags: |
             ghcr.io/v4ldum/finance:latest
             ghcr.io/v4ldum/finance:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-push-image
+    steps:
+        # This is needed while GitHub doesn't support IPv6
+      - name: Set up WARP
+        uses: fscarmen/warp-on-actions@v1.3
+        with:
+          stack: dual        # Optional. Support [ ipv4, ipv6, dual ]. Default is dual.
+          mode: client    # Optional. Support [ wireguard, client ]. Default is wireguard.
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        env:
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_SERVER: ${{ secrets.SSH_SERVER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_ed25519 > /dev/null 2>&1
+          ssh-keyscan -p "$SSH_PORT" "$SSH_SERVER" >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          DOCKER_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          # Login to ghcr
+          docker login -u V4ldum -p "${{ secrets.GITHUB_TOKEN }}" ghcr.io 
+          
+          # Pull new image
+          docker pull ghcr.io/v4ldum/finance
+
+          # Scale up container
+          docker compose up -d --no-deps --scale finance=2 --no-recreate finance
+
+          # Get container IDs
+          OLD=$(docker ps -f "name=finance" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | head -n 1 | awk '{print $1}')
+          NEW=$(docker ps --filter "name=finance" --format "{{.ID}} {{.CreatedAt}}" | sort -k2 | tail -n 1 | awk '{print $1}')
+
+          # Wait for container to be up
+          for attempt in {1..6}; do
+            sleep 5
+            CODE=$(docker inspect --format "{{.State.ExitCode}}" "$NEW")
+            if [ "$CODE" = "0" ]; then
+              break
+            fi
+          done
+
+          # Scale down
+          CODE=$(docker inspect --format "{{.State.ExitCode}}" "$NEW")
+          if [ "$CODE" = "0" ]; then
+            # Delete old and scale down if healthy
+            docker container rm -f "$OLD"
+            docker compose up -d --no-deps --scale finance=1 --no-recreate finance
+
+            docker rename "$NEW" finance
+          else
+            # Delete new and scale down if unhealthy
+            docker container rm -f "$NEW"
+            docker compose up -d --no-deps --scale finance=1 --no-recreate finance
+            exit 1
+          fi

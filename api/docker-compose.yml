@@ -1,0 +1,26 @@
+services:
+  finance:
+    image: ghcr.io/v4ldum/finance:latest
+    restart: unless-stopped
+    networks:
+      - "netv6"
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      - type: bind
+        source: /root/finance/db/finance.db
+        target: /app/finance.db
+      - type: bind
+        source: /root/finance/finance-env
+        target: /app/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.finance.tls=true"
+      - "traefik.http.routers.finance.entrypoints=websecure"
+      - "traefik.http.middlewares.api-prefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.finance.middlewares=api-prefix"
+      - "traefik.http.routers.finance.rule=Host(`finance.valdum.dev`) && PathPrefix(`/api`)"
+
+networks:
+  netv6:
+    external: true
