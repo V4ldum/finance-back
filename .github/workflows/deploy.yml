@@ -128,6 +128,8 @@ jobs:
 
   cleanup:
     runs-on: ubuntu-latest
+    needs:
+      - deploy
     steps:
       - name: Set up GitHub CLI
         run: |
