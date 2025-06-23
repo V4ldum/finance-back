@@ -8,10 +8,10 @@ services:
       - TZ=Europe/Paris
     volumes:
       - type: bind
-        source: /root/finance/db/finance.db
+        source: /root/finance/finance.db
         target: /app/finance.db
       - type: bind
-        source: /root/finance/finance-env
+        source: /root/finance/finance.env
         target: /app/.env
     labels:
       - "traefik.enable=true"
