@@ -5,6 +5,7 @@ on:
       - "main"
     paths:
       - api/src/**
+      - api/docker-compose.yml
 
 permissions:
   contents: read
