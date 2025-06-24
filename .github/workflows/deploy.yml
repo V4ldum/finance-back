@@ -125,6 +125,7 @@ jobs:
             docker rename "$NEW" ${{ env.PROJECT }}
           else
             # Delete new and scale down if unhealthy
+            docker logs "$NEW"
             docker container rm -f "$NEW"
             docker compose up -d --no-deps --scale ${{ env.PROJECT }}=1 --no-recreate ${{ env.PROJECT }}
             exit 1
