@@ -9,5 +9,5 @@ RUN cargo build --release --locked --target aarch64-unknown-linux-gnu
 FROM gcr.io/distroless/cc-debian12:nonroot
 WORKDIR /app
 
-COPY --from=build /update-agent/target/aarch64-unknown-linux-gnu/release/update_agent .
+COPY --from=build /work/target/aarch64-unknown-linux-gnu/release/update_agent .
 ENTRYPOINT ["/app/update_agent"]
