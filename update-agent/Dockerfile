@@ -1,8 +1,13 @@
-FROM messense/rust-musl-cross:aarch64-musl AS build
+FROM rust:slim AS build
 ENV SQLX_OFFLINE=true
-WORKDIR /update-agent
+WORKDIR /work
 COPY . .
-RUN cargo build --release --locked -q --target aarch64-unknown-linux-musl
 
-FROM scratch AS export
-COPY --from=build /update-agent/target/aarch64-unknown-linux-musl/release/update_agent .
+# Build
+RUN cargo build --release --locked --target aarch64-unknown-linux-gnu
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+WORKDIR /app
+
+COPY --from=build /update-agent/target/aarch64-unknown-linux-gnu/release/update_agent .
+ENTRYPOINT ["/app/update_agent"]

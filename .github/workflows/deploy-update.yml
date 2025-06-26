@@ -1,0 +1,97 @@
+name: pipeline
+on:
+  push:
+    branches:
+      - "main"
+    # paths:
+    #   - api/update-agent/**
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  PROJECT: "finance-update"
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: update-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Analyze project source
+        run: cargo check --keep-going
+
+  build-and-push-image:
+    runs-on: ubuntu-24.04-arm
+    needs:
+      - run-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx # For cross-platform support
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: update-agent
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ghcr.io/v4ldum/${{ env.PROJECT }}:latest
+            ghcr.io/v4ldum/${{ env.PROJECT }}:${{ github.sha }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-push-image
+    steps:
+      - name: Set up GitHub CLI
+        run: |
+          gh --version || sudo apt-get install -y gh
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Fetch package versions
+        id: get-versions
+        run: |
+          # Fetch all versions (sorted by creation date, newest first)
+          versions=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/${{ env.PROJECT }}/versions" \
+            | jq -r 'sort_by(.created_at) | reverse | .[].id')
+
+          # Split into "keep" and "delete" lists
+          keep=$(echo "$versions" | head -n 6)
+          delete=$(echo "$versions" | tail -n +$(( 6 + 1 )))
+
+          # Set outputs for later steps
+          echo "keep=$(echo $keep | jq -s -c '.')" >> $GITHUB_OUTPUT
+          echo "delete=$(echo $delete | jq -s -c '.')" >> $GITHUB_OUTPUT
+
+      - name: Delete old versions
+        if: steps.get-versions.outputs.delete != '[]'
+        run: |
+          for version_id in $(echo "${{ steps.get-versions.outputs.delete }}" | jq -r '.[]'); do
+            echo "Deleting version $version_id"
+            gh api \
+              -X DELETE \
+              "/user/packages/container/${{ env.PROJECT }}/versions/$version_id"
+          done
+
+      - name: Log results
+        run: |
+          echo "Kept versions: ${{ steps.get-versions.outputs.keep }}"
+          echo "Deleted versions: ${{ steps.get-versions.outputs.delete }}"
