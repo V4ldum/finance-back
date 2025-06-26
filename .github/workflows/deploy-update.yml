@@ -4,7 +4,7 @@ on:
     branches:
       - "main"
     paths:
-      - api/update-agent/**
+      - update-agent/src/**
 
 permissions:
   contents: read
