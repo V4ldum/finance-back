@@ -20,7 +20,7 @@ pub struct CurrenciesPriceQuote {
 #[derive(Deserialize, Debug)]
 pub struct CurrenciesPriceResult {
     pub name: String,
-    pub symbol: String,
+    //pub symbol: String,
     #[serde(rename = "lastPrice")]
     pub last_price: f64,
 }

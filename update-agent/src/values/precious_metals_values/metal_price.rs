@@ -13,7 +13,7 @@ pub struct MetalPriceData {
 
 #[derive(Deserialize, Debug)]
 pub struct MetalPriceQuote {
-    pub name: String,
+    //pub name: String,
     #[serde(rename = "results", deserialize_with = "deserialize_results")]
     pub result: MetalPriceResult,
 }
@@ -21,9 +21,9 @@ pub struct MetalPriceQuote {
 #[derive(Deserialize, Debug)]
 pub struct MetalPriceResult {
     pub bid: f64, // this is in EUR per troy ounces
-    pub change: f64,
-    #[serde(rename = "changePercentage")]
-    pub change_percentage: f64,
+    //pub change: f64,
+    //#[serde(rename = "changePercentage")]
+    //pub change_percentage: f64,
 }
 
 fn deserialize_results<'de, D>(deserializer: D) -> Result<MetalPriceResult, D::Error>
@@ -37,8 +37,5 @@ where
             result_vec.len()
         )));
     }
-    Ok(result_vec
-        .into_iter()
-        .next()
-        .expect("There should be one element here"))
+    Ok(result_vec.into_iter().next().expect("There should be one element here"))
 }
