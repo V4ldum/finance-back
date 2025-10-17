@@ -1,7 +1,7 @@
 use std::os::raw::{c_char, c_int};
 
 use rusqlite::ffi;
-use rusqlite::functions::FunctionFlags;
+use rusqlite::functions::{Context, FunctionFlags};
 use rusqlite::types::{ToSqlOutput, Value};
 use rusqlite::{Connection, Result};
 
@@ -21,12 +21,16 @@ fn extension_init(db: Connection) -> Result<bool> {
         c"unaccent",
         1,
         FunctionFlags::SQLITE_DETERMINISTIC | FunctionFlags::SQLITE_UTF8,
-        |ctx| {
-            let text = ctx.get::<String>(0).expect("one argument");
-            Ok(ToSqlOutput::Owned(Value::Text(deunicode::deunicode_with_tofu(
-                &text, "",
-            ))))
-        },
+        unaccent,
     )?;
+
     Ok(false)
+}
+
+fn unaccent<'a>(ctx: &Context<'_>) -> Result<ToSqlOutput<'a>, rusqlite::Error> {
+    let text = ctx.get::<String>(0).expect("one argument");
+
+    Ok(ToSqlOutput::Owned(Value::Text(deunicode::deunicode_with_tofu(
+        &text, "",
+    ))))
 }
