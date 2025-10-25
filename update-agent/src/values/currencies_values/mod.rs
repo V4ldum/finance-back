@@ -1,27 +1,20 @@
 use std::error::Error;
 
 use reqwest::Client;
-use serde_json::json;
 
-use currencies_price::CurrenciesPrice;
+use currencies_price::EURUSDExchangeRate;
 
 mod currencies_price;
 
-pub async fn get_usd_to_eur_exchange_rate() -> Result<CurrenciesPrice, Box<dyn Error>> {
-    let json_body = json!({
-        "query": r"query BarchartsFuturesByExchange( $exchange: String!, $category: String! ) { GetBarchartFuturesByExchange( exchange: $exchange, category: $category ) {  results { name, symbol, lastPrice, } } }",
-        "variables": {
-            "category": "Currencies",
-            "exchange": "CME",
-            "name": "Euro FX",
-        },
-    });
+pub async fn get_usd_to_eur_exchange_rate() -> Result<EURUSDExchangeRate, Box<dyn Error>> {
+    const USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1";
 
-    let result = Client::new()
-        .post("https://kdb-gw.prod.kitco.com/")
-        .json(&json_body)
+    let result = Client::builder()
+        .user_agent(USER_AGENT)
+        .build()?
+        .get("https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X")
         .send()
         .await?;
 
-    serde_json::from_str::<CurrenciesPrice>(&result.text().await?).map_err(|err| err.into())
+    serde_json::from_str::<EURUSDExchangeRate>(&result.text().await?).map_err(|err| err.into())
 }

@@ -50,7 +50,33 @@ async fn main() {
                         .update_value(
                             "SP500",
                             // EUR = USD / Rate, SP500 quote is in USD
-                            sp500_price.data.quote.result.last_price / currencies_price.data.quote.result.last_price,
+                            sp500_price
+                                .chart
+                                .result
+                                .first()
+                                .expect("Failed to find SP500PriceResult")
+                                .indicators
+                                .quote
+                                .first()
+                                .expect("Failed to find SP500PriceResultIndicatorQuote")
+                                .close
+                                .last()
+                                .expect("Failed to find a value in SP500PriceResultIndicatorQuote")
+                                / currencies_price
+                                    .chart
+                                    .result
+                                    .first()
+                                    .expect("Failed to find EURUSDExchangeRateResult")
+                                    .indicators
+                                    .quote
+                                    .first()
+                                    .expect("Failed to find EURUSDExchangeRateResultIndicatorQuote")
+                                    .close
+                                    .iter()
+                                    .filter(|item| item.is_some())
+                                    .last()
+                                    .expect("Failed to find a value in EURUSDExchangeRateResultIndicatorQuote")
+                                    .expect("There should be a value since we filtered all None"),
                         )
                         .await;
                     if let Err(err) = sp_result {
