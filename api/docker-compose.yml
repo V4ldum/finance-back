@@ -8,8 +8,8 @@ services:
       - TZ=Europe/Paris
     volumes:
       - type: bind
-        source: /root/finance/finance.db
-        target: /app/finance.db
+        source: /root/finance/db/
+        target: /app/db/
       - type: bind
         source: /root/finance/finance.env
         target: /app/.env
