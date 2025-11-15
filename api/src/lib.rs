@@ -11,11 +11,15 @@ pub use crate::database::Database;
 use crate::routes::router;
 
 pub async fn run(state: AppState) {
+    const IP: &str = "0.0.0.0";
+    const PORT: &str = "7878";
+
     let router = router(state);
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:7878")
+    let listener = tokio::net::TcpListener::bind(format!("{IP}:{PORT}"))
         .await
         .expect("The listener should be able to bind to this port");
 
+    println!("Serving {IP}:{PORT}");
     axum::serve(listener, router)
         .await
         .expect("The server should launch successfully");
