@@ -1,14 +1,14 @@
-use crate::state::AppState;
-
-mod middleware;
-
 mod database;
+mod middleware;
 mod routes;
 pub mod state;
 mod utils;
 
 pub use crate::database::Database;
+
 use crate::routes::router;
+use crate::state::AppState;
+use log::info;
 
 pub async fn run(state: AppState) {
     const IP: &str = "0.0.0.0";
