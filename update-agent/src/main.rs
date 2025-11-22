@@ -14,7 +14,7 @@ async fn main() {
     let sp500_price = stocks_values::get_sp500_price().await;
 
     // Save them in local db
-    let database = Database::build().await.unwrap();
+    let database = Database::build().await.expect("Failed to build the database");
 
     match gold_price {
         Ok(gold_price) => {
@@ -24,7 +24,7 @@ async fn main() {
                 eprintln!("An error occurred updating gold price : {err}");
             }
         }
-        Err(err) => eprintln!("{err:#?}"),
+        Err(err) => eprintln!("An error occurred with Gold: {err:#?}"),
     }
 
     match silver_price {
@@ -37,7 +37,7 @@ async fn main() {
                 eprintln!("An error occurred updating silver price : {err}");
             }
         }
-        Err(err) => eprintln!("{err:#?}"),
+        Err(err) => eprintln!("An error occurred with Silver: {err:#?}"),
     }
 
     match sp500_price {
@@ -46,37 +46,42 @@ async fn main() {
 
             match currencies_price {
                 Ok(currencies_price) => {
+                    let close_value = sp500_price
+                        .chart
+                        .result
+                        .first()
+                        .expect("Failed to find SP500PriceResult")
+                        .indicators
+                        .quote
+                        .first()
+                        .expect("Failed to find SP500PriceResultIndicatorQuote")
+                        .close
+                        .iter()
+                        .filter(|item| item.is_some())
+                        .last()
+                        .expect("Failed to find a value in SP500PriceResultIndicatorQuote")
+                        .expect("We filtered out None");
+                    let change_rate = currencies_price
+                        .chart
+                        .result
+                        .first()
+                        .expect("Failed to find EURUSDExchangeRateResult")
+                        .indicators
+                        .quote
+                        .first()
+                        .expect("Failed to find EURUSDExchangeRateResultIndicatorQuote")
+                        .close
+                        .iter()
+                        .filter(|item| item.is_some())
+                        .last()
+                        .expect("Failed to find a value in EURUSDExchangeRateResultIndicatorQuote")
+                        .expect("There should be a value since we filtered all None");
+
                     let sp_result = database
                         .update_value(
                             "SP500",
                             // EUR = USD / Rate, SP500 quote is in USD
-                            sp500_price
-                                .chart
-                                .result
-                                .first()
-                                .expect("Failed to find SP500PriceResult")
-                                .indicators
-                                .quote
-                                .first()
-                                .expect("Failed to find SP500PriceResultIndicatorQuote")
-                                .close
-                                .last()
-                                .expect("Failed to find a value in SP500PriceResultIndicatorQuote")
-                                / currencies_price
-                                    .chart
-                                    .result
-                                    .first()
-                                    .expect("Failed to find EURUSDExchangeRateResult")
-                                    .indicators
-                                    .quote
-                                    .first()
-                                    .expect("Failed to find EURUSDExchangeRateResultIndicatorQuote")
-                                    .close
-                                    .iter()
-                                    .filter(|item| item.is_some())
-                                    .last()
-                                    .expect("Failed to find a value in EURUSDExchangeRateResultIndicatorQuote")
-                                    .expect("There should be a value since we filtered all None"),
+                            close_value / change_rate,
                         )
                         .await;
                     if let Err(err) = sp_result {
@@ -86,6 +91,6 @@ async fn main() {
                 Err(err) => eprintln!("{err:#?}"),
             }
         }
-        Err(err) => eprintln!("{err:#?}"),
+        Err(err) => eprintln!("An error occurred with SP500: {err:#?}"),
     }
 }

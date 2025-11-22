@@ -22,5 +22,5 @@ pub struct SP500PriceResultIndicator {
 
 #[derive(Deserialize, Debug)]
 pub struct SP500PriceResultIndicatorQuote {
-    pub close: Vec<f64>,
+    pub close: Vec<Option<f64>>,
 }

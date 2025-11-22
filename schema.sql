@@ -5,13 +5,12 @@ CREATE TABLE IF NOT EXISTS "prices"
     value REAL        not null,
     date  DATE        not null
 );
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE coin_images(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-    image_url VARCHAR(100), 
-    thumbnail_url VARCHAR(100), 
-    lettering VARCHAR(100), 
-    description VARCHAR(100), 
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    image_url VARCHAR(100),
+    thumbnail_url VARCHAR(100),
+    lettering VARCHAR(100),
+    description VARCHAR(100),
     copyright VARCHAR(100)
 );
 CREATE TABLE IF NOT EXISTS "coins"
