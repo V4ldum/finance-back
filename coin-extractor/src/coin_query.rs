@@ -102,7 +102,10 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                 purity.pop().expect("purity should not be empty"); // Remove the ‰ sign to parse it to int
 
                 // Parse it first to float in case there is a comma, multiply it by 10 then hard cast it to i32
-                let purity: f32 = purity.parse().expect("purity should be a unsigned int");
+                let purity: f32 = purity
+                    .replace(",", ".")
+                    .parse()
+                    .expect("purity should be a unsigned int");
                 let purity = (purity * 10.0) as i32;
 
                 Ok(CoinQueryComposition {
