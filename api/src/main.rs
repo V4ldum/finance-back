@@ -11,7 +11,7 @@ use std::str::FromStr;
 async fn main() -> Result<()> {
     setup_logging()?;
 
-    dotenvy::dotenv()?;
+    //dotenvy::dotenv()?;
     let database_url = dotenvy::var("DATABASE_URL")?;
 
     let database =
