@@ -13,6 +13,7 @@ services:
       - type: bind
         source: /root/finance/finance.env
         target: /app/.env
+        read_only: true
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.finance.tls=true"
