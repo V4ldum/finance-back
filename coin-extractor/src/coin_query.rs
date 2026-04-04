@@ -73,7 +73,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                             text = Some(map.next_value()?);
                         }
                         _ => {
-                            map.next_value()?;
+                            map.next_value::<()>()?;
                         }
                     }
                 }

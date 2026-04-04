@@ -1,0 +1,10 @@
+[workspace]
+resolver = "3"
+members = [
+    "api",
+    "coin-extractor",
+    "update-agent",
+]
+exclude = [
+    "sqlite3_unaccent",
+]

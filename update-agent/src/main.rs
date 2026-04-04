@@ -57,8 +57,7 @@ async fn main() {
                         .expect("Failed to find SP500PriceResultIndicatorQuote")
                         .close
                         .iter()
-                        .filter(|item| item.is_some())
-                        .last()
+                        .rfind(|item| item.is_some())
                         .expect("Failed to find a value in SP500PriceResultIndicatorQuote")
                         .expect("We filtered out None");
                     let change_rate = currencies_price
@@ -72,8 +71,7 @@ async fn main() {
                         .expect("Failed to find EURUSDExchangeRateResultIndicatorQuote")
                         .close
                         .iter()
-                        .filter(|item| item.is_some())
-                        .last()
+                        .rfind(|item| item.is_some())
                         .expect("Failed to find a value in EURUSDExchangeRateResultIndicatorQuote")
                         .expect("There should be a value since we filtered all None");
 

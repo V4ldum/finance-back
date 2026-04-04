@@ -8,13 +8,14 @@ WORKDIR /work/sqlite3_unaccent
 RUN cargo build --release --locked --target x86_64-unknown-linux-gnu # Building sqlite extension
 
 WORKDIR /work
-RUN cargo build --release --locked --target x86_64-unknown-linux-gnu
+RUN cargo build --release --locked --target x86_64-unknown-linux-gnu -p finance-api -p update_agent
 
 
 FROM gcr.io/distroless/cc-debian12:nonroot
 WORKDIR /app
 
-COPY --from=build /work/target/x86_64-unknown-linux-gnu/release/finance-api .
+COPY --from=build /work/target/x86_64-unknown-linux-gnu/release/api .
+COPY --from=build /work/target/x86_64-unknown-linux-gnu/release/update-agent .
 COPY --from=build /work/sqlite3_unaccent/target/x86_64-unknown-linux-gnu/release/libsqlite3_unaccent.so /usr/lib/
 
 EXPOSE 7878

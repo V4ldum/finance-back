@@ -1,7 +1,10 @@
 [package]
 name = "sqlite3_unaccent"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
+
+[workspace]
+# Excluded from wrapping workspace
 
 [lib]
 crate-type = ["cdylib"]
