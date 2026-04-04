@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
 use finance_api::state::AppState;
-use finance_api::{run, Database};
+use finance_api::{Database, run};
 use log::LevelFilter;
 use simplelog::{ColorChoice, ConfigBuilder, LevelPadding, TermLogger, TerminalMode};
-use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
+use sqlx::sqlite::SqliteConnectOptions;
 use std::str::FromStr;
 
 #[tokio::main]
