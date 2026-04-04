@@ -6,7 +6,9 @@ use rusqlite::types::{ToSqlOutput, Value};
 use rusqlite::{Connection, Result};
 
 /// Entry point for SQLite to load the extension.
-#[expect(clippy::not_unsafe_ptr_arg_deref)]
+/// # Safety
+///
+/// This function is called by SQLite during extension initialization.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn sqlite3_extension_init(
     db: *mut ffi::sqlite3,
