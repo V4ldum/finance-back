@@ -10,5 +10,5 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-rusqlite = { version = "0.36.0", features = ["loadable_extension", "functions"] }
+rusqlite = { version = "0.39.0", features = ["loadable_extension", "functions"] }
 deunicode = "1.6.2"
