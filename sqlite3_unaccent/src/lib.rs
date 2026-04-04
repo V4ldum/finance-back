@@ -7,13 +7,13 @@ use rusqlite::{Connection, Result};
 
 /// Entry point for SQLite to load the extension.
 #[expect(clippy::not_unsafe_ptr_arg_deref)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn sqlite3_extension_init(
     db: *mut ffi::sqlite3,
     pz_err_msg: *mut *mut c_char,
     p_api: *mut ffi::sqlite3_api_routines,
 ) -> c_int {
-    Connection::extension_init2(db, pz_err_msg, p_api, extension_init)
+    unsafe { Connection::extension_init2(db, pz_err_msg, p_api, extension_init) }
 }
 
 fn extension_init(db: Connection) -> Result<bool> {
