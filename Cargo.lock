@@ -24,6 +24,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
+name = "api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "chrono",
+ "dotenvy",
+ "log",
+ "serde",
+ "simplelog",
+ "sqlx",
+ "tokio",
+ "tower-http",
+]
+
+[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -441,22 +457,6 @@ dependencies = [
  "concurrent-queue",
  "parking",
  "pin-project-lite",
-]
-
-[[package]]
-name = "finance-api"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "chrono",
- "dotenvy",
- "log",
- "serde",
- "simplelog",
- "sqlx",
- "tokio",
- "tower-http",
 ]
 
 [[package]]
@@ -2409,7 +2409,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
-name = "update_agent"
+name = "update-agent"
 version = "0.1.0"
 dependencies = [
  "anyhow",

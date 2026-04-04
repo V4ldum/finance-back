@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use finance_api::state::AppState;
-use finance_api::{Database, run};
+use api::state::AppState;
+use api::{Database, run};
 use log::LevelFilter;
 use simplelog::{ColorChoice, ConfigBuilder, LevelPadding, TermLogger, TerminalMode};
 use sqlx::SqlitePool;
