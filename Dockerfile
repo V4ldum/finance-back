@@ -19,4 +19,4 @@ COPY --from=build /work/target/x86_64-unknown-linux-gnu/release/api .
 COPY --from=build /work/target/x86_64-unknown-linux-gnu/release/update-agent .
 
 EXPOSE 7878
-ENTRYPOINT ["/app/finance-api"]
+ENTRYPOINT ["/app/api"]
