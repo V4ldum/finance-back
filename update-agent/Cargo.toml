@@ -8,7 +8,7 @@ edition = "2024"
 [dependencies]
 dotenvy = "0.15.7"
 chrono = "0.4.44"
-reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls-tls-native-roots"] }
+reqwest = { version = "0.13.2", default-features = false, features = ["json"] }
 serde_json = "1.0.149"
 tokio = { version = "1.51.0", features = ["rt", "rt-multi-thread", "macros"] }
 serde = { version = "1.0.228", features = ["derive"] }
