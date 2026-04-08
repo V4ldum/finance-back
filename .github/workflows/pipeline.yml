@@ -47,6 +47,8 @@ jobs:
         needs: detect-changes
         if: needs.detect-changes.outputs.rebuild == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/test-rust.yml@main
+        with:
+            enabled: true
 
     build:
         needs: [detect-changes, test]
