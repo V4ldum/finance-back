@@ -2,6 +2,11 @@ services:
     finance:
         image: ghcr.io/v4ldum/finance:latest
         restart: unless-stopped
+        # Draining
+        healthcheck:
+            test: /bin/test ! -f /tmp/drain # && some other healthcheck
+            interval: 5s
+            retries: 1
         networks:
             - "netv6"
         environment:
