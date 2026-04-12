@@ -17,6 +17,10 @@ async fn main() -> Result<()> {
     let database =
         SqlitePool::connect_with(SqliteConnectOptions::from_str(&database_url)?.extension("libsqlite3_unaccent"))
             .await?;
+
+    // Automatically migrate the database
+    sqlx::migrate!().run(&database).await?;
+
     let state = AppState {
         database: Database::new(database),
     };

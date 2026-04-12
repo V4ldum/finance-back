@@ -5,14 +5,17 @@ CREATE TABLE IF NOT EXISTS "prices"
     value REAL        not null,
     date  DATE        not null
 );
-CREATE TABLE coin_images(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    image_url VARCHAR(100),
+
+CREATE TABLE IF NOT EXISTS coin_images
+(
+    id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    image_url     VARCHAR(100),
     thumbnail_url VARCHAR(100),
-    lettering VARCHAR(100),
-    description VARCHAR(100),
-    copyright VARCHAR(100)
+    lettering     VARCHAR(100),
+    description   VARCHAR(100),
+    copyright     VARCHAR(100)
 );
+
 CREATE TABLE IF NOT EXISTS "coins"
 (
     id          INTEGER      not null
@@ -34,10 +37,13 @@ CREATE TABLE IF NOT EXISTS "coins"
         references coin_images(id),
     check (composition IN ('GOLD', 'SILVER'))
 );
-CREATE TABLE users(
-id integer primary key autoincrement not null,
-api_key varchar(30) unique not null
+
+CREATE TABLE IF NOT EXISTS users
+(
+    id      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    api_key VARCHAR(30) UNIQUE NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS "coin_assets"
 (
     coin_id   INTEGER not null
@@ -47,6 +53,7 @@ CREATE TABLE IF NOT EXISTS "coin_assets"
     possessed INTEGER not null,
     primary key (coin_id, user_id)
 );
+
 CREATE TABLE IF NOT EXISTS "raw_assets"
 (
     id          INTEGER     not null
@@ -59,6 +66,7 @@ CREATE TABLE IF NOT EXISTS "raw_assets"
     id_user     INTEGER     not null,
     FOREIGN KEY (id_user) REFERENCES users(id)
 );
+
 CREATE TABLE IF NOT EXISTS "cash_assets"
 (
     id         INTEGER     not null
