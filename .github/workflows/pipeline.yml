@@ -66,6 +66,7 @@ jobs:
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         with:
             project: ${{ needs.detect-changes.outputs.project }}
+            drain: true
         secrets: inherit
 
     cleanup:
