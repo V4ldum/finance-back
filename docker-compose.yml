@@ -28,6 +28,8 @@ services:
             ofelia.enabled: "true"
             ofelia.job-exec.test-job.schedule: "@every 1m"
             ofelia.job-exec.test-job.command: "/bin/test ! -f /tmp/drain"
+            ofelia.job-exec.other-test-job.schedule: "@every 1m"
+            ofelia.job-exec.other-test-job.command: "/bin/test ! -f /tmp/drain"
 
 networks:
     netv6:
