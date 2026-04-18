@@ -25,6 +25,9 @@ services:
             traefik.http.middlewares.api-prefix.stripprefix.prefixes: /api
             traefik.http.routers.finance.middlewares: api-prefix
             traefik.http.routers.finance.rule: Host(`finance.valdum.dev`) && PathPrefix(`/api`)
+            ofelia.enable: true
+            ofelia.job-exec.test-job.schedule: "@every 1m"
+            ofelia.job-exec.test-job.command: "/bin/test ! -f /tmp/drain"
 
 networks:
     netv6:
