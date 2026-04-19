@@ -25,9 +25,9 @@ services:
             traefik.http.middlewares.api-prefix.stripprefix.prefixes: /api
             traefik.http.routers.finance.middlewares: api-prefix
             traefik.http.routers.finance.rule: Host(`finance.valdum.dev`) && PathPrefix(`/api`)
-            chadburn.enabled: "true"
-            chadburn.job-exec.test-job.schedule: "@every 1m"
-            chadburn.job-exec.test-job.command: "/bin/test ! -f /tmp/drain"
+            scheduler.enabled: false
+            scheduler.exec.test-job.schedule: "@every 1m"
+            scheduler.exec.test-job.command: "/bin/test ! -f /tmp/drain"
 
 networks:
     netv6:
