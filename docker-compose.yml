@@ -19,7 +19,7 @@ services:
               source: /root/finance/finance.env
               target: /app/.env
         labels:
-            vector.enabled: true
+            vector.enable: true
             traefik.enable: true
             traefik.http.routers.finance.tls: true
             traefik.http.routers.finance.entrypoints: websecure
