@@ -28,7 +28,7 @@ services:
             traefik.http.routers.finance.middlewares: api-prefix
             traefik.http.routers.finance.rule: Host(`finance.valdum.dev`) && PathPrefix(`/api`)
             scheduler.enable: true
-            scheduler.exec.update-precious-metals.schedule: "00 12 6 * * *"
+            scheduler.exec.update-precious-metals.schedule: "00 12 3 * * *"
             scheduler.exec.update-precious-metals.command: "/app/update-agent"
 
 networks:
