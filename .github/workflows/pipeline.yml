@@ -48,7 +48,9 @@ jobs:
         if: needs.detect-changes.outputs.rebuild == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/test-rust.yml@main
         with:
-            enabled: true
+            test: true
+            format: true
+            clippy: true
 
     build:
         needs: [detect-changes, test]
