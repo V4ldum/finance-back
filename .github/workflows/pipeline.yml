@@ -60,11 +60,12 @@ jobs:
             project: ${{ needs.detect-changes.outputs.project }}
 
     deploy:
-        needs: [detect-changes, build]
+        needs: [detect-changes, test, build]
         if: >-
             always() &&
-            (needs.build.result == 'success' ||
-             (needs.build.result == 'skipped' && needs.detect-changes.outputs.redeploy == 'true'))
+            ((needs.test.result == 'success' && needs.build.result == 'success') ||
+             (needs.test.result == 'skipped' && needs.build.result == 'skipped' &&
+              needs.detect-changes.outputs.redeploy == 'true'))
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
         with:
