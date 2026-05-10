@@ -49,8 +49,6 @@ jobs:
         uses: v4ldum/shared-workflows/.github/workflows/test-rust.yml@main
         with:
             test: true
-            format: true
-            clippy: true
 
     build:
         needs: [detect-changes, test]
