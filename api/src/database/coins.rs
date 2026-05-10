@@ -1,8 +1,8 @@
 use std::error::Error;
 
+use crate::database::Database;
 use crate::database::tables::coin::Coin;
 use crate::database::tables::coin_image::CoinImage;
-use crate::database::Database;
 
 impl Database {
     pub async fn search_coin(&self, query: &str) -> Result<Vec<Coin>, Box<dyn Error>> {

@@ -1,7 +1,7 @@
 use std::error::Error;
 
-use crate::database::tables::users::Users;
 use crate::database::Database;
+use crate::database::tables::users::Users;
 
 impl Database {
     pub async fn get_user(&self, key: &str) -> Result<Option<Users>, Box<dyn Error>> {

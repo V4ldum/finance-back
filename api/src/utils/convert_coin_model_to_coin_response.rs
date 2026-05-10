@@ -1,5 +1,5 @@
-use crate::database::tables::coin::Coin;
 use crate::database::Database;
+use crate::database::tables::coin::Coin;
 use crate::utils::api_error::APIError;
 use crate::utils::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
 

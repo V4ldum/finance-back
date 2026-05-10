@@ -1,5 +1,5 @@
-use crate::database::tables::coin_asset::CoinAsset;
 use crate::database::Database;
+use crate::database::tables::coin_asset::CoinAsset;
 use std::error::Error;
 
 impl Database {

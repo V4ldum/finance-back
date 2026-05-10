@@ -1,7 +1,7 @@
 use std::error::Error;
 
-use crate::database::tables::price::Price;
 use crate::database::Database;
+use crate::database::tables::price::Price;
 
 impl Database {
     pub async fn find_one_trade_value(&self, query: &str) -> Result<Option<Price>, Box<dyn Error>> {

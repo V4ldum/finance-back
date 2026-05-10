@@ -1,5 +1,5 @@
-use crate::database::tables::cash_asset::CashAsset;
 use crate::database::Database;
+use crate::database::tables::cash_asset::CashAsset;
 use sqlx::{Execute, QueryBuilder, Sqlite};
 use std::error::Error;
 

@@ -12,7 +12,7 @@ use crate::routes::trade_values::{get_all_trade_values, get_one_trade_value};
 use crate::state::AppState;
 use axum::http::Method;
 use axum::routing::{get, post};
-use axum::{middleware, Router};
+use axum::{Router, middleware};
 use middleware::from_fn_with_state;
 use tower_http::cors::{Any, CorsLayer};
 

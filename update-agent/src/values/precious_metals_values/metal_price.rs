@@ -21,9 +21,9 @@ pub struct MetalPriceQuote {
 #[derive(Deserialize, Debug)]
 pub struct MetalPriceResult {
     pub bid: f64, // this is in EUR per troy ounces
-    //pub change: f64,
-    //#[serde(rename = "changePercentage")]
-    //pub change_percentage: f64,
+                  //pub change: f64,
+                  //#[serde(rename = "changePercentage")]
+                  //pub change_percentage: f64,
 }
 
 fn deserialize_results<'de, D>(deserializer: D) -> Result<MetalPriceResult, D::Error>

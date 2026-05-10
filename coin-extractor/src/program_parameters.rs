@@ -1,4 +1,4 @@
-use sqlx::{SqliteConnection};
+use sqlx::SqliteConnection;
 
 pub struct ProgramParameters {
     pub api_key: String,

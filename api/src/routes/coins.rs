@@ -1,6 +1,6 @@
+use axum::Json;
 use axum::extract::{Path, Query, State};
 use axum::response::{IntoResponse, Response};
-use axum::Json;
 use serde::Deserialize;
 
 use crate::database::Database;
