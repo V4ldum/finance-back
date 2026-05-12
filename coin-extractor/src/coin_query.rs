@@ -5,36 +5,36 @@ use serde::de::MapAccess;
 use serde::{Deserialize, Deserializer};
 
 #[derive(Deserialize, Debug)]
-pub struct CoinQuery {
-    pub title: String,
-    pub weight: f64,
-    pub size: f64,
-    pub thickness: Option<f64>,
+pub(crate) struct CoinQuery {
+    pub(crate) title: String,
+    pub(crate) weight: f64,
+    pub(crate) size: f64,
+    pub(crate) thickness: Option<f64>,
     #[serde(deserialize_with = "deserialize_date_to_string")]
-    pub min_year: String,
+    pub(crate) min_year: String,
     #[serde(deserialize_with = "deserialize_date_to_string")]
-    pub max_year: String,
-    pub composition: CoinQueryComposition,
-    pub obverse: Option<CoinQuerySide>,
-    pub reverse: Option<CoinQuerySide>,
-    pub edge: Option<CoinQuerySide>,
-    pub watermark: Option<CoinQuerySide>,
+    pub(crate) max_year: String,
+    pub(crate) composition: CoinQueryComposition,
+    pub(crate) obverse: Option<CoinQuerySide>,
+    pub(crate) reverse: Option<CoinQuerySide>,
+    pub(crate) edge: Option<CoinQuerySide>,
+    pub(crate) watermark: Option<CoinQuerySide>,
 }
 
 #[derive(Debug)]
-pub struct CoinQueryComposition {
+pub(crate) struct CoinQueryComposition {
     //pub text: String,
-    pub composition: String,
-    pub purity: i32,
+    pub(crate) composition: String,
+    pub(crate) purity: i32,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct CoinQuerySide {
-    pub description: Option<String>,
-    pub lettering: Option<String>,
-    pub picture: Option<String>,
-    pub thumbnail: Option<String>,
-    pub picture_copyright: Option<String>,
+pub(crate) struct CoinQuerySide {
+    pub(crate) description: Option<String>,
+    pub(crate) lettering: Option<String>,
+    pub(crate) picture: Option<String>,
+    pub(crate) thumbnail: Option<String>,
+    pub(crate) picture_copyright: Option<String>,
 }
 
 fn deserialize_date_to_string<'de, D>(deserializer: D) -> Result<String, D::Error>

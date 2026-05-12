@@ -9,7 +9,11 @@ use crate::utils::api_error::APIError;
 use crate::utils::dto::assets_dto::RawAssetsDto;
 use crate::utils::get_user_id_from_headers::get_user_id_from_headers;
 
-pub async fn get_raw_asset(Path(id): Path<String>, State(database): State<Database>, headers: HeaderMap) -> Response {
+pub(crate) async fn get_raw_asset(
+    Path(id): Path<String>,
+    State(database): State<Database>,
+    headers: HeaderMap,
+) -> Response {
     let user_id = match get_user_id_from_headers(&headers, &database).await {
         Ok(user_id) => user_id,
         Err(err) => {
@@ -41,7 +45,7 @@ pub async fn get_raw_asset(Path(id): Path<String>, State(database): State<Databa
 }
 
 #[derive(Deserialize)]
-pub struct CreateRawAssetRequest {
+pub(super) struct CreateRawAssetRequest {
     name: String,
     possessed: i64,
     unit_weight: i64,
@@ -49,7 +53,7 @@ pub struct CreateRawAssetRequest {
     purity: i64,
 }
 
-pub async fn create_raw_asset(
+pub(crate) async fn create_raw_asset(
     State(database): State<Database>,
     headers: HeaderMap,
     Json(request): Json<CreateRawAssetRequest>,
@@ -95,7 +99,7 @@ pub async fn create_raw_asset(
 }
 
 #[derive(Deserialize)]
-pub struct UpdateRawAssetRequest {
+pub(super) struct UpdateRawAssetRequest {
     name: Option<String>,
     possessed: Option<i64>,
     unit_weight: Option<i64>,
@@ -103,7 +107,7 @@ pub struct UpdateRawAssetRequest {
     purity: Option<i64>,
 }
 
-pub async fn update_raw_asset(
+pub(crate) async fn update_raw_asset(
     Path(id): Path<String>,
     State(database): State<Database>,
     headers: HeaderMap,
@@ -157,7 +161,7 @@ pub async fn update_raw_asset(
     StatusCode::NO_CONTENT.into_response()
 }
 
-pub async fn delete_raw_asset(
+pub(crate) async fn delete_raw_asset(
     Path(id): Path<String>,
     State(database): State<Database>,
     headers: HeaderMap,

@@ -1,7 +1,7 @@
-pub mod cash_asset;
-pub mod coin;
-pub mod coin_asset;
-pub mod coin_image;
-pub mod price;
-pub mod raw_asset;
-pub mod users;
+pub(crate) mod cash_asset;
+pub(crate) mod coin;
+pub(crate) mod coin_asset;
+pub(crate) mod coin_image;
+pub(crate) mod price;
+pub(crate) mod raw_asset;
+pub(crate) mod users;

@@ -5,7 +5,7 @@ use axum::http::HeaderMap;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 
-pub async fn check_api_key(
+pub(crate) async fn check_api_key(
     State(database): State<Database>,
     headers: HeaderMap,
     request: Request,

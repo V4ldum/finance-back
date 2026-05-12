@@ -4,7 +4,7 @@ use sqlx::{Execute, QueryBuilder, Sqlite};
 use std::error::Error;
 
 impl Database {
-    pub async fn get_cash_assets(&self, id_user: i64) -> Result<Vec<CashAsset>, Box<dyn Error>> {
+    pub(crate) async fn get_cash_assets(&self, id_user: i64) -> Result<Vec<CashAsset>, Box<dyn Error>> {
         let cash_assets = sqlx::query_as!(CashAsset, "SELECT * FROM cash_assets WHERE id_user == $1", id_user)
             .fetch_all(&self.db)
             .await?;
@@ -12,7 +12,11 @@ impl Database {
         Ok(cash_assets)
     }
 
-    pub async fn find_cash_asset(&self, asset_id: i64, user_id: i64) -> Result<Option<CashAsset>, Box<dyn Error>> {
+    pub(crate) async fn find_cash_asset(
+        &self,
+        asset_id: i64,
+        user_id: i64,
+    ) -> Result<Option<CashAsset>, Box<dyn Error>> {
         let asset = sqlx::query_as!(
             CashAsset,
             "SELECT * FROM cash_assets WHERE id = $1 AND id_user = $2",
@@ -25,7 +29,7 @@ impl Database {
         Ok(asset)
     }
 
-    pub async fn add_cash_asset(
+    pub(crate) async fn add_cash_asset(
         &self,
         name: String,
         possessed: i64,
@@ -47,7 +51,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn update_cash_asset(
+    pub(crate) async fn update_cash_asset(
         &self,
         id: i64,
         user_id: i64,
@@ -93,7 +97,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn delete_cash_asset(&self, id: i64, user_id: i64) -> Result<(), Box<dyn Error>> {
+    pub(crate) async fn delete_cash_asset(&self, id: i64, user_id: i64) -> Result<(), Box<dyn Error>> {
         sqlx::query!("DELETE FROM cash_assets WHERE id = $1 AND id_user = $2", id, user_id)
             .execute(&self.db)
             .await?;

@@ -24,7 +24,7 @@ mod health_check;
 mod raw_assets;
 mod trade_values;
 
-pub fn router(state: AppState) -> Router {
+pub(crate) fn router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
         .allow_origin(Any);

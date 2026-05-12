@@ -7,18 +7,18 @@ use crate::database::Database;
 use crate::utils::api_error::APIError;
 
 #[derive(Serialize)]
-pub struct TradeValues {
-    pub gold: TradeValue,
-    pub silver: TradeValue,
-    pub sp_500: TradeValue,
+pub(super) struct TradeValues {
+    gold: TradeValue,
+    silver: TradeValue,
+    sp_500: TradeValue,
 }
 #[derive(Serialize)]
-pub struct TradeValue {
-    pub price: f64,
-    pub last_update: String,
+pub(super) struct TradeValue {
+    price: f64,
+    last_update: String,
 }
 
-pub async fn get_one_trade_value(Path(query): Path<String>, State(database): State<Database>) -> Response {
+pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(database): State<Database>) -> Response {
     let query_key = match query.as_str() {
         "gold" => "Gold",
         "silver" => "Silver",
@@ -42,7 +42,7 @@ pub async fn get_one_trade_value(Path(query): Path<String>, State(database): Sta
     }
 }
 
-pub async fn get_all_trade_values(State(database): State<Database>) -> Response {
+pub(crate) async fn get_all_trade_values(State(database): State<Database>) -> Response {
     let Ok(prices) = database.find_all_trade_values().await else {
         return APIError::database_error().into_response();
     };

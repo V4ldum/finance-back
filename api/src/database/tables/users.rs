@@ -1,4 +1,5 @@
-pub struct Users {
-    pub id: i64,
-    pub api_key: String,
+pub(crate) struct Users {
+    pub(crate) id: i64,
+    #[expect(dead_code)]
+    pub(crate) api_key: String,
 }

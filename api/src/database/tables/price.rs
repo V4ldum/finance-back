@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 
-pub struct Price {
-    pub name: String,
-    pub value: f64,
-    pub date: NaiveDate,
+pub(crate) struct Price {
+    pub(crate) name: String,
+    pub(crate) value: f64,
+    pub(crate) date: NaiveDate,
 }

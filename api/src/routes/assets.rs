@@ -8,7 +8,7 @@ use crate::utils::api_error::APIError;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, RawAssetsDto};
 
-pub async fn get_assets(State(database): State<Database>, headers: HeaderMap) -> Response {
+pub(crate) async fn get_assets(State(database): State<Database>, headers: HeaderMap) -> Response {
     let key = headers
         .get("X-API-KEY")
         .expect("The key was confirmed present by the middleware")

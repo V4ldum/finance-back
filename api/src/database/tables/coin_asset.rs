@@ -1,5 +1,6 @@
-pub struct CoinAsset {
-    pub coin_id: i64,
-    pub user_id: i64,
-    pub possessed: i64,
+pub(crate) struct CoinAsset {
+    pub(crate) coin_id: i64,
+    #[expect(dead_code)]
+    pub(crate) user_id: i64,
+    pub(crate) possessed: i64,
 }

@@ -10,7 +10,11 @@ use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coi
 use crate::utils::dto::assets_dto::CoinAssetsDto;
 use crate::utils::get_user_id_from_headers::get_user_id_from_headers;
 
-pub async fn get_coin_asset(Path(id): Path<String>, State(database): State<Database>, headers: HeaderMap) -> Response {
+pub(crate) async fn get_coin_asset(
+    Path(id): Path<String>,
+    State(database): State<Database>,
+    headers: HeaderMap,
+) -> Response {
     let user_id = match get_user_id_from_headers(&headers, &database).await {
         Ok(user_id) => user_id,
         Err(err) => {
@@ -51,12 +55,12 @@ pub async fn get_coin_asset(Path(id): Path<String>, State(database): State<Datab
 }
 
 #[derive(Deserialize)]
-pub struct CreateCoinAssetRequest {
+pub(super) struct CreateCoinAssetRequest {
     coin_id: i64,
     possessed: i64,
 }
 
-pub async fn create_coin_asset(
+pub(crate) async fn create_coin_asset(
     State(database): State<Database>,
     headers: HeaderMap,
     Json(request): Json<CreateCoinAssetRequest>,
@@ -90,11 +94,11 @@ pub async fn create_coin_asset(
 }
 
 #[derive(Deserialize)]
-pub struct UpdateCoinAssetRequest {
+pub(super) struct UpdateCoinAssetRequest {
     possessed: i64,
 }
 
-pub async fn update_coin_asset(
+pub(crate) async fn update_coin_asset(
     Path(id): Path<String>,
     State(database): State<Database>,
     headers: HeaderMap,
@@ -128,7 +132,7 @@ pub async fn update_coin_asset(
     StatusCode::NO_CONTENT.into_response()
 }
 
-pub async fn delete_coin_asset(
+pub(crate) async fn delete_coin_asset(
     Path(id): Path<String>,
     State(database): State<Database>,
     headers: HeaderMap,

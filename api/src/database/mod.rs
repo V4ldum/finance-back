@@ -4,7 +4,7 @@ mod cash_assets;
 mod coin_assets;
 mod coins;
 mod raw_assets;
-pub mod tables;
+pub(crate) mod tables;
 mod trade_values;
 mod users;
 

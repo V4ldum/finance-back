@@ -1,7 +1,8 @@
-pub struct CashAsset {
-    pub id: i64,
-    pub name: String,
-    pub possessed: i64,
-    pub unit_value: i64,
-    pub id_user: i64,
+pub(crate) struct CashAsset {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) possessed: i64,
+    pub(crate) unit_value: i64,
+    #[expect(dead_code)]
+    pub(crate) id_user: i64,
 }

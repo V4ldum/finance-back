@@ -3,7 +3,10 @@ use crate::database::tables::coin::Coin;
 use crate::utils::api_error::APIError;
 use crate::utils::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
 
-pub async fn convert_coin_model_to_coin_response(coin: Coin, database: &Database) -> Result<CoinDataDto, APIError> {
+pub(crate) async fn convert_coin_model_to_coin_response(
+    coin: Coin,
+    database: &Database,
+) -> Result<CoinDataDto, APIError> {
     let obverse = if let Some(obverse) = coin.obverse {
         let Ok(result) = database.get_coin_side(obverse).await else {
             return Err(APIError::database_error());

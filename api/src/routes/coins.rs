@@ -8,11 +8,11 @@ use crate::utils::api_error::APIError;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 
 #[derive(Deserialize)]
-pub struct QueryParams {
+pub(super) struct QueryParams {
     q: String,
 }
 
-pub async fn search_coin(Query(query): Query<QueryParams>, State(database): State<Database>) -> Response {
+pub(crate) async fn search_coin(Query(query): Query<QueryParams>, State(database): State<Database>) -> Response {
     let Ok(coins) = database.search_coin(&query.q).await else {
         return APIError::database_error().into_response();
     };
@@ -35,7 +35,7 @@ pub async fn search_coin(Query(query): Query<QueryParams>, State(database): Stat
     Json(coins_response).into_response()
 }
 
-pub async fn get_coin(Path(id): Path<String>, State(database): State<Database>) -> Response {
+pub(crate) async fn get_coin(Path(id): Path<String>, State(database): State<Database>) -> Response {
     let Ok(id) = id.parse::<i64>() else {
         return APIError::bad_id(&id).into_response();
     };

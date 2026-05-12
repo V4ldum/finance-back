@@ -1,1 +1,1 @@
-pub mod check_api_key;
+pub(crate) mod check_api_key;
