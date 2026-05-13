@@ -12,6 +12,7 @@ target/
 *.log
 *.swp
 .DS_Store
+*.dll
 
 # IntelliJ related
 *.iml

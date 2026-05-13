@@ -1,11 +1,12 @@
 use anyhow::{Context, Result};
 use api::state::AppState;
 use api::{Database, run};
-use log::LevelFilter;
+use log::{LevelFilter, info};
 use simplelog::{ColorChoice, ConfigBuilder, LevelPadding, TermLogger, TerminalMode};
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnectOptions;
 use std::str::FromStr;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -14,6 +15,7 @@ async fn main() -> Result<()> {
     dotenvy::dotenv()?;
     let database_url = dotenvy::var("DATABASE_URL")?;
 
+    // Setup the database connection
     let database =
         SqlitePool::connect_with(SqliteConnectOptions::from_str(&database_url)?.extension("libsqlite3_unaccent"))
             .await?;
@@ -21,11 +23,21 @@ async fn main() -> Result<()> {
     // Automatically migrate the database
     sqlx::migrate!().run(&database).await?;
 
+    // Create the application state
     let state = AppState {
         database: Database::new(database),
     };
 
-    run(state).await;
+    // Bind the listener to the IP and port
+    const ADDRESS: &str = "0.0.0.0:7878";
+    info!("Serving {ADDRESS}");
+    let listener = TcpListener::bind(ADDRESS)
+        .await
+        .expect("The listener should be able to bind to this port");
+
+    // Serve the API
+    run(state, listener)?.await?;
+
     Ok(())
 }
 

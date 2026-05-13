@@ -16,3 +16,6 @@ sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio-rustls", "chron
 anyhow = "1.0.102"
 log = "0.4.29"
 simplelog = "0.12.2"
+
+[dev-dependencies]
+reqwest = "0.13.3"
