@@ -4,5 +4,5 @@ pub(crate) struct CashAsset {
     pub(crate) possessed: i64,
     pub(crate) unit_value: i64,
     #[expect(dead_code)]
-    pub(crate) id_user: i64,
+    pub(crate) user_id: i64,
 }

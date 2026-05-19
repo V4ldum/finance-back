@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use api::state::AppState;
-use api::{Database, run};
+use api::get_configuration;
+use api::run;
 use log::{LevelFilter, info};
 use simplelog::{ColorChoice, ConfigBuilder, LevelPadding, TermLogger, TerminalMode};
 use sqlx::SqlitePool;
@@ -12,31 +12,27 @@ use tokio::net::TcpListener;
 async fn main() -> Result<()> {
     setup_logging()?;
 
-    dotenvy::dotenv()?;
-    let database_url = dotenvy::var("DATABASE_URL")?;
+    // Read configuration from environment variables
+    let configuration = get_configuration().expect("Failed to read configuration");
 
     // Setup the database connection
-    let database =
-        SqlitePool::connect_with(SqliteConnectOptions::from_str(&database_url)?.extension("libsqlite3_unaccent"))
-            .await?;
+    let options = SqliteConnectOptions::from_str(&configuration.database_url)?
+        .extension("libsqlite3_unaccent")
+        .foreign_keys(true);
+    let pool = SqlitePool::connect_with(options).await?;
 
     // Automatically migrate the database
-    sqlx::migrate!().run(&database).await?;
-
-    // Create the application state
-    let state = AppState {
-        database: Database::new(database),
-    };
+    sqlx::migrate!().run(&pool).await?;
 
     // Bind the listener to the IP and port
-    const ADDRESS: &str = "0.0.0.0:7878";
-    info!("Serving {ADDRESS}");
-    let listener = TcpListener::bind(ADDRESS)
+    let address = format!("0.0.0.0:{}", configuration.application_port);
+    info!("Serving {address}");
+    let listener = TcpListener::bind(&address)
         .await
         .expect("The listener should be able to bind to this port");
 
     // Serve the API
-    run(state, listener)?.await?;
+    run(listener, pool)?.await?;
 
     Ok(())
 }
@@ -62,7 +58,7 @@ fn setup_logging() -> Result<()> {
         .set_thread_level(LevelFilter::Off)
         .set_target_level(LevelFilter::Error)
         .set_level_padding(LevelPadding::Left)
-        .add_filter_allow_str("manganotif")
+        .add_filter_allow_str("api")
         .build();
 
     TermLogger::init(

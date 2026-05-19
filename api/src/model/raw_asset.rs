@@ -6,5 +6,5 @@ pub(crate) struct RawAsset {
     pub(crate) composition: String,
     pub(crate) purity: i64,
     #[expect(dead_code)]
-    pub(crate) id_user: i64,
+    pub(crate) user_id: i64,
 }

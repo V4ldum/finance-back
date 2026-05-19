@@ -1,26 +1,20 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM users WHERE api_key = $1",
+  "query": "SELECT id FROM users WHERE api_key = $1",
   "describe": {
     "columns": [
       {
         "name": "id",
         "ordinal": 0,
         "type_info": "Integer"
-      },
-      {
-        "name": "api_key",
-        "ordinal": 1,
-        "type_info": "Text"
       }
     ],
     "parameters": {
       "Right": 1
     },
     "nullable": [
-      false,
       false
     ]
   },
-  "hash": "4c1de95cd5051bb191387c7854e5d6bc14b496db54dbea4e9144fca5f5eb3d29"
+  "hash": "203e72eb4e229790857e0580e10bc2c6de9e4158ec6ec1764d9d7d891c597eab"
 }

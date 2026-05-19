@@ -1,20 +1,21 @@
-mod database;
+mod configuration;
 mod middleware;
+mod model;
 mod routes;
-pub mod state;
 mod utils;
 
-pub use crate::database::Database;
+pub use configuration::Configuration;
+pub use configuration::get_configuration;
 
 use crate::routes::router;
-use crate::state::AppState;
 use anyhow::Result;
 use axum::Router;
 use axum::serve::Serve;
+use sqlx::SqlitePool;
 use tokio::net::TcpListener;
 
-pub fn run(state: AppState, listener: TcpListener) -> Result<Serve<TcpListener, Router, Router>> {
-    let router = router(state);
+pub fn run(listener: TcpListener, pool: SqlitePool) -> Result<Serve<TcpListener, Router, Router>> {
+    let router = router(pool);
     let server = axum::serve(listener, router);
 
     Ok(server)

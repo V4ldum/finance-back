@@ -9,11 +9,11 @@ use crate::routes::coins::{get_coin, search_coin};
 use crate::routes::health_check::health_check;
 use crate::routes::raw_assets::{delete_raw_asset, update_raw_asset};
 use crate::routes::trade_values::{get_all_trade_values, get_one_trade_value};
-use crate::state::AppState;
 use axum::http::Method;
 use axum::routing::{get, post};
 use axum::{Router, middleware};
 use middleware::from_fn_with_state;
+use sqlx::SqlitePool;
 use tower_http::cors::{Any, CorsLayer};
 
 mod assets;
@@ -24,7 +24,7 @@ mod health_check;
 mod raw_assets;
 mod trade_values;
 
-pub(crate) fn router(state: AppState) -> Router {
+pub(crate) fn router(pool: SqlitePool) -> Router {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
         .allow_origin(Any);
@@ -50,8 +50,8 @@ pub(crate) fn router(state: AppState) -> Router {
             "/assets/cash/{id}",
             get(get_cash_asset).patch(update_cash_asset).delete(delete_cash_asset),
         )
-        .route_layer(from_fn_with_state(state.clone(), check_api_key))
-        .with_state(state)
+        .route_layer(from_fn_with_state(pool.clone(), check_api_key))
+        .with_state(pool)
         .route("/health", get(health_check))
         .layer(cors)
 }

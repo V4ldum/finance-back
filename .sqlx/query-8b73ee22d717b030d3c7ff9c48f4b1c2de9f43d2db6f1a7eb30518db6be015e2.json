@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO users(api_key) VALUES ('123')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "8b73ee22d717b030d3c7ff9c48f4b1c2de9f43d2db6f1a7eb30518db6be015e2"
+}

@@ -1,0 +1,1 @@
+-- No-op: the original orphan FK values cannot be reconstructed once nulled.

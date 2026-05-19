@@ -1,36 +1,53 @@
-use crate::database::Database;
-use crate::database::tables::coin::Coin;
+use sqlx::SqlitePool;
+
+use crate::model::coin::Coin;
+use crate::model::coin_image::CoinImage;
 use crate::utils::api_error::APIError;
 use crate::utils::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
 
 pub(crate) async fn convert_coin_model_to_coin_response(
     coin: Coin,
-    database: &Database,
+    pool: &SqlitePool,
 ) -> Result<CoinDataDto, APIError> {
     let obverse = if let Some(obverse) = coin.obverse {
-        let Ok(result) = database.get_coin_side(obverse).await else {
-            return Err(APIError::database_error());
-        };
-
-        result
+        match sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", obverse)
+            .fetch_optional(pool)
+            .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                log::error!("{e}");
+                return Err(APIError::database_error());
+            }
+        }
     } else {
         None
     };
     let reverse = if let Some(reverse) = coin.reverse {
-        let Ok(result) = database.get_coin_side(reverse).await else {
-            return Err(APIError::database_error());
-        };
-
-        result
+        match sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", reverse)
+            .fetch_optional(pool)
+            .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                log::error!("{e}");
+                return Err(APIError::database_error());
+            }
+        }
     } else {
         None
     };
     let edge = if let Some(edge) = coin.edge {
-        let Ok(result) = database.get_coin_side(edge).await else {
-            return Err(APIError::database_error());
-        };
-
-        result
+        match sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", edge)
+            .fetch_optional(pool)
+            .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                log::error!("{e}");
+                return Err(APIError::database_error());
+            }
+        }
     } else {
         None
     };

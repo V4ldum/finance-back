@@ -1,57 +1,62 @@
-use axum::Json;
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use axum::{Extension, Json};
 use serde::Deserialize;
+use sqlx::SqlitePool;
+use sqlx::error::ErrorKind;
 
-use crate::database::Database;
+use crate::middleware::check_api_key::AuthenticatedUserId;
+use crate::model::coin::Coin;
+use crate::model::coin_asset::CoinAsset;
 use crate::utils::api_error::APIError;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 use crate::utils::dto::assets_dto::CoinAssetsDto;
-use crate::utils::get_user_id_from_headers::get_user_id_from_headers;
 
 pub(crate) async fn get_coin_asset(
-    Path(id): Path<String>,
-    State(database): State<Database>,
-    headers: HeaderMap,
+    Path(coin_id): Path<i64>,
+    State(pool): State<SqlitePool>,
+    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
-    let user_id = match get_user_id_from_headers(&headers, &database).await {
-        Ok(user_id) => user_id,
-        Err(err) => {
-            return err.into_response();
+    let coin_asset = match sqlx::query_as!(
+        CoinAsset,
+        "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
+        coin_id,
+        user_id
+    )
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(coin)) => coin,
+        Ok(None) => return APIError::bad_id(&coin_id.to_string()).into_response(),
+        Err(e) => {
+            log::error!("{e}");
+            return APIError::database_error().into_response();
         }
     };
 
-    let Ok(coin_id) = id.parse::<i64>() else {
-        return APIError::bad_id(&id).into_response();
-    };
-
-    let Ok(coin) = database.find_coin_asset(coin_id, user_id).await else {
-        return APIError::database_error().into_response();
-    };
-
-    let Some(coin_asset) = coin else {
-        return APIError::bad_id(&coin_id.to_string()).into_response();
-    };
-
-    let Ok(Some(coin_data)) = database.find_coin(coin_asset.coin_id).await else {
-        return APIError::database_error().into_response();
-    };
-
-    let coin_data = convert_coin_model_to_coin_response(coin_data, &database).await;
-
-    let coin_data = match coin_data {
-        Ok(coin_data) => coin_data,
-        Err(error) => {
-            return error.into_response();
+    match sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_id)
+        .fetch_optional(&pool)
+        .await
+    {
+        Ok(Some(coin_data)) => match convert_coin_model_to_coin_response(coin_data, &pool).await {
+            Ok(coin_data) => Json(CoinAssetsDto {
+                possessed: coin_asset.possessed,
+                coin_data,
+            })
+            .into_response(),
+            Err(e) => e.into_response(),
+        },
+        Ok(None) => {
+            // There should not be any orphan coin_assets so this should not happen
+            log::warn!("Coin associated with coin_asset not found, this should not happen");
+            APIError::database_error().into_response()
         }
-    };
-
-    Json(CoinAssetsDto {
-        possessed: coin_asset.possessed,
-        coin_data,
-    })
-    .into_response()
+        Err(e) => {
+            log::error!("{e}");
+            APIError::database_error().into_response()
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -61,36 +66,38 @@ pub(super) struct CreateCoinAssetRequest {
 }
 
 pub(crate) async fn create_coin_asset(
-    State(database): State<Database>,
-    headers: HeaderMap,
+    State(pool): State<SqlitePool>,
+    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<CreateCoinAssetRequest>,
 ) -> Response {
-    let user_id = match get_user_id_from_headers(&headers, &database).await {
-        Ok(user_id) => user_id,
-        Err(err) => {
-            return err.into_response();
-        }
-    };
-
     if request.possessed < 1 {
-        return APIError::invalid_value("possessed must be > 1").into_response();
+        return APIError::invalid_value("possessed must be >= 1").into_response();
     }
 
-    let result = database
-        .add_coin_asset(request.coin_id, user_id, request.possessed)
-        .await;
-
-    if result.is_err() {
-        return match result.err().unwrap() {
-            sqlx::Error::Database(_) => {
+    match sqlx::query!(
+        r#"
+            INSERT INTO coin_assets (coin_id, user_id, possessed)
+            VALUES ($1, $2, $3)
+        "#,
+        request.coin_id,
+        user_id,
+        request.possessed
+    )
+    .execute(&pool)
+    .await
+    {
+        Ok(_) => StatusCode::CREATED.into_response(),
+        Err(e) => match e {
+            sqlx::Error::Database(db_error) if db_error.kind() == ErrorKind::UniqueViolation => {
                 APIError::invalid_value(&format!("you already possess coin_id {}", request.coin_id))
             }
-            _ => APIError::database_error(),
+            e => {
+                log::error!("{e}");
+                APIError::database_error()
+            }
         }
-        .into_response();
+        .into_response(),
     }
-
-    StatusCode::CREATED.into_response()
 }
 
 #[derive(Deserialize)]
@@ -99,33 +106,43 @@ pub(super) struct UpdateCoinAssetRequest {
 }
 
 pub(crate) async fn update_coin_asset(
-    Path(id): Path<String>,
-    State(database): State<Database>,
-    headers: HeaderMap,
+    Path(coin_id): Path<i64>,
+    State(pool): State<SqlitePool>,
+    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<UpdateCoinAssetRequest>,
 ) -> Response {
-    let user_id = match get_user_id_from_headers(&headers, &database).await {
-        Ok(user_id) => user_id,
-        Err(err) => {
-            return err.into_response();
+    let coin_asset = match sqlx::query_as!(
+        CoinAsset,
+        "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
+        coin_id,
+        user_id
+    )
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(coin_asset)) => coin_asset,
+        Ok(None) => return APIError::bad_id(&coin_id.to_string()).into_response(),
+        Err(e) => {
+            log::error!("{e}");
+            return APIError::database_error().into_response();
         }
     };
 
-    let Ok(coin_id) = id.parse::<i64>() else {
-        return APIError::bad_id(&id).into_response();
-    };
-
-    let Ok(coin_asset) = database.find_coin_asset(coin_id, user_id).await else {
-        return APIError::database_error().into_response();
-    };
-
-    let Some(coin_asset) = coin_asset else {
-        return APIError::bad_id(&coin_id.to_string()).into_response();
-    };
-
     if coin_asset.possessed != request.possessed {
-        let Ok(_) = database.update_coin_asset(coin_id, user_id, request.possessed).await else {
-            return APIError::database_error().into_response();
+        match sqlx::query!(
+            "UPDATE coin_assets SET possessed = $1 WHERE coin_id = $2 AND user_id = $3",
+            request.possessed,
+            coin_id,
+            user_id
+        )
+        .execute(&pool)
+        .await
+        {
+            Ok(_) => (), // no-op
+            Err(e) => {
+                log::error!("{e}");
+                return APIError::database_error().into_response();
+            }
         };
     }
 
@@ -133,24 +150,22 @@ pub(crate) async fn update_coin_asset(
 }
 
 pub(crate) async fn delete_coin_asset(
-    Path(id): Path<String>,
-    State(database): State<Database>,
-    headers: HeaderMap,
+    Path(coin_id): Path<i64>,
+    State(pool): State<SqlitePool>,
+    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
-    let user_id = match get_user_id_from_headers(&headers, &database).await {
-        Ok(user_id) => user_id,
-        Err(err) => {
-            return err.into_response();
+    match sqlx::query!(
+        "DELETE FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
+        coin_id,
+        user_id
+    )
+    .execute(&pool)
+    .await
+    {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => {
+            log::error!("{e}");
+            APIError::database_error().into_response()
         }
-    };
-
-    let Ok(coin_id) = id.parse::<i64>() else {
-        return APIError::bad_id(&id).into_response();
-    };
-
-    let Ok(_) = database.delete_coin_asset(coin_id, user_id).await else {
-        return APIError::database_error().into_response();
-    };
-
-    StatusCode::NO_CONTENT.into_response()
+    }
 }

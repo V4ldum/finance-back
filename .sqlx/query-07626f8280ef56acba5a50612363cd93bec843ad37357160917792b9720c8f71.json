@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT name, possessed, unit_value FROM cash_assets",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "possessed",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "unit_value",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "07626f8280ef56acba5a50612363cd93bec843ad37357160917792b9720c8f71"
+}
