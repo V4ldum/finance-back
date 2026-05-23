@@ -1,3 +1,4 @@
+use anyhow::Result;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -13,32 +14,26 @@ use crate::utils::api_error::APIError;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 use crate::utils::dto::assets_dto::CoinAssetsDto;
 
+#[tracing::instrument(
+    name = "get coin asset",
+    skip_all,
+    fields(
+        id = %coin_id,
+        user_id = %user_id
+    )
+)]
 pub(crate) async fn get_coin_asset(
     Path(coin_id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
-    let coin_asset = match sqlx::query_as!(
-        CoinAsset,
-        "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
-        coin_id,
-        user_id
-    )
-    .fetch_optional(&pool)
-    .await
-    {
+    let coin_asset = match query_coin_asset(&pool, coin_id, user_id).await {
         Ok(Some(coin)) => coin,
         Ok(None) => return APIError::bad_id(&coin_id.to_string()).into_response(),
-        Err(e) => {
-            log::error!("{e}");
-            return APIError::database_error().into_response();
-        }
+        Err(_) => return APIError::database_error().into_response(),
     };
 
-    match sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_id)
-        .fetch_optional(&pool)
-        .await
-    {
+    match query_coin(&pool, coin_id).await {
         Ok(Some(coin_data)) => match convert_coin_model_to_coin_response(coin_data, &pool).await {
             Ok(coin_data) => Json(CoinAssetsDto {
                 possessed: coin_asset.possessed,
@@ -49,14 +44,42 @@ pub(crate) async fn get_coin_asset(
         },
         Ok(None) => {
             // There should not be any orphan coin_assets so this should not happen
-            log::warn!("Coin associated with coin_asset not found, this should not happen");
+            tracing::warn!("Coin associated with coin_asset not found, this should not happen");
             APIError::database_error().into_response()
         }
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
+        Err(_) => APIError::database_error().into_response(),
     }
+}
+
+#[tracing::instrument(name = "query coin asset", skip_all)]
+async fn query_coin_asset(pool: &SqlitePool, coin_id: i64, user_id: i64) -> Result<Option<CoinAsset>> {
+    let coin_asset = sqlx::query_as!(
+        CoinAsset,
+        "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
+        coin_id,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(coin_asset)
+}
+
+#[tracing::instrument(name = "query coin", skip_all)]
+async fn query_coin(pool: &SqlitePool, coin_id: i64) -> Result<Option<Coin>> {
+    let coin = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(coin)
 }
 
 #[derive(Deserialize)]
@@ -65,6 +88,15 @@ pub(super) struct CreateCoinAssetRequest {
     possessed: i64,
 }
 
+#[tracing::instrument(
+    name = "create coin asset",
+    skip_all,
+    fields(
+        user_id = %user_id,
+        coin_id = %request.coin_id,
+        possessed = %request.possessed,
+    )
+)]
 pub(crate) async fn create_coin_asset(
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
@@ -74,30 +106,37 @@ pub(crate) async fn create_coin_asset(
         return APIError::invalid_value("possessed must be >= 1").into_response();
     }
 
-    match sqlx::query!(
+    match create_a_coin_asset(&pool, user_id, &request).await {
+        Ok(_) => StatusCode::CREATED.into_response(),
+        Err(e) => match e.downcast::<sqlx::Error>() {
+            Ok(sqlx::Error::Database(db_error)) if db_error.kind() == ErrorKind::UniqueViolation => {
+                APIError::invalid_value(&format!("you already possess coin_id {}", request.coin_id))
+            }
+            _ => APIError::database_error(),
+        }
+        .into_response(),
+    }
+}
+
+#[tracing::instrument(name = "create a coin asset", skip_all)]
+async fn create_a_coin_asset(pool: &SqlitePool, user_id: i64, request: &CreateCoinAssetRequest) -> Result<()> {
+    sqlx::query!(
         r#"
-            INSERT INTO coin_assets (coin_id, user_id, possessed)
-            VALUES ($1, $2, $3)
-        "#,
+                INSERT INTO coin_assets (coin_id, user_id, possessed)
+                VALUES ($1, $2, $3)
+            "#,
         request.coin_id,
         user_id,
         request.possessed
     )
-    .execute(&pool)
+    .execute(pool)
     .await
-    {
-        Ok(_) => StatusCode::CREATED.into_response(),
-        Err(e) => match e {
-            sqlx::Error::Database(db_error) if db_error.kind() == ErrorKind::UniqueViolation => {
-                APIError::invalid_value(&format!("you already possess coin_id {}", request.coin_id))
-            }
-            e => {
-                log::error!("{e}");
-                APIError::database_error()
-            }
-        }
-        .into_response(),
-    }
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -105,67 +144,88 @@ pub(super) struct UpdateCoinAssetRequest {
     possessed: i64,
 }
 
+#[tracing::instrument(
+    name = "update coin asset",
+    skip_all,
+    fields(
+        id = %coin_id,
+        user_id = %user_id,
+        possessed = %request.possessed
+    )
+)]
 pub(crate) async fn update_coin_asset(
     Path(coin_id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<UpdateCoinAssetRequest>,
 ) -> Response {
-    let coin_asset = match sqlx::query_as!(
-        CoinAsset,
-        "SELECT * FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
-        coin_id,
-        user_id
-    )
-    .fetch_optional(&pool)
-    .await
-    {
+    let coin_asset = match query_coin_asset(&pool, coin_id, user_id).await {
         Ok(Some(coin_asset)) => coin_asset,
         Ok(None) => return APIError::bad_id(&coin_id.to_string()).into_response(),
-        Err(e) => {
-            log::error!("{e}");
-            return APIError::database_error().into_response();
-        }
+        Err(_) => return APIError::database_error().into_response(),
     };
 
-    if coin_asset.possessed != request.possessed {
-        match sqlx::query!(
-            "UPDATE coin_assets SET possessed = $1 WHERE coin_id = $2 AND user_id = $3",
-            request.possessed,
-            coin_id,
-            user_id
-        )
-        .execute(&pool)
-        .await
-        {
-            Ok(_) => (), // no-op
-            Err(e) => {
-                log::error!("{e}");
-                return APIError::database_error().into_response();
-            }
-        };
+    if coin_asset.possessed != request.possessed
+        && update_a_coin_asset(&pool, user_id, coin_id, request.possessed)
+            .await
+            .is_err()
+    {
+        return APIError::database_error().into_response();
     }
 
     StatusCode::NO_CONTENT.into_response()
 }
 
+#[tracing::instrument(name = "update a coin asset", skip_all)]
+async fn update_a_coin_asset(pool: &SqlitePool, user_id: i64, coin_id: i64, possessed: i64) -> Result<()> {
+    sqlx::query!(
+        "UPDATE coin_assets SET possessed = $1 WHERE coin_id = $2 AND user_id = $3",
+        possessed,
+        coin_id,
+        user_id
+    )
+    .execute(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(())
+}
+
+#[tracing::instrument(
+    name = "delete coin asset",
+    skip_all,
+    fields(
+        coin_id = %coin_id,
+        user_id = %user_id
+    )
+)]
 pub(crate) async fn delete_coin_asset(
     Path(coin_id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
-    match sqlx::query!(
+    match delete_a_coin_asset(&pool, user_id, coin_id).await {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(_) => APIError::database_error().into_response(),
+    }
+}
+
+#[tracing::instrument(name = "delete a coin asset", skip_all)]
+async fn delete_a_coin_asset(pool: &SqlitePool, user_id: i64, coin_id: i64) -> Result<()> {
+    sqlx::query!(
         "DELETE FROM coin_assets WHERE coin_id = $1 AND user_id = $2",
         coin_id,
         user_id
     )
-    .execute(&pool)
+    .execute(pool)
     .await
-    {
-        Ok(_) => StatusCode::NO_CONTENT.into_response(),
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
-    }
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(())
 }

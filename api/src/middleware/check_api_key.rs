@@ -8,6 +8,7 @@ use sqlx::SqlitePool;
 #[derive(Clone, Copy)]
 pub(crate) struct AuthenticatedUserId(pub i64);
 
+#[tracing::instrument(name = "check api key", skip_all)]
 pub(crate) async fn check_api_key(
     State(pool): State<SqlitePool>,
     headers: HeaderMap,
@@ -31,7 +32,7 @@ pub(crate) async fn check_api_key(
         }
         Ok(None) => APIError::bad_api_key().into_response(),
         Err(e) => {
-            log::error!("{e}");
+            tracing::error!("Failed to execute query: {e:?}");
             APIError::database_error().into_response()
         }
     }

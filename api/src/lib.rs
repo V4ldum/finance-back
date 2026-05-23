@@ -2,6 +2,7 @@ mod configuration;
 mod middleware;
 mod model;
 mod routes;
+pub mod telemetry;
 mod utils;
 
 pub use configuration::Configuration;

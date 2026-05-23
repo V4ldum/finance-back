@@ -1,3 +1,4 @@
+use anyhow::Result;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -10,20 +11,20 @@ use crate::model::cash_asset::CashAsset;
 use crate::utils::api_error::APIError;
 use crate::utils::dto::assets_dto::CashAssetsDto;
 
+#[tracing::instrument(
+    name = "get cash asset",
+    skip_all,
+    fields(
+        id = %cash_asset_id,
+        user_id = %user_id
+    )
+)]
 pub(crate) async fn get_cash_asset(
     Path(cash_asset_id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
-    match sqlx::query_as!(
-        CashAsset,
-        "SELECT * FROM cash_assets WHERE id = $1 AND user_id = $2",
-        cash_asset_id,
-        user_id
-    )
-    .fetch_optional(&pool)
-    .await
-    {
+    match query_cash_asset(&pool, cash_asset_id, user_id).await {
         Ok(Some(asset)) => Json(CashAssetsDto {
             id: asset.id,
             name: asset.name,
@@ -32,11 +33,26 @@ pub(crate) async fn get_cash_asset(
         })
         .into_response(),
         Ok(None) => APIError::bad_id(&cash_asset_id.to_string()).into_response(),
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
+        Err(_) => APIError::database_error().into_response(),
     }
+}
+
+#[tracing::instrument(name = "query cash asset", skip_all)]
+async fn query_cash_asset(pool: &SqlitePool, asset_id: i64, user_id: i64) -> Result<Option<CashAsset>> {
+    let cash_asset = sqlx::query_as!(
+        CashAsset,
+        "SELECT * FROM cash_assets WHERE id = $1 AND user_id = $2",
+        asset_id,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(cash_asset)
 }
 
 #[derive(Deserialize)]
@@ -46,6 +62,16 @@ pub(super) struct CreateCashAssetRequest {
     unit_value: i64,
 }
 
+#[tracing::instrument(
+    name = "create cash asset",
+    skip_all,
+    fields(
+        user_id = %user_id,
+        asset_name = %request.name,
+        possessed = %request.possessed,
+        unit_value = %request.unit_value
+    )
+)]
 pub(crate) async fn create_cash_asset(
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
@@ -59,25 +85,32 @@ pub(crate) async fn create_cash_asset(
         return APIError::invalid_value("unit_value must be >= 0").into_response();
     }
 
-    match sqlx::query!(
+    match create_a_cash_asset(&pool, user_id, &request).await {
+        Ok(_) => StatusCode::CREATED.into_response(),
+        Err(_) => APIError::database_error().into_response(),
+    }
+}
+
+#[tracing::instrument(name = "create a cash asset", skip_all)]
+async fn create_a_cash_asset(pool: &SqlitePool, user_id: i64, request: &CreateCashAssetRequest) -> Result<()> {
+    sqlx::query!(
         r#"
             INSERT INTO cash_assets (name, possessed, unit_value, user_id)
             VALUES ($1, $2, $3, $4)
-            "#,
+        "#,
         request.name,
         request.possessed,
         request.unit_value,
         user_id
     )
-    .execute(&pool)
+    .execute(pool)
     .await
-    {
-        Ok(_) => StatusCode::CREATED.into_response(),
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
-    }
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -87,6 +120,17 @@ pub(super) struct UpdateCashAssetRequest {
     unit_value: Option<i64>,
 }
 
+#[tracing::instrument(
+    name = "update cash asset",
+    skip_all,
+    fields(
+        id = %id,
+        user_id = %user_id,
+        asset_name = ?request.name,
+        possessed = ?request.possessed,
+        unit_value = ?request.unit_value,
+    )
+)]
 pub(crate) async fn update_cash_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
@@ -101,43 +145,11 @@ pub(crate) async fn update_cash_asset(
         return APIError::invalid_value("unit_value must be >= 0").into_response();
     }
 
-    match (request.name, request.possessed, request.unit_value) {
+    match (request.name.as_deref(), request.possessed, request.unit_value) {
         (None, None, None) => (), // No update necessary
-        (name, possessed, unit_value) => {
-            let mut query: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE cash_assets SET ");
-            let mut and = false;
-
-            if let Some(name) = name {
-                query.push("name = ");
-                query.push_bind(name);
-                and = true;
-            }
-            if let Some(possessed) = possessed {
-                if and {
-                    query.push(", ");
-                }
-                query.push("possessed = ");
-                query.push_bind(possessed);
-                and = true;
-            }
-            if let Some(unit_value) = unit_value {
-                if and {
-                    query.push(", ");
-                }
-                query.push("unit_value = ");
-                query.push_bind(unit_value);
-            }
-            query.push(" WHERE id = ");
-            query.push_bind(id);
-            query.push(" AND user_id = ");
-            query.push_bind(user_id);
-
-            match query.build().execute(&pool).await {
-                Ok(_) => (),
-                Err(e) => {
-                    log::error!("{e}");
-                    return APIError::database_error().into_response();
-                }
+        (_, _, _) => {
+            if update_a_cash_asset(&pool, user_id, id, &request).await.is_err() {
+                return APIError::database_error().into_response();
             }
         }
     }
@@ -145,19 +157,81 @@ pub(crate) async fn update_cash_asset(
     StatusCode::NO_CONTENT.into_response()
 }
 
+#[tracing::instrument(name = "update a cash asset", skip_all)]
+async fn update_a_cash_asset(
+    pool: &SqlitePool,
+    user_id: i64,
+    asset_id: i64,
+    request: &UpdateCashAssetRequest,
+) -> Result<()> {
+    let mut query: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE cash_assets SET ");
+    let mut and = false;
+
+    if let Some(name) = request.name.as_deref() {
+        query.push("name = ");
+        query.push_bind(name);
+        and = true;
+    }
+    if let Some(possessed) = request.possessed {
+        if and {
+            query.push(", ");
+        }
+        query.push("possessed = ");
+        query.push_bind(possessed);
+        and = true;
+    }
+    if let Some(unit_value) = request.unit_value {
+        if and {
+            query.push(", ");
+        }
+        query.push("unit_value = ");
+        query.push_bind(unit_value);
+    }
+    query.push(" WHERE id = ");
+    query.push_bind(asset_id);
+    query.push(" AND user_id = ");
+    query.push_bind(user_id);
+
+    query.build().execute(pool).await.map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(())
+}
+
+#[tracing::instrument(
+    name = "delete cash asset",
+    skip_all,
+    fields(
+        id = %id,
+        user_id = %user_id,
+    )
+)]
 pub(crate) async fn delete_cash_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
-    match sqlx::query!("DELETE FROM cash_assets WHERE id = $1 AND user_id = $2", id, user_id)
-        .execute(&pool)
-        .await
-    {
+    match delete_a_cash_asset(&pool, id, user_id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
+        Err(_) => APIError::database_error().into_response(),
     }
+}
+
+#[tracing::instrument(name = "delete a cash asset", skip_all)]
+async fn delete_a_cash_asset(pool: &SqlitePool, asset_id: i64, user_id: i64) -> Result<()> {
+    sqlx::query!(
+        "DELETE FROM cash_assets WHERE id = $1 AND user_id = $2",
+        asset_id,
+        user_id
+    )
+    .execute(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {e:?}");
+        e
+    })?;
+
+    Ok(())
 }

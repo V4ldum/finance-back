@@ -1,8 +1,12 @@
-use api::Configuration;
+use api::{
+    Configuration,
+    telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
+};
 use serde_json::json;
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
-use std::str::FromStr;
+use std::{str::FromStr, sync::LazyLock};
 use tokio::net::TcpListener;
+use tracing::level_filters::LevelFilter;
 use uuid::Uuid;
 
 struct TestApp {
@@ -31,7 +35,37 @@ async fn configure_database(config: &Configuration) -> SqlitePool {
     pool
 }
 
+// Ensure the telemetry stack is only initialized once
+static TRACING: LazyLock<()> = LazyLock::new(|| {
+    let default_filter_level = LevelFilter::INFO;
+    let subscriber_name = "test".to_string();
+
+    // If the environment variable TEST_LOG is set, output tracing to stdout, otherwise don't output it
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber = get_subscriber(SubscriberConfig {
+            service: subscriber_name,
+            json_filter: default_filter_level,
+            json_sink: std::io::sink,
+            text_filter: default_filter_level,
+            text_sink: std::io::stdout,
+        });
+        init_subscriber(subscriber);
+    } else {
+        let subscriber = get_subscriber(SubscriberConfig {
+            service: subscriber_name,
+            json_filter: default_filter_level,
+            json_sink: std::io::sink,
+            text_filter: default_filter_level,
+            text_sink: std::io::sink,
+        });
+        init_subscriber(subscriber);
+    };
+});
+
 async fn spawn_app() -> TestApp {
+    // Setup telemetry
+    LazyLock::force(&TRACING);
+
     // Bind to a random port and get the address
     let listener = TcpListener::bind("127.0.0.1:0")
         .await

@@ -1,3 +1,4 @@
+use anyhow::Result;
 use axum::Json;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
@@ -19,6 +20,13 @@ pub(super) struct TradeValue {
     last_update: String,
 }
 
+#[tracing::instrument(
+    name = "get one trade value",
+    skip_all,
+    fields(
+        query = %query
+    )
+)]
 pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(pool): State<SqlitePool>) -> Response {
     let query_key = match query.as_str() {
         "gold" => "Gold",
@@ -29,10 +37,7 @@ pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(pool): 
         }
     };
 
-    match sqlx::query_as!(Price, "SELECT * FROM prices WHERE name = $1", query_key)
-        .fetch_optional(&pool)
-        .await
-    {
+    match get_price(&pool, query_key).await {
         Ok(Some(value)) => Json(TradeValue {
             price: value.value,
             last_update: value.date.to_string(),
@@ -40,18 +45,29 @@ pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(pool): 
         .into_response(),
         Ok(None) => {
             // The prices table is expected to always contain a row for every known query key
-            log::warn!("No price row found for query key {query_key}. This should not happen");
+            tracing::warn!("No price row found for query key {query_key}. This should not happen");
             APIError::database_error().into_response()
         }
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
+        Err(_) => APIError::database_error().into_response(),
     }
 }
 
+#[tracing::instrument(name = "get price", skip_all)]
+async fn get_price(pool: &SqlitePool, query_key: &str) -> Result<Option<Price>> {
+    let price = sqlx::query_as!(Price, "SELECT * FROM prices WHERE name = $1", query_key)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(price)
+}
+
+#[tracing::instrument(name = "get all trade values", skip_all)]
 pub(crate) async fn get_all_trade_values(State(pool): State<SqlitePool>) -> Response {
-    match sqlx::query_as!(Price, "SELECT * FROM prices").fetch_all(&pool).await {
+    match get_all_prices(&pool).await {
         Ok(prices) => {
             let gold_value = prices
                 .iter()
@@ -82,9 +98,19 @@ pub(crate) async fn get_all_trade_values(State(pool): State<SqlitePool>) -> Resp
             })
             .into_response()
         }
-        Err(e) => {
-            log::error!("{e}");
-            APIError::database_error().into_response()
-        }
+        Err(_) => APIError::database_error().into_response(),
     }
+}
+
+#[tracing::instrument(name = "get all prices", skip_all)]
+async fn get_all_prices(pool: &SqlitePool) -> Result<Vec<Price>> {
+    let prices = sqlx::query_as!(Price, "SELECT * FROM prices")
+        .fetch_all(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(prices)
 }

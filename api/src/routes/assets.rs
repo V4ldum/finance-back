@@ -11,53 +11,40 @@ use crate::model::raw_asset::RawAsset;
 use crate::utils::api_error::APIError;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, RawAssetsDto};
+use anyhow::Result;
 
+#[tracing::instrument(
+    name = "get all assets",
+    skip_all,
+    fields(
+        user_id = %user_id
+    )
+)]
 pub(crate) async fn get_assets(
     State(pool): State<SqlitePool>,
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
 ) -> Response {
     // Query Raw Assets
-    let raw_assets = match sqlx::query_as!(RawAsset, "SELECT * FROM raw_assets WHERE user_id = $1", user_id)
-        .fetch_all(&pool)
-        .await
-    {
+    let raw_assets = match get_raw_assets(&pool, user_id).await {
         Ok(raw_assets) => raw_assets,
-        Err(e) => {
-            log::error!("{e}");
-            return APIError::database_error().into_response();
-        }
+        Err(_) => return APIError::database_error().into_response(),
     };
 
     // Query Cash Assets
-    let cash_assets = match sqlx::query_as!(CashAsset, "SELECT * FROM cash_assets WHERE user_id = $1", user_id)
-        .fetch_all(&pool)
-        .await
-    {
+    let cash_assets = match get_cash_assets(&pool, user_id).await {
         Ok(cash_assets) => cash_assets,
-        Err(e) => {
-            log::error!("{e}");
-            return APIError::database_error().into_response();
-        }
+        Err(_) => return APIError::database_error().into_response(),
     };
 
     // Query Coin Assets
-    let coin_assets_models = match sqlx::query_as!(CoinAsset, "SELECT * FROM coin_assets WHERE user_id = $1", user_id)
-        .fetch_all(&pool)
-        .await
-    {
+    let coin_assets_models = match get_coin_assets(&pool, user_id).await {
         Ok(coin_assets_models) => coin_assets_models,
-        Err(e) => {
-            log::error!("{e}");
-            return APIError::database_error().into_response();
-        }
+        Err(_) => return APIError::database_error().into_response(),
     };
 
     let mut coins_assets = Vec::with_capacity(coin_assets_models.len());
     for coin_asset_model in coin_assets_models.into_iter() {
-        match sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_asset_model.coin_id)
-            .fetch_optional(&pool)
-            .await
-        {
+        match get_coin(&pool, coin_asset_model.coin_id).await {
             Ok(Some(coin_model)) => {
                 match convert_coin_model_to_coin_response(coin_model, &pool).await {
                     Ok(coin_data) => {
@@ -73,13 +60,10 @@ pub(crate) async fn get_assets(
             }
             Ok(None) => {
                 // There should not be any orphan coin_assets so this should not happen
-                log::warn!("Coin associated with coin_asset not found, this should not happen");
+                tracing::warn!("Coin associated with coin_asset not found, this should not happen");
                 return APIError::database_error().into_response();
             }
-            Err(e) => {
-                log::error!("{e}");
-                return APIError::database_error().into_response();
-            }
+            Err(_) => return APIError::database_error().into_response(),
         };
     }
 
@@ -107,4 +91,56 @@ pub(crate) async fn get_assets(
         coin_assets: coins_assets,
     })
     .into_response()
+}
+
+#[tracing::instrument(name = "get raw assets", skip_all)]
+async fn get_raw_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<RawAsset>> {
+    let assets = sqlx::query_as!(RawAsset, "SELECT * FROM raw_assets WHERE user_id = $1", user_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(assets)
+}
+
+#[tracing::instrument(name = "get cash assets", skip_all)]
+async fn get_cash_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<CashAsset>> {
+    let assets = sqlx::query_as!(CashAsset, "SELECT * FROM cash_assets WHERE user_id = $1", user_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(assets)
+}
+
+#[tracing::instrument(name = "get coin assets", skip_all)]
+async fn get_coin_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<CoinAsset>> {
+    let assets = sqlx::query_as!(CoinAsset, "SELECT * FROM coin_assets WHERE user_id = $1", user_id)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(assets)
+}
+
+#[tracing::instrument(name = "get coin", skip_all)]
+async fn get_coin(pool: &SqlitePool, coin_id: i64) -> Result<Option<Coin>> {
+    let coin = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {e:?}");
+            e
+        })?;
+
+    Ok(coin)
 }

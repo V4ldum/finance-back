@@ -16,7 +16,7 @@ pub(crate) async fn convert_coin_model_to_coin_response(
         {
             Ok(result) => result,
             Err(e) => {
-                log::error!("{e}");
+                tracing::error!("Failed to execute query: {e:?}");
                 return Err(APIError::database_error());
             }
         }
@@ -30,7 +30,7 @@ pub(crate) async fn convert_coin_model_to_coin_response(
         {
             Ok(result) => result,
             Err(e) => {
-                log::error!("{e}");
+                tracing::error!("Failed to execute query: {e:?}");
                 return Err(APIError::database_error());
             }
         }
@@ -44,7 +44,7 @@ pub(crate) async fn convert_coin_model_to_coin_response(
         {
             Ok(result) => result,
             Err(e) => {
-                log::error!("{e}");
+                tracing::error!("Failed to execute query: {e:?}");
                 return Err(APIError::database_error());
             }
         }
