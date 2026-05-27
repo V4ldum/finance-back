@@ -15,7 +15,7 @@ pub(crate) async fn check_api_key(
     mut request: Request,
     next: Next,
 ) -> Response {
-    let Some(key) = headers.get("X-API-KEY") else {
+    let Some(key) = headers.get("X-API-Key") else {
         return APIError::no_api_key().into_response();
     };
     let Ok(key) = key.to_str() else {

@@ -21,10 +21,10 @@ async fn main() {
             let gold_result = database.update_value("Gold", gold_price.data.quote.result.bid).await;
 
             if let Err(err) = gold_result {
-                eprintln!("An error occurred updating gold price : {err}");
+                eprintln!("An error occurred updating gold price : {err:?}");
             }
         }
-        Err(err) => eprintln!("An error occurred with Gold: {err:#?}"),
+        Err(err) => eprintln!("An error occurred with Gold: {err:?}"),
     }
 
     match silver_price {
@@ -34,10 +34,10 @@ async fn main() {
                 .await;
 
             if let Err(err) = silver_result {
-                eprintln!("An error occurred updating silver price : {err}");
+                eprintln!("An error occurred updating silver price : {err:?}");
             }
         }
-        Err(err) => eprintln!("An error occurred with Silver: {err:#?}"),
+        Err(err) => eprintln!("An error occurred with Silver: {err:?}"),
     }
 
     match sp500_price {
@@ -83,12 +83,12 @@ async fn main() {
                         )
                         .await;
                     if let Err(err) = sp_result {
-                        eprintln!("An error occurred updating SP500 price : {err}");
+                        eprintln!("An error occurred updating SP500 price : {err:?}");
                     }
                 }
-                Err(err) => eprintln!("{err:#?}"),
+                Err(err) => eprintln!("{err:?}"),
             }
         }
-        Err(err) => eprintln!("An error occurred with SP500: {err:#?}"),
+        Err(err) => eprintln!("An error occurred with SP500: {err:?}"),
     }
 }

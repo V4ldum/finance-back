@@ -74,7 +74,9 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
             "/assets/cash/{id}",
             get(get_cash_asset).patch(update_cash_asset).delete(delete_cash_asset),
         )
+        // Anything above needs authentication
         .route_layer(from_fn_with_state(pool.clone(), check_api_key))
+        // Anything above can use the state
         .with_state(pool)
         .route("/health", get(health_check))
         .layer(cors)
