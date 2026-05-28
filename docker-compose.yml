@@ -11,6 +11,8 @@ services:
             - "netv6"
         environment:
             - TZ=Europe/Paris
+            - HOST=0.0.0.0
+            - PORT=7878
         volumes:
             - type: bind
               source: /root/finance/db/

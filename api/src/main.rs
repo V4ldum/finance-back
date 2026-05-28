@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     sqlx::migrate!().run(&pool).await?;
 
     // Bind the listener to the IP and port
-    let address = format!("0.0.0.0:{}", configuration.application_port);
+    let address = format!("{}:{}", configuration.application_host, configuration.application_port);
     tracing::info!("Serving {address}");
     let listener = TcpListener::bind(&address)
         .await

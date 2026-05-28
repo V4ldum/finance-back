@@ -76,6 +76,7 @@ async fn spawn_app() -> TestApp {
     // Create the configuration and set up the database
     let configuration = Configuration {
         database_url: format!("sqlite:file:memdb-{}?mode=memory&cache=shared", Uuid::new_v4()),
+        application_host: "127.0.0.1".to_string(),
         application_port: port,
     };
     let pool = configure_database(&configuration).await;
