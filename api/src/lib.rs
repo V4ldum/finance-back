@@ -1,4 +1,5 @@
 mod configuration;
+mod domain;
 mod middleware;
 mod model;
 mod routes;

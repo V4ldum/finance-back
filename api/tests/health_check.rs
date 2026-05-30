@@ -206,11 +206,19 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
 }
 
 #[tokio::test]
-async fn create_cash_asset_returns_400_when_data_is_incorrect() {
+async fn create_cash_asset_returns_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
     let test_cases = vec![
+        (
+            json!({
+                "name": " ",
+                "possessed": 1,
+                "unit_value": 20,
+            }),
+            "name was empty",
+        ),
         (
             json!({
                 "name": "20 €",

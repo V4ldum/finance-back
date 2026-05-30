@@ -1,0 +1,32 @@
+default_job = "clippy"
+env.CARGO_TERM_COLOR = "always"
+
+# Clippy API
+[jobs.clippy]
+command = ["cargo", "clippy", "-p", "api"]
+need_stdout = false
+on_success = "job:run"
+
+# Clippy Pedantic
+[jobs.pedantic]
+command = [
+	"cargo", "clippy",
+	"--",
+	"-W", "clippy::pedantic",
+]
+need_stdout = false
+
+# Tests
+[jobs.test]
+command = ["cargo", "test"]
+need_stdout = true
+
+# Run API
+[jobs.run]
+command = [
+    "cargo", "run", "-p", "api",
+]
+need_stdout = true
+allow_warnings = true
+background = false # For long-running applications (server)
+on_change_strategy = "kill_then_restart"
