@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use serde::Deserialize;
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::SqlitePool;
 
 use crate::middleware::check_api_key::AuthenticatedUserId;
 use crate::model::raw_asset::RawAsset;
@@ -173,20 +173,15 @@ pub(crate) async fn update_raw_asset(
         return APIError::invalid_value("purity must be between 1 and 9999").into_response();
     }
 
-    match (
-        request.name.as_deref(),
-        request.possessed,
-        request.unit_weight,
-        request.composition.as_deref(),
-        request.purity,
-    ) {
-        (None, None, None, None, None) => (), // No update necessary
-        _ => {
-            if update_a_raw_asset(&pool, user_id, id, &request).await.is_err() {
-                return APIError::database_error().into_response();
-            }
-        }
-    };
+    if (request.name.is_some()
+        || request.possessed.is_some()
+        || request.unit_weight.is_some()
+        || request.composition.is_some()
+        || request.purity.is_some())
+        && update_a_raw_asset(&pool, user_id, id, &request).await.is_err()
+    {
+        return APIError::database_error().into_response();
+    }
 
     StatusCode::NO_CONTENT.into_response()
 }
@@ -198,54 +193,34 @@ async fn update_a_raw_asset(
     asset_id: i64,
     request: &UpdateRawAssetRequest,
 ) -> Result<()> {
-    let mut query: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE raw_assets SET ");
-    let mut and = false;
+    let request_name = request.name.as_ref();
+    let request_possessed = request.possessed.as_ref();
+    let request_unit_weight = request.unit_weight.as_ref();
+    let request_composition = request.composition.as_ref();
+    let request_purity = request.purity.as_ref();
 
-    if let Some(name) = request.name.as_deref() {
-        query.push("name = ");
-        query.push_bind(name);
-        and = true;
-    }
-    if let Some(possessed) = request.possessed {
-        if and {
-            query.push(", ");
-        }
-        query.push("possessed = ");
-        query.push_bind(possessed);
-        and = true;
-    }
-    if let Some(unit_weight) = request.unit_weight {
-        if and {
-            query.push(", ");
-        }
-        query.push("unit_weight = ");
-        query.push_bind(unit_weight);
-        and = true;
-    }
-    if let Some(composition) = request.composition.as_deref() {
-        if and {
-            query.push(", ");
-        }
-        query.push("composition = ");
-        query.push_bind(composition);
-        and = true;
-    }
-    if let Some(purity) = request.purity {
-        if and {
-            query.push(", ");
-        }
-        query.push("purity = ");
-        query.push_bind(purity);
-    }
-    query.push(" WHERE id = ");
-    query.push_bind(asset_id);
-    query.push(" AND user_id = ");
-    query.push_bind(user_id);
-
-    query.build().execute(pool).await.map_err(|e| {
-        tracing::error!("Failed to execute query: {e:?}");
-        e
-    })?;
+    // COALESCE writes the first non-null argument in the pair
+    sqlx::query!(
+        r#"
+            UPDATE raw_assets
+            SET name = COALESCE($1, name),
+                possessed = COALESCE($2, possessed),
+                unit_weight = COALESCE($3, unit_weight),
+                composition = COALESCE($4, composition),
+                purity = COALESCE($5, purity)
+            WHERE id = $6 AND user_id = $7
+        "#,
+        request_name,
+        request_possessed,
+        request_unit_weight,
+        request_composition,
+        request_purity,
+        asset_id,
+        user_id,
+    )
+    .execute(pool)
+    .await
+    .inspect_err(|e| tracing::error!("Failed to execute query: {e:?}"))?;
 
     Ok(())
 }

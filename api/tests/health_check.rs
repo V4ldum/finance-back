@@ -127,7 +127,7 @@ async fn create_cash_asset_returns_201_for_valid_data() {
         .expect("Failed to execute request");
 
     // Assert
-    assert_eq!(201, response.status().as_u16());
+    assert_eq!(response.status().as_u16(), 201);
 
     let saved = sqlx::query!("SELECT name, possessed, unit_value FROM cash_assets")
         .fetch_one(&app.pool)
@@ -198,8 +198,8 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
 
         // Assert
         assert_eq!(
-            422,
             response.status().as_u16(),
+            422,
             "The API did not fail with 400 Bad Request when the payload was {error_message}"
         );
     }
@@ -257,8 +257,8 @@ async fn create_cash_asset_returns_400_when_data_is_invalid() {
 
         // Assert
         assert_eq!(
-            400,
             response.status().as_u16(),
+            400,
             "The API did not fail with 400 Bad Request when {error_message}"
         );
     }

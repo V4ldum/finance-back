@@ -4,9 +4,9 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use serde::Deserialize;
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::SqlitePool;
 
-use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, NewCashAsset};
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, NewCashAsset, UpdateCashAsset};
 use crate::middleware::check_api_key::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
 use crate::utils::api_error::APIError;
@@ -135,6 +135,22 @@ pub(super) struct UpdateCashAssetRequest {
     unit_value: Option<i64>,
 }
 
+impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
+    type Error = anyhow::Error;
+
+    fn try_from(value: UpdateCashAssetRequest) -> Result<Self> {
+        let name = value.name.map(AssetName::parse).transpose()?;
+        let possessed = value.possessed.map(AssetPossessed::parse).transpose()?;
+        let unit_value = value.unit_value.map(AssetUnitValue::parse).transpose()?;
+
+        Ok(UpdateCashAsset {
+            name,
+            possessed,
+            unit_value,
+        })
+    }
+}
+
 #[tracing::instrument(
     name = "update cash asset",
     skip_all,
@@ -152,21 +168,20 @@ pub(crate) async fn update_cash_asset(
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<UpdateCashAssetRequest>,
 ) -> Response {
-    if matches!(request.possessed, Some(p) if p < 1) {
-        return APIError::invalid_value("possessed must be >= 1").into_response();
-    }
+    let update_cash_asset: UpdateCashAsset = match request.try_into() {
+        Ok(update_cash_asset) => update_cash_asset,
+        Err(err) => return APIError::invalid_value(&err.to_string()).into_response(),
+    };
 
-    if matches!(request.unit_value, Some(v) if v < 0) {
-        return APIError::invalid_value("unit_value must be >= 0").into_response();
-    }
-
-    match (request.name.as_deref(), request.possessed, request.unit_value) {
-        (None, None, None) => (), // No update necessary
-        (_, _, _) => {
-            if update_a_cash_asset(&pool, user_id, id, &request).await.is_err() {
-                return APIError::database_error().into_response();
-            }
-        }
+    // Update the database if any fields are provided
+    if (update_cash_asset.name.is_some()
+        || update_cash_asset.possessed.is_some()
+        || update_cash_asset.unit_value.is_some())
+        && update_a_cash_asset(&pool, user_id, id, &update_cash_asset)
+            .await
+            .is_err()
+    {
+        return APIError::database_error().into_response();
     }
 
     StatusCode::NO_CONTENT.into_response()
@@ -177,40 +192,30 @@ async fn update_a_cash_asset(
     pool: &SqlitePool,
     user_id: i64,
     asset_id: i64,
-    request: &UpdateCashAssetRequest,
+    cash_asset: &UpdateCashAsset,
 ) -> Result<()> {
-    let mut query: QueryBuilder<Sqlite> = QueryBuilder::new("UPDATE cash_assets SET ");
-    let mut and = false;
+    let cash_asset_name = cash_asset.name.as_ref().map(|n| n.as_ref());
+    let cash_asset_possessed = cash_asset.possessed.as_ref().map(|p| p.as_ref());
+    let cash_asset_unit_value = cash_asset.unit_value.as_ref().map(|v| v.as_ref());
 
-    if let Some(name) = request.name.as_deref() {
-        query.push("name = ");
-        query.push_bind(name);
-        and = true;
-    }
-    if let Some(possessed) = request.possessed {
-        if and {
-            query.push(", ");
-        }
-        query.push("possessed = ");
-        query.push_bind(possessed);
-        and = true;
-    }
-    if let Some(unit_value) = request.unit_value {
-        if and {
-            query.push(", ");
-        }
-        query.push("unit_value = ");
-        query.push_bind(unit_value);
-    }
-    query.push(" WHERE id = ");
-    query.push_bind(asset_id);
-    query.push(" AND user_id = ");
-    query.push_bind(user_id);
-
-    query.build().execute(pool).await.map_err(|e| {
-        tracing::error!("Failed to execute query: {e:?}");
-        e
-    })?;
+    // COALESCE writes the first non-null argument in the pair
+    sqlx::query!(
+        r#"
+            UPDATE cash_assets
+            SET name = COALESCE($1, name),
+                possessed = COALESCE($2, possessed),
+                unit_value = COALESCE($3, unit_value)
+            WHERE id = $4 AND user_id = $5
+        "#,
+        cash_asset_name,
+        cash_asset_possessed,
+        cash_asset_unit_value,
+        asset_id,
+        user_id,
+    )
+    .execute(pool)
+    .await
+    .inspect_err(|e| tracing::error!("Failed to execute query: {e:?}"))?;
 
     Ok(())
 }

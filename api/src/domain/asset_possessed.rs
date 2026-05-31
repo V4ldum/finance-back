@@ -1,10 +1,10 @@
 use anyhow::{Result, anyhow};
 
 #[derive(Debug)]
-pub struct AssetPossessed(i64);
+pub(crate) struct AssetPossessed(i64);
 
 impl AssetPossessed {
-    pub fn parse(possessed: i64) -> Result<Self> {
+    pub(crate) fn parse(possessed: i64) -> Result<Self> {
         if possessed < 1 {
             return Err(anyhow!("possessed must be >= 1"));
         }

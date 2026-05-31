@@ -1,10 +1,10 @@
 use anyhow::{Result, anyhow};
 
 #[derive(Debug, Copy, Clone)]
-pub struct AssetUnitValue(i64);
+pub(crate) struct AssetUnitValue(i64);
 
 impl AssetUnitValue {
-    pub fn parse(unit_value: i64) -> Result<Self> {
+    pub(crate) fn parse(unit_value: i64) -> Result<Self> {
         if unit_value < 0 {
             return Err(anyhow!("unit_value_must be >= 0"));
         }
