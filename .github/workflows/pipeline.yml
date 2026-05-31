@@ -5,6 +5,7 @@ on:
         branches:
             - "main"
         paths:
+            - .sqlx/**
             - api/**
             - sqlite3_unaccent/src/**
             - update-agent/**
@@ -36,6 +37,7 @@ jobs:
               with:
                   filters: |
                       rebuild:
+                          - '.sqlx/**'
                           - 'api/**'
                           - 'sqlite3_unaccent/src/**'
                           - 'update-agent/**'

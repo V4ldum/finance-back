@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE cash_assets\n            SET name = COALESCE($1, name),\n                possessed = COALESCE($2, possessed),\n                unit_value = COALESCE($3, unit_value)\n            WHERE id = $4 AND user_id = $5\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "6c7adfa4b9522a0e7614e8f94c142c5b6f929d3ce7abd9acc28c80ebf6934029"
+}
