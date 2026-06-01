@@ -6,6 +6,9 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
+use crate::domain::{
+    AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, CreateRawAsset, UpdateRawAsset,
+};
 use crate::middleware::check_api_key::AuthenticatedUserId;
 use crate::model::raw_asset::RawAsset;
 use crate::utils::api_error::APIError;
@@ -66,6 +69,26 @@ pub(super) struct CreateRawAssetRequest {
     purity: i64,
 }
 
+impl TryFrom<CreateRawAssetRequest> for CreateRawAsset {
+    type Error = anyhow::Error;
+
+    fn try_from(value: CreateRawAssetRequest) -> Result<Self> {
+        let name = AssetName::parse(value.name)?;
+        let possessed = AssetPossessed::parse(value.possessed)?;
+        let unit_weight = AssetUnitWeight::parse(value.unit_weight)?;
+        let composition = AssetComposition::parse(value.composition)?;
+        let purity = AssetPurity::parse(value.purity)?;
+
+        Ok(Self {
+            name,
+            possessed,
+            unit_weight,
+            composition,
+            purity,
+        })
+    }
+}
+
 #[tracing::instrument(
     name = "create raw asset",
     skip_all,
@@ -83,40 +106,35 @@ pub(crate) async fn create_raw_asset(
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<CreateRawAssetRequest>,
 ) -> Response {
-    if request.possessed < 1 {
-        return APIError::invalid_value("possessed must be >= 1").into_response();
-    }
+    let create_raw_asset: CreateRawAsset = match request.try_into() {
+        Ok(create_raw_asset) => create_raw_asset,
+        Err(err) => return APIError::invalid_value(&err.to_string()).into_response(),
+    };
 
-    if request.unit_weight < 0 {
-        return APIError::invalid_value("unit_weight must be >= 0").into_response();
-    }
-
-    if request.composition != "GOLD" && request.composition != "SILVER" {
-        return APIError::invalid_value("composition can either be \"GOLD\" or \"SILVER\"").into_response();
-    }
-
-    if request.purity > 9999 || request.purity < 1 {
-        return APIError::invalid_value("purity must be between 1 and 9999").into_response();
-    }
-
-    match add_raw_asset(&pool, user_id, &request).await {
+    match add_raw_asset(&pool, user_id, &create_raw_asset).await {
         Ok(_) => StatusCode::CREATED.into_response(),
         Err(_) => APIError::database_error().into_response(),
     }
 }
 
 #[tracing::instrument(name = "add raw asset", skip_all)]
-async fn add_raw_asset(pool: &SqlitePool, user_id: i64, request: &CreateRawAssetRequest) -> Result<()> {
+async fn add_raw_asset(pool: &SqlitePool, user_id: i64, raw_asset: &CreateRawAsset) -> Result<()> {
+    let raw_asset_name = raw_asset.name.as_ref();
+    let raw_asset_possessed = raw_asset.possessed.as_ref();
+    let raw_asset_unit_weight = raw_asset.unit_weight.as_ref();
+    let raw_asset_composition = raw_asset.composition.as_ref();
+    let raw_asset_purity = raw_asset.purity.as_ref();
+
     sqlx::query!(
         r#"
             INSERT INTO raw_assets (name, possessed, unit_weight, composition, purity, user_id)
             VALUES ($1, $2, $3, $4, $5, $6)
         "#,
-        request.name,
-        request.possessed,
-        request.unit_weight,
-        request.composition,
-        request.purity,
+        raw_asset_name,
+        raw_asset_possessed,
+        raw_asset_unit_weight,
+        raw_asset_composition,
+        raw_asset_purity,
         user_id,
     )
     .execute(pool)
@@ -138,6 +156,26 @@ pub(super) struct UpdateRawAssetRequest {
     purity: Option<i64>,
 }
 
+impl TryFrom<UpdateRawAssetRequest> for UpdateRawAsset {
+    type Error = anyhow::Error;
+
+    fn try_from(value: UpdateRawAssetRequest) -> Result<Self> {
+        let name = value.name.map(AssetName::parse).transpose()?;
+        let possessed = value.possessed.map(AssetPossessed::parse).transpose()?;
+        let unit_weight = value.unit_weight.map(AssetUnitWeight::parse).transpose()?;
+        let composition = value.composition.map(AssetComposition::parse).transpose()?;
+        let purity = value.purity.map(AssetPurity::parse).transpose()?;
+
+        Ok(Self {
+            name,
+            possessed,
+            unit_weight,
+            composition,
+            purity,
+        })
+    }
+}
+
 #[tracing::instrument(
     name = "update raw asset",
     skip_all,
@@ -157,28 +195,17 @@ pub(crate) async fn update_raw_asset(
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<UpdateRawAssetRequest>,
 ) -> Response {
-    if matches!(request.possessed, Some(p) if p < 1) {
-        return APIError::invalid_value("possessed must be >= 1").into_response();
-    }
+    let update_raw_asset: UpdateRawAsset = match request.try_into() {
+        Ok(update_raw_asset) => update_raw_asset,
+        Err(err) => return APIError::invalid_value(&err.to_string()).into_response(),
+    };
 
-    if matches!(request.unit_weight, Some(w) if w < 0) {
-        return APIError::invalid_value("unit_weight must be >= 0").into_response();
-    }
-
-    if matches!(request.composition.as_deref(), Some(c) if c != "GOLD" && c != "SILVER") {
-        return APIError::invalid_value("composition can either be \"GOLD\" or \"SILVER\"").into_response();
-    }
-
-    if matches!(request.purity, Some(p) if !(1..=9999).contains(&p)) {
-        return APIError::invalid_value("purity must be between 1 and 9999").into_response();
-    }
-
-    if (request.name.is_some()
-        || request.possessed.is_some()
-        || request.unit_weight.is_some()
-        || request.composition.is_some()
-        || request.purity.is_some())
-        && update_a_raw_asset(&pool, user_id, id, &request).await.is_err()
+    if (update_raw_asset.name.is_some()
+        || update_raw_asset.possessed.is_some()
+        || update_raw_asset.unit_weight.is_some()
+        || update_raw_asset.composition.is_some()
+        || update_raw_asset.purity.is_some())
+        && update_a_raw_asset(&pool, user_id, id, &update_raw_asset).await.is_err()
     {
         return APIError::database_error().into_response();
     }
@@ -187,17 +214,12 @@ pub(crate) async fn update_raw_asset(
 }
 
 #[tracing::instrument(name = "update a raw asset", skip_all)]
-async fn update_a_raw_asset(
-    pool: &SqlitePool,
-    user_id: i64,
-    asset_id: i64,
-    request: &UpdateRawAssetRequest,
-) -> Result<()> {
-    let request_name = request.name.as_ref();
-    let request_possessed = request.possessed.as_ref();
-    let request_unit_weight = request.unit_weight.as_ref();
-    let request_composition = request.composition.as_ref();
-    let request_purity = request.purity.as_ref();
+async fn update_a_raw_asset(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_asset: &UpdateRawAsset) -> Result<()> {
+    let raw_asset_name = raw_asset.name.as_ref().map(|n| n.as_ref());
+    let raw_asset_possessed = raw_asset.possessed.as_ref().map(|p| p.as_ref());
+    let raw_asset_unit_weight = raw_asset.unit_weight.as_ref().map(|w| w.as_ref());
+    let raw_asset_composition = raw_asset.composition.as_ref().map(|c| c.as_ref());
+    let raw_asset_purity = raw_asset.purity.as_ref().map(|p| p.as_ref());
 
     // COALESCE writes the first non-null argument in the pair
     sqlx::query!(
@@ -210,11 +232,11 @@ async fn update_a_raw_asset(
                 purity = COALESCE($5, purity)
             WHERE id = $6 AND user_id = $7
         "#,
-        request_name,
-        request_possessed,
-        request_unit_weight,
-        request_composition,
-        request_purity,
+        raw_asset_name,
+        raw_asset_possessed,
+        raw_asset_unit_weight,
+        raw_asset_composition,
+        raw_asset_purity,
         asset_id,
         user_id,
     )

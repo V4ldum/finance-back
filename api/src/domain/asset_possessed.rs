@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct AssetPossessed(i64);
 
 impl AssetPossessed {
@@ -27,12 +27,12 @@ mod test {
 
     proptest! {
         #[test]
-        fn possessed_smaller_than_1_are_rejected(possessed in i64::MIN..=0i64) {
+        fn possessed_smaller_than_1_are_rejected(possessed in i64::MIN..=0_i64) {
             assert_err!(AssetPossessed::parse(possessed));
         }
 
         #[test]
-        fn valid_possessed_are_parsed_successfully(possessed in 1i64..=i64::MAX) {
+        fn valid_possessed_are_parsed_successfully(possessed in 1_i64..=i64::MAX) {
             assert_ok!(AssetPossessed::parse(possessed));
         }
 

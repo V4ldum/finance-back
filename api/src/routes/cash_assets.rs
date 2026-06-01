@@ -6,7 +6,7 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, NewCashAsset, UpdateCashAsset};
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, CreateCashAsset, UpdateCashAsset};
 use crate::middleware::check_api_key::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
 use crate::utils::api_error::APIError;
@@ -63,15 +63,15 @@ pub(super) struct CreateCashAssetRequest {
     unit_value: i64,
 }
 
-impl TryFrom<CreateCashAssetRequest> for NewCashAsset {
+impl TryFrom<CreateCashAssetRequest> for CreateCashAsset {
     type Error = anyhow::Error;
 
-    fn try_from(value: CreateCashAssetRequest) -> Result<NewCashAsset> {
+    fn try_from(value: CreateCashAssetRequest) -> Result<CreateCashAsset> {
         let name = AssetName::parse(value.name)?;
         let possessed = AssetPossessed::parse(value.possessed)?;
         let unit_value = AssetUnitValue::parse(value.unit_value)?;
 
-        Ok(NewCashAsset {
+        Ok(Self {
             name,
             possessed,
             unit_value,
@@ -94,19 +94,19 @@ pub(crate) async fn create_cash_asset(
     Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
     Json(request): Json<CreateCashAssetRequest>,
 ) -> Response {
-    let new_cash_asset: NewCashAsset = match request.try_into() {
-        Ok(new_cash_asset) => new_cash_asset,
+    let create_cash_asset: CreateCashAsset = match request.try_into() {
+        Ok(create_cash_asset) => create_cash_asset,
         Err(err) => return APIError::invalid_value(&err.to_string()).into_response(),
     };
 
-    match create_a_cash_asset(&pool, user_id, &new_cash_asset).await {
+    match create_a_cash_asset(&pool, user_id, &create_cash_asset).await {
         Ok(_) => StatusCode::CREATED.into_response(),
         Err(_) => APIError::database_error().into_response(),
     }
 }
 
 #[tracing::instrument(name = "create a cash asset", skip_all)]
-async fn create_a_cash_asset(pool: &SqlitePool, user_id: i64, cash_asset: &NewCashAsset) -> Result<()> {
+async fn create_a_cash_asset(pool: &SqlitePool, user_id: i64, cash_asset: &CreateCashAsset) -> Result<()> {
     let cash_asset_name = cash_asset.name.as_ref();
     let cash_asset_possessed = cash_asset.possessed.as_ref();
     let cash_asset_unit_value = cash_asset.unit_value.as_ref();
@@ -143,7 +143,7 @@ impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
         let possessed = value.possessed.map(AssetPossessed::parse).transpose()?;
         let unit_value = value.unit_value.map(AssetUnitValue::parse).transpose()?;
 
-        Ok(UpdateCashAsset {
+        Ok(Self {
             name,
             possessed,
             unit_value,

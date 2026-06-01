@@ -5,9 +5,6 @@ use unicode_segmentation::UnicodeSegmentation;
 pub(crate) struct AssetName(String);
 
 impl AssetName {
-    // Returns an instance of `AssetName` if the input satisfies all our validation constraints
-    // on asset names.
-    // It panics otherwise.
     pub(crate) fn parse(name: String) -> Result<Self> {
         let is_empty_or_whitespace = name.trim().is_empty();
         let is_too_long = name.graphemes(true).count() > 256;

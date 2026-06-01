@@ -1,11 +1,23 @@
+mod asset_composition;
 mod asset_name;
 mod asset_possessed;
+mod asset_purity;
 mod asset_unit_value;
-mod new_cash_asset;
+mod asset_unit_weight;
+mod create_cash_asset;
+mod create_coin_asset;
+mod create_raw_asset;
 mod update_cash_asset;
+mod update_raw_asset;
 
+pub(crate) use asset_composition::AssetComposition;
 pub(crate) use asset_name::AssetName;
 pub(crate) use asset_possessed::AssetPossessed;
+pub(crate) use asset_purity::AssetPurity;
 pub(crate) use asset_unit_value::AssetUnitValue;
-pub(crate) use new_cash_asset::NewCashAsset;
+pub(crate) use asset_unit_weight::AssetUnitWeight;
+pub(crate) use create_cash_asset::CreateCashAsset;
+pub(crate) use create_coin_asset::CreateCoinAsset;
+pub(crate) use create_raw_asset::CreateRawAsset;
 pub(crate) use update_cash_asset::UpdateCashAsset;
+pub(crate) use update_raw_asset::UpdateRawAsset;
