@@ -5,6 +5,7 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use sqlx::SqlitePool;
 
+use crate::domain::AssetTradeValue;
 use crate::model::price::Price;
 use crate::utils::api_error::APIError;
 
@@ -28,16 +29,14 @@ pub(super) struct TradeValue {
     )
 )]
 pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(pool): State<SqlitePool>) -> Response {
-    let query_key = match query.as_str() {
-        "gold" => "Gold",
-        "silver" => "Silver",
-        "sp500" => "SP500",
-        _ => {
-            return APIError::unknown_query(&query).into_response();
+    let trade_value = match AssetTradeValue::parse(query) {
+        Ok(trade_value) => trade_value,
+        Err(err) => {
+            return APIError::unknown_query(&err.to_string()).into_response();
         }
     };
 
-    match get_price(&pool, query_key).await {
+    match get_price(&pool, &trade_value).await {
         Ok(Some(value)) => Json(TradeValue {
             price: value.value,
             last_update: value.date.to_string(),
@@ -45,7 +44,10 @@ pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(pool): 
         .into_response(),
         Ok(None) => {
             // The prices table is expected to always contain a row for every known query key
-            tracing::warn!("No price row found for query key {query_key}. This should not happen");
+            tracing::warn!(
+                "No price row found for query key {}. This should not happen",
+                trade_value.as_ref()
+            );
             APIError::database_error().into_response()
         }
         Err(_) => APIError::database_error().into_response(),
@@ -53,8 +55,10 @@ pub(crate) async fn get_one_trade_value(Path(query): Path<String>, State(pool): 
 }
 
 #[tracing::instrument(name = "get price", skip_all)]
-async fn get_price(pool: &SqlitePool, query_key: &str) -> Result<Option<Price>> {
-    let price = sqlx::query_as!(Price, "SELECT * FROM prices WHERE name = $1", query_key)
+async fn get_price(pool: &SqlitePool, trade_value: &AssetTradeValue) -> Result<Option<Price>> {
+    let trade_value_key = trade_value.as_ref();
+
+    let price = sqlx::query_as!(Price, "SELECT * FROM prices WHERE name = $1", trade_value_key)
         .fetch_optional(pool)
         .await
         .map_err(|e| {

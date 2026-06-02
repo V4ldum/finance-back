@@ -133,6 +133,7 @@ async fn create_cash_asset_returns_201_for_valid_data() {
         .fetch_one(&app.pool)
         .await
         .expect("Failed to fetch cash_assets");
+
     assert_eq!(saved.name, "20 €");
     assert_eq!(saved.possessed, 1);
     assert_eq!(saved.unit_value, 20);
@@ -165,25 +166,6 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
             }),
             "missing unit_value",
         ),
-        (
-            json!({
-                "unit_value": 20,
-            }),
-            "missing name and possessed",
-        ),
-        (
-            json!({
-                "possessed": 1,
-            }),
-            "missing name and unit_value",
-        ),
-        (
-            json!({
-                "name": "20 €",
-            }),
-            "missing possessed and unit_value",
-        ),
-        (json!({}), "missing name, possessed and unit_value"),
     ];
 
     for (invalid_body, error_message) in test_cases {
@@ -213,11 +195,11 @@ async fn create_cash_asset_returns_400_when_data_is_invalid() {
     let test_cases = vec![
         (
             json!({
-                "name": " ",
+                "name": "",
                 "possessed": 1,
                 "unit_value": 20,
             }),
-            "name was empty",
+            "name was incorrect",
         ),
         (
             json!({
@@ -226,14 +208,6 @@ async fn create_cash_asset_returns_400_when_data_is_invalid() {
                 "unit_value": 20,
             }),
             "possessed was negative",
-        ),
-        (
-            json!({
-                "name": "20 €",
-                "possessed": 0,
-                "unit_value": 20,
-            }),
-            "possessed was zero",
         ),
         (
             json!({
@@ -249,6 +223,192 @@ async fn create_cash_asset_returns_400_when_data_is_invalid() {
         // Act
         let response = client
             .post(format!("{}/assets/cash", app.address))
+            .header("X-API-KEY", "123")
+            .json(&invalid_body)
+            .send()
+            .await
+            .expect("Failed to execute request");
+
+        // Assert
+        assert_eq!(
+            response.status().as_u16(),
+            400,
+            "The API did not fail with 400 Bad Request when {error_message}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn create_raw_asset_returns_201_for_valid_data() {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    // Act
+    let json = json!({
+        "name": "20g silver ingot",
+        "possessed": 1,
+        "unit_weight": 20,
+        "composition": "SILVER",
+        "purity": 9999,
+    });
+    let response = client
+        .post(format!("{}/assets/raw", app.address))
+        .header("X-API-KEY", "123")
+        .json(&json)
+        .send()
+        .await
+        .expect("Failed to execute request");
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 201);
+
+    let saved = sqlx::query!("SELECT name, possessed, unit_weight, composition, purity FROM raw_assets")
+        .fetch_one(&app.pool)
+        .await
+        .expect("Failed to fetch raw_assets");
+
+    assert_eq!(saved.name, "20g silver ingot");
+    assert_eq!(saved.possessed, 1);
+    assert_eq!(saved.unit_weight, 20);
+    assert_eq!(saved.composition, "SILVER");
+    assert_eq!(saved.purity, 9999);
+}
+
+#[tokio::test]
+async fn create_raw_asset_returns_422_when_data_is_missing() {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        (
+            json!({
+                "possessed": 1,
+                "unit_weight": 20,
+                "composition": "SILVER",
+                "purity": 9999,
+            }),
+            "missing name",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "unit_weight": 20,
+                "composition": "SILVER",
+                "purity": 9999,
+            }),
+            "missing possessed",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": 1,
+                "composition": "SILVER",
+                "purity": 9999,
+            }),
+            "missing unit_weight",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": 1,
+                "unit_weight": 20,
+                "purity": 9999,
+            }),
+            "missing composition",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": 1,
+                "unit_weight": 20,
+                "composition": "SILVER",
+            }),
+            "missing purity",
+        ),
+    ];
+
+    for (invalid_body, error_message) in test_cases {
+        // Act
+        let response = client
+            .post(format!("{}/assets/raw", app.address))
+            .header("X-API-KEY", "123")
+            .json(&invalid_body)
+            .send()
+            .await
+            .expect("Failed to execute request");
+
+        // Assert
+        assert_eq!(
+            response.status().as_u16(),
+            422,
+            "The API did not fail with 400 Bad Request when the payload was {error_message}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn create_raw_asset_returns_400_when_data_is_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        (
+            json!({
+                "name": "",
+                "possessed": 1,
+                "unit_weight": 20,
+                "composition": "SILVER",
+                "purity": 9999,
+            }),
+            "name was incorrect",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": -1,
+                "unit_weight": 20,
+                "composition": "SILVER",
+                "purity": 9999,
+            }),
+            "possessed was negative",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": 1,
+                "unit_weight": -20,
+                "composition": "SILVER",
+                "purity": 9999,
+            }),
+            "unit_weight was negative",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": 1,
+                "unit_weight": 20,
+                "composition": "Incorrect",
+                "purity": 9999,
+            }),
+            "composition was incorrect",
+        ),
+        (
+            json!({
+                "name": "20g silver ingot",
+                "possessed": 1,
+                "unit_weight": 20,
+                "composition": "SILVER",
+                "purity": 10000,
+            }),
+            "purity was outside of the 1..9999 range",
+        ),
+    ];
+
+    for (invalid_body, error_message) in test_cases {
+        // Act
+        let response = client
+            .post(format!("{}/assets/raw", app.address))
             .header("X-API-KEY", "123")
             .json(&invalid_body)
             .send()

@@ -25,3 +25,6 @@ target/
 
 # Database
 *.db
+
+# Tests related
+**/proptest-regressions

@@ -5,6 +5,7 @@ use axum::response::{IntoResponse, Response};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
+use crate::domain::CoinSearchQuery;
 use crate::model::coin::Coin;
 use crate::utils::api_error::APIError;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
@@ -22,7 +23,12 @@ pub(super) struct QueryParams {
     )
 )]
 pub(crate) async fn search_coin(Query(query): Query<QueryParams>, State(pool): State<SqlitePool>) -> Response {
-    let coins = match query_coins(&pool, &query.q).await {
+    let query = match CoinSearchQuery::parse(query.q) {
+        Ok(query) => query,
+        Err(err) => return APIError::invalid_value(&err.to_string()).into_response(),
+    };
+
+    let coins = match query_coins(&pool, query).await {
         Ok(coins) => coins,
         Err(_) => return APIError::database_error().into_response(),
     };
@@ -41,12 +47,12 @@ pub(crate) async fn search_coin(Query(query): Query<QueryParams>, State(pool): S
 }
 
 #[tracing::instrument(name = "query coins", skip_all)]
-async fn query_coins(pool: &SqlitePool, query: &str) -> Result<Vec<Coin>> {
+async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<Coin>> {
     // TODO migrate back to query_as! macro then comptime extension is merged :
     // - https://github.com/launchbadge/sqlx/issues/3330
     // - https://github.com/launchbadge/sqlx/pull/3713
     let coins = sqlx::query_as("SELECT * FROM coins WHERE instr(UNACCENT(LOWER(name)), UNACCENT(LOWER(?))) > 0")
-        .bind(query)
+        .bind(query.as_ref())
         .fetch_all(pool)
         .await
         .map_err(|e| {
