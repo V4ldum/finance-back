@@ -28,7 +28,7 @@ impl APIError {
     }
     pub(crate) fn no_api_key() -> Self {
         APIError {
-            code: StatusCode::BAD_REQUEST,
+            code: StatusCode::UNAUTHORIZED,
             reason: String::from(r#""key" parameter is required"#),
         }
     }
