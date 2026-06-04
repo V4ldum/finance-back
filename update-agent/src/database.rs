@@ -13,9 +13,10 @@ impl Database {
         dotenvy::dotenv()?;
         let database_url = dotenvy::var("DATABASE_URL")?;
 
-        if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
-            panic!("Database not found")
-        }
+        assert!(
+            Sqlite::database_exists(&database_url).await.unwrap_or(false),
+            "Database not found"
+        );
 
         let db = SqlitePool::connect(&database_url).await?;
 

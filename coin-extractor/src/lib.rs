@@ -20,9 +20,7 @@ pub async fn run(mut params: ProgramParameters) -> Result<(), Box<dyn Error>> {
 
     let coin = serde_json::from_str::<CoinQuery>(&response.text().await?)?;
 
-    if coin.watermark.is_some() {
-        panic!("FOUND WATERMARK FOR {}", coin.title);
-    }
+    assert!(coin.watermark.is_none(), "Watermark found");
 
     insert_in_database(coin, params.coin_id, &mut params.db).await?;
 

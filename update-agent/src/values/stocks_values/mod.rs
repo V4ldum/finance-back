@@ -13,7 +13,7 @@ pub async fn get_sp500_price() -> Result<SP500Price, Box<dyn Error>> {
     let result = Client::builder()
         .user_agent(USER_AGENT)
         .build()?
-        .get(format!("https://query2.finance.yahoo.com/v8/finance/chart/{}", symbol))
+        .get(format!("https://query2.finance.yahoo.com/v8/finance/chart/{symbol}"))
         .send()
         .await?;
 

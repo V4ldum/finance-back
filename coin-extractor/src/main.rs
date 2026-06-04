@@ -23,13 +23,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let first_arg = &args[1];
     let Ok(coin_id) = first_arg.parse() else {
-        eprintln!("Invalid argument {}, argument should be a number", first_arg);
+        eprintln!("Invalid argument {first_arg}, argument should be a number");
         exit(1);
     };
 
-    if !Sqlite::database_exists(&database_url).await.unwrap_or(false) {
-        panic!("Database not found")
-    }
+    assert!(
+        Sqlite::database_exists(&database_url).await.unwrap_or(false),
+        "Database not found"
+    );
 
     let db = SqliteConnection::connect(&database_url).await?;
 
