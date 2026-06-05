@@ -2,6 +2,7 @@ use api::{
     Configuration,
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
+use fake::{Fake, faker::lorem::en::Sentence};
 use reqwest::Method;
 use serde_json::json;
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
@@ -189,11 +190,15 @@ async fn create_cash_asset_returns_201_for_valid_data() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
+    let name = Sentence(1..3).fake::<String>();
+    let possessed = (1..1000).fake::<i64>();
+    let unit_value = (1..1000).fake::<i64>();
+
     // Act
     let json = json!({
-        "name": "20 €",
-        "possessed": 1,
-        "unit_value": 20,
+        "name": name,
+        "possessed": possessed,
+        "unit_value": unit_value,
     });
     let response = client
         .post(format!("{}/assets/cash", app.address))
@@ -211,9 +216,9 @@ async fn create_cash_asset_returns_201_for_valid_data() {
         .await
         .expect("Failed to fetch cash_assets");
 
-    assert_eq!(saved.name, "20 €");
-    assert_eq!(saved.possessed, 1);
-    assert_eq!(saved.unit_value, 20);
+    assert_eq!(saved.name, name);
+    assert_eq!(saved.possessed, possessed);
+    assert_eq!(saved.unit_value, unit_value);
 }
 
 #[tokio::test]
@@ -221,25 +226,30 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
+
+    let name = Sentence(1..3).fake::<String>();
+    let possessed = (1..1000).fake::<i64>();
+    let unit_value = (1..1000).fake::<i64>();
+
     let test_cases = vec![
         (
             json!({
-                "possessed": 1,
-                "unit_value": 20,
+                "possessed": possessed,
+                "unit_value": unit_value,
             }),
             "missing name",
         ),
         (
             json!({
-                "name": "20 €",
-                "unit_value": 20,
+                "name": name,
+                "unit_value": unit_value,
             }),
             "missing possessed",
         ),
         (
             json!({
-                "name": "20 €",
-                "possessed": 1,
+                "name": name,
+                "possessed": possessed,
             }),
             "missing unit_value",
         ),
@@ -269,27 +279,32 @@ async fn create_cash_asset_returns_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
+
+    let name = Sentence(1..3).fake::<String>();
+    let possessed = (1..1000).fake::<i64>();
+    let unit_value = (1..1000).fake::<i64>();
+
     let test_cases = vec![
         (
             json!({
                 "name": "",
-                "possessed": 1,
-                "unit_value": 20,
+                "possessed": possessed,
+                "unit_value": unit_value,
             }),
             "name was incorrect",
         ),
         (
             json!({
-                "name": "20 €",
+                "name": name,
                 "possessed": -1,
-                "unit_value": 20,
+                "unit_value": unit_value,
             }),
             "possessed was negative",
         ),
         (
             json!({
-                "name": "20 €",
-                "possessed": 1,
+                "name": name,
+                "possessed": possessed,
                 "unit_value": -20,
             }),
             "unit_value was negative",
@@ -321,13 +336,19 @@ async fn create_raw_asset_returns_201_for_valid_data() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();
 
+    let name = Sentence(1..3).fake::<String>();
+    let possessed = (1..1000).fake::<i64>();
+    let unit_weight = (1..1000).fake::<i64>();
+    let composition = ["GOLD", "SILVER"][(0..2).fake::<usize>()];
+    let purity = (1..=9999).fake::<i64>();
+
     // Act
     let json = json!({
-        "name": "20g silver ingot",
-        "possessed": 1,
-        "unit_weight": 20,
-        "composition": "SILVER",
-        "purity": 9999,
+        "name": name,
+        "possessed": possessed,
+        "unit_weight": unit_weight,
+        "composition": composition,
+        "purity": purity,
     });
     let response = client
         .post(format!("{}/assets/raw", app.address))
@@ -345,11 +366,11 @@ async fn create_raw_asset_returns_201_for_valid_data() {
         .await
         .expect("Failed to fetch raw_assets");
 
-    assert_eq!(saved.name, "20g silver ingot");
-    assert_eq!(saved.possessed, 1);
-    assert_eq!(saved.unit_weight, 20);
-    assert_eq!(saved.composition, "SILVER");
-    assert_eq!(saved.purity, 9999);
+    assert_eq!(saved.name, name);
+    assert_eq!(saved.possessed, possessed);
+    assert_eq!(saved.unit_weight, unit_weight);
+    assert_eq!(saved.composition, composition);
+    assert_eq!(saved.purity, purity);
 }
 
 #[tokio::test]
@@ -357,49 +378,56 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
+
+    let name = Sentence(1..3).fake::<String>();
+    let possessed = (1..1000).fake::<i64>();
+    let unit_weight = (1..1000).fake::<i64>();
+    let composition = ["GOLD", "SILVER"][(0..2).fake::<usize>()];
+    let purity = (1..=9999).fake::<i64>();
+
     let test_cases = vec![
         (
             json!({
-                "possessed": 1,
-                "unit_weight": 20,
-                "composition": "SILVER",
-                "purity": 9999,
+                "possessed": possessed,
+                "unit_weight": unit_weight,
+                "composition": composition,
+                "purity": purity,
             }),
             "missing name",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "unit_weight": 20,
-                "composition": "SILVER",
-                "purity": 9999,
+                "name": name,
+                "unit_weight": unit_weight,
+                "composition": composition,
+                "purity": purity,
             }),
             "missing possessed",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "possessed": 1,
-                "composition": "SILVER",
-                "purity": 9999,
+                "name": name,
+                "possessed": possessed,
+                "composition": composition,
+                "purity": purity,
             }),
             "missing unit_weight",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "possessed": 1,
-                "unit_weight": 20,
-                "purity": 9999,
+                "name": name,
+                "possessed": possessed,
+                "unit_weight": unit_weight,
+                "purity": purity,
             }),
             "missing composition",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "possessed": 1,
-                "unit_weight": 20,
-                "composition": "SILVER",
+                "name": name,
+                "possessed": possessed,
+                "unit_weight": unit_weight,
+                "composition": composition,
             }),
             "missing purity",
         ),
@@ -429,53 +457,60 @@ async fn create_raw_asset_returns_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
+
+    let name = Sentence(1..3).fake::<String>();
+    let possessed = (1..1000).fake::<i64>();
+    let unit_weight = (1..1000).fake::<i64>();
+    let composition = ["GOLD", "SILVER"][(0..2).fake::<usize>()];
+    let purity = (1..=9999).fake::<i64>();
+
     let test_cases = vec![
         (
             json!({
                 "name": "",
-                "possessed": 1,
-                "unit_weight": 20,
-                "composition": "SILVER",
-                "purity": 9999,
+                "possessed": possessed,
+                "unit_weight": unit_weight,
+                "composition": composition,
+                "purity": purity,
             }),
             "name was incorrect",
         ),
         (
             json!({
-                "name": "20g silver ingot",
+                "name": name,
                 "possessed": -1,
-                "unit_weight": 20,
-                "composition": "SILVER",
-                "purity": 9999,
+                "unit_weight": unit_weight,
+                "composition": composition,
+                "purity": purity,
             }),
             "possessed was negative",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "possessed": 1,
+                "name": name,
+                "possessed": possessed,
                 "unit_weight": -20,
-                "composition": "SILVER",
-                "purity": 9999,
+                "composition": composition,
+                "purity": purity,
             }),
             "unit_weight was negative",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "possessed": 1,
-                "unit_weight": 20,
+                "name": name,
+                "possessed": possessed,
+                "unit_weight": unit_weight,
                 "composition": "Incorrect",
-                "purity": 9999,
+                "purity": purity,
             }),
             "composition was incorrect",
         ),
         (
             json!({
-                "name": "20g silver ingot",
-                "possessed": 1,
-                "unit_weight": 20,
-                "composition": "SILVER",
+                "name": name,
+                "possessed": possessed,
+                "unit_weight": unit_weight,
+                "composition": composition,
                 "purity": 10000,
             }),
             "purity was outside of the 1..9999 range",
