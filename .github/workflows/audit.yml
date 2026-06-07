@@ -2,7 +2,7 @@ name: Security audit
 on:
     workflow_dispatch:
     schedule:
-        - cron: "52 6 8 * *"
+        - cron: "52 4 8 * *"
 
 jobs:
     audit:
