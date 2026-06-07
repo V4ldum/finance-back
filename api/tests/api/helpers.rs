@@ -1,11 +1,12 @@
-use std::{str::FromStr, sync::LazyLock};
+use std::path::Path;
+use std::process::Command;
+use std::sync::LazyLock;
 
 use api::{
-    Configuration,
+    Application, Configuration, get_connection_pool,
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
-use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
-use tokio::net::TcpListener;
+use sqlx::SqlitePool;
 use tracing::level_filters::LevelFilter;
 use uuid::Uuid;
 
@@ -41,49 +42,70 @@ static TRACING: LazyLock<()> = LazyLock::new(|| {
     };
 });
 
-async fn configure_database(config: &Configuration) -> SqlitePool {
-    // Create a connection pool to the database
-    let options = SqliteConnectOptions::from_str(&config.database_url)
-        .expect("Failed to create SqliteConnectOptions")
-        .foreign_keys(true);
-    let pool = SqlitePool::connect_with(options)
-        .await
-        .expect("Failed to connect to database");
+// Build the SQLite extension and return the absolute path to the resulting library.
+// This guarantees the artifact exists before any test.
+static UNACCENT_EXTENSION: LazyLock<String> = LazyLock::new(|| -> String {
+    // The extension is its own workspace (excluded from the main one), so it must be
+    // built through its own manifest and lands in its own target directory.
+    let extension_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("api crate should have a parent directory")
+        .join("sqlite3_unaccent");
 
-    // Migrate the database
-    sqlx::migrate!().run(&pool).await.expect("Failed to migrate database");
+    let status = Command::new(env!("CARGO"))
+        .arg("build")
+        .arg("--manifest-path")
+        .arg(extension_dir.join("Cargo.toml"))
+        .status()
+        .expect("Failed to run cargo to build the sqlite3_unaccent extension");
+    assert!(status.success(), "Failed to build the sqlite3_unaccent extension");
 
+    // The cdylib name is platform specific: libsqlite3_unaccent.so / sqlite3_unaccent.dll
+    let library = format!(
+        "{}sqlite3_unaccent{}",
+        std::env::consts::DLL_PREFIX,
+        std::env::consts::DLL_SUFFIX
+    );
+    let path = extension_dir.join("target").join("debug").join(library);
+    assert!(path.exists(), "Built extension was not found at {}", path.display());
+
+    path.into_os_string()
+        .into_string()
+        .expect("Extension path should be valid UTF-8")
+});
+
+async fn configure_database(pool: &SqlitePool) {
     // Insert a test user into the database
     sqlx::query!("INSERT OR IGNORE INTO users(api_key) VALUES ('123')")
-        .execute(&pool)
+        .execute(pool)
         .await
         .expect("Failed to insert user into database");
-
-    pool
 }
 
 pub async fn spawn_app() -> TestApp {
     // Setup telemetry
     LazyLock::force(&TRACING);
 
-    // Bind to a random port and get the address
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("Failed to bind to random port");
-    let port = listener.local_addr().unwrap().port();
-    let address = format!("http://127.0.0.1:{port}");
-
-    // Create the configuration and set up the database
+    // Create the configuration
     let configuration = Configuration {
         database_url: format!("sqlite:file:memdb-{}?mode=memory&cache=shared", Uuid::new_v4()),
         application_host: "127.0.0.1".to_string(),
-        application_port: port,
+        application_port: 0, // Random OS port
+        sqlite_extension: LazyLock::force(&UNACCENT_EXTENSION).to_owned(),
     };
-    let pool = configure_database(&configuration).await;
+
+    // Set up the database pool used by tests
+    let pool = get_connection_pool(&configuration.database_url, &configuration.sqlite_extension)
+        .await
+        .expect("Failed to get connection pool");
+    configure_database(&pool).await;
 
     // Run the server in the background
-    let server = api::run(listener, pool.clone()).expect("Failed to bind address");
-    tokio::spawn(server.into_future());
+    let server = Application::build(configuration)
+        .await
+        .expect("Failed to build application");
+    let address = format!("http://127.0.0.1:{}", server.port());
+    tokio::spawn(server.run_until_stopped().into_future());
 
     TestApp { address, pool }
 }

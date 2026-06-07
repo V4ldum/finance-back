@@ -4,6 +4,7 @@ pub struct Configuration {
     pub database_url: String,
     pub application_host: String,
     pub application_port: u16,
+    pub sqlite_extension: String,
 }
 
 pub fn get_configuration() -> Result<Configuration> {
@@ -17,5 +18,6 @@ pub fn get_configuration() -> Result<Configuration> {
         database_url,
         application_host,
         application_port: application_port.parse::<u16>()?,
+        sqlite_extension: "libsqlite3_unaccent".to_string(),
     })
 }
