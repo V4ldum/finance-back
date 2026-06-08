@@ -1,28 +1,43 @@
-use fake::{Fake, faker::lorem::en::Sentence};
 use serde_json::json;
 
-use crate::helpers::spawn_app;
+use crate::helpers::{name, possessed, spawn_app, unit_value};
 
 #[tokio::test]
 async fn create_cash_asset_returns_201_for_valid_data() {
     // Arrange
     let app = spawn_app().await;
-
-    let name = Sentence(1..3).fake::<String>();
-    let possessed = (1..1000).fake::<i64>();
-    let unit_value = (1..1000).fake::<i64>();
+    let json = json!({
+        "name": name(),
+        "possessed": possessed(),
+        "unit_value": unit_value(),
+    });
 
     // Act
+    let response = app.post_cash_asset(&json).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 201);
+}
+
+#[tokio::test]
+async fn create_cash_asset_persists_the_asset() {
+    // Arrange
+    let app = spawn_app().await;
+
+    let name = name();
+    let possessed = possessed();
+    let unit_value = unit_value();
+
     let json = json!({
         "name": name,
         "possessed": possessed,
         "unit_value": unit_value,
     });
-    let response = app.post_cash_asset(&json).await;
+
+    // Act
+    app.post_cash_asset(&json).await;
 
     // Assert
-    assert_eq!(response.status().as_u16(), 201);
-
     let saved = sqlx::query!("SELECT name, possessed, unit_value FROM cash_assets")
         .fetch_one(&app.pool)
         .await
@@ -38,29 +53,25 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
 
-    let name = Sentence(1..3).fake::<String>();
-    let possessed = (1..1000).fake::<i64>();
-    let unit_value = (1..1000).fake::<i64>();
-
     let test_cases = vec![
         (
             json!({
-                "possessed": possessed,
-                "unit_value": unit_value,
+                "possessed": possessed(),
+                "unit_value": unit_value(),
             }),
             "missing name",
         ),
         (
             json!({
-                "name": name,
-                "unit_value": unit_value,
+                "name": name(),
+                "unit_value": unit_value(),
             }),
             "missing possessed",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
+                "name": name(),
+                "possessed": possessed(),
             }),
             "missing unit_value",
         ),
@@ -84,31 +95,27 @@ async fn create_cash_asset_returns_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await;
 
-    let name = Sentence(1..3).fake::<String>();
-    let possessed = (1..1000).fake::<i64>();
-    let unit_value = (1..1000).fake::<i64>();
-
     let test_cases = vec![
         (
             json!({
                 "name": "",
-                "possessed": possessed,
-                "unit_value": unit_value,
+                "possessed": possessed(),
+                "unit_value": unit_value(),
             }),
             "name was incorrect",
         ),
         (
             json!({
-                "name": name,
+                "name": name(),
                 "possessed": -1,
-                "unit_value": unit_value,
+                "unit_value": unit_value(),
             }),
             "possessed was negative",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
+                "name": name(),
+                "possessed": possessed(),
                 "unit_value": -20,
             }),
             "unit_value was negative",

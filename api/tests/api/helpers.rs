@@ -6,6 +6,7 @@ use api::{
     Application, Configuration, get_connection_pool,
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
+use fake::{Fake, faker::lorem::en::Sentence};
 use sqlx::SqlitePool;
 use tracing::level_filters::LevelFilter;
 use uuid::Uuid;
@@ -53,6 +54,30 @@ impl TestApp {
             .await
             .expect("Failed to execute request")
     }
+}
+
+pub fn name() -> String {
+    Sentence(1..3).fake()
+}
+
+pub fn possessed() -> i64 {
+    (1..1000).fake()
+}
+
+pub fn unit_value() -> i64 {
+    (1..1000).fake()
+}
+
+pub fn unit_weight() -> i64 {
+    (1..1000).fake()
+}
+
+pub fn composition() -> String {
+    ["GOLD", "SILVER"][(0..2).fake::<usize>()].to_string()
+}
+
+pub fn purity() -> i64 {
+    (1..=9999).fake()
 }
 
 // Ensure the telemetry stack is only initialized once

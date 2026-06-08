@@ -1,20 +1,37 @@
-use fake::{Fake, faker::lorem::en::Sentence};
 use serde_json::json;
 
-use crate::helpers::spawn_app;
+use crate::helpers::{composition, name, possessed, purity, spawn_app, unit_weight};
 
 #[tokio::test]
 async fn create_raw_asset_returns_201_for_valid_data() {
     // Arrange
     let app = spawn_app().await;
-
-    let name = Sentence(1..3).fake::<String>();
-    let possessed = (1..1000).fake::<i64>();
-    let unit_weight = (1..1000).fake::<i64>();
-    let composition = ["GOLD", "SILVER"][(0..2).fake::<usize>()];
-    let purity = (1..=9999).fake::<i64>();
+    let json = json!({
+        "name": name(),
+        "possessed": possessed(),
+        "unit_weight": unit_weight(),
+        "composition": composition(),
+        "purity": purity(),
+    });
 
     // Act
+    let response = app.post_raw_asset(&json).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 201);
+}
+
+#[tokio::test]
+async fn create_raw_asset_persists_the_asset() {
+    // Arrange
+    let app = spawn_app().await;
+
+    let name = name();
+    let possessed = possessed();
+    let unit_weight = unit_weight();
+    let composition = composition();
+    let purity = purity();
+
     let json = json!({
         "name": name,
         "possessed": possessed,
@@ -22,11 +39,11 @@ async fn create_raw_asset_returns_201_for_valid_data() {
         "composition": composition,
         "purity": purity,
     });
-    let response = app.post_raw_asset(&json).await;
+
+    // Act
+    app.post_raw_asset(&json).await;
 
     // Assert
-    assert_eq!(response.status().as_u16(), 201);
-
     let saved = sqlx::query!("SELECT name, possessed, unit_weight, composition, purity FROM raw_assets")
         .fetch_one(&app.pool)
         .await
@@ -44,55 +61,49 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
 
-    let name = Sentence(1..3).fake::<String>();
-    let possessed = (1..1000).fake::<i64>();
-    let unit_weight = (1..1000).fake::<i64>();
-    let composition = ["GOLD", "SILVER"][(0..2).fake::<usize>()];
-    let purity = (1..=9999).fake::<i64>();
-
     let test_cases = vec![
         (
             json!({
-                "possessed": possessed,
-                "unit_weight": unit_weight,
-                "composition": composition,
-                "purity": purity,
+                "possessed": possessed(),
+                "unit_weight": unit_weight(),
+                "composition": composition(),
+                "purity": purity(),
             }),
             "missing name",
         ),
         (
             json!({
-                "name": name,
-                "unit_weight": unit_weight,
-                "composition": composition,
-                "purity": purity,
+                "name": name(),
+                "unit_weight": unit_weight(),
+                "composition": composition(),
+                "purity": purity(),
             }),
             "missing possessed",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
-                "composition": composition,
-                "purity": purity,
+                "name": name(),
+                "possessed": possessed(),
+                "composition": composition(),
+                "purity": purity(),
             }),
             "missing unit_weight",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
-                "unit_weight": unit_weight,
-                "purity": purity,
+                "name": name(),
+                "possessed": possessed(),
+                "unit_weight": unit_weight(),
+                "purity": purity(),
             }),
             "missing composition",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
-                "unit_weight": unit_weight,
-                "composition": composition,
+                "name": name(),
+                "possessed": possessed(),
+                "unit_weight": unit_weight(),
+                "composition": composition(),
             }),
             "missing purity",
         ),
@@ -116,59 +127,53 @@ async fn create_raw_asset_returns_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await;
 
-    let name = Sentence(1..3).fake::<String>();
-    let possessed = (1..1000).fake::<i64>();
-    let unit_weight = (1..1000).fake::<i64>();
-    let composition = ["GOLD", "SILVER"][(0..2).fake::<usize>()];
-    let purity = (1..=9999).fake::<i64>();
-
     let test_cases = vec![
         (
             json!({
                 "name": "",
-                "possessed": possessed,
-                "unit_weight": unit_weight,
-                "composition": composition,
-                "purity": purity,
+                "possessed": possessed(),
+                "unit_weight": unit_weight(),
+                "composition": composition(),
+                "purity": purity(),
             }),
             "name was incorrect",
         ),
         (
             json!({
-                "name": name,
+                "name": name(),
                 "possessed": -1,
-                "unit_weight": unit_weight,
-                "composition": composition,
-                "purity": purity,
+                "unit_weight": unit_weight(),
+                "composition": composition(),
+                "purity": purity(),
             }),
             "possessed was negative",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
+                "name": name(),
+                "possessed": possessed(),
                 "unit_weight": -20,
-                "composition": composition,
-                "purity": purity,
+                "composition": composition(),
+                "purity": purity(),
             }),
             "unit_weight was negative",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
-                "unit_weight": unit_weight,
+                "name": name(),
+                "possessed": possessed(),
+                "unit_weight": unit_weight(),
                 "composition": "Incorrect",
-                "purity": purity,
+                "purity": purity(),
             }),
             "composition was incorrect",
         ),
         (
             json!({
-                "name": name,
-                "possessed": possessed,
-                "unit_weight": unit_weight,
-                "composition": composition,
+                "name": name(),
+                "possessed": possessed(),
+                "unit_weight": unit_weight(),
+                "composition": composition(),
                 "purity": 10000,
             }),
             "purity was outside of the 1..9999 range",

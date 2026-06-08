@@ -3,7 +3,7 @@ use std::error::Error;
 use crate::coin_query::{CoinQuery, CoinQuerySide};
 use crate::program_parameters::ProgramParameters;
 use reqwest::Client;
-use sqlx::SqliteConnection;
+use sqlx::{Connection, SqliteConnection};
 
 mod coin_query;
 pub mod program_parameters;
@@ -28,23 +28,25 @@ pub async fn run(mut params: ProgramParameters) -> Result<(), Box<dyn Error>> {
 }
 
 async fn insert_in_database(coin: CoinQuery, numista_id: u32, db: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
+    let mut transaction = db.begin().await?;
+
     let obverse_id = match coin.obverse {
         Some(obverse) => {
-            let id = insert_coin_side(obverse, db).await?;
+            let id = insert_coin_side(obverse, &mut transaction).await?;
             Some(id)
         }
         None => None,
     };
     let reverse_id = match coin.reverse {
         Some(reverse) => {
-            let id = insert_coin_side(reverse, db).await?;
+            let id = insert_coin_side(reverse, &mut transaction).await?;
             Some(id)
         }
         None => None,
     };
     let edge_id = match coin.edge {
         Some(edge) => {
-            let id = insert_coin_side(edge, db).await?;
+            let id = insert_coin_side(edge, &mut transaction).await?;
             Some(id)
         }
         None => None,
@@ -75,13 +77,15 @@ async fn insert_in_database(coin: CoinQuery, numista_id: u32, db: &mut SqliteCon
         reverse_id,
         edge_id
     )
-    .execute(db)
+    .execute(&mut *transaction)
     .await?;
+
+    transaction.commit().await?;
 
     Ok(())
 }
 
-async fn insert_coin_side(side: CoinQuerySide, db: &mut SqliteConnection) -> Result<i64, Box<dyn Error>> {
+async fn insert_coin_side(side: CoinQuerySide, transaction: &mut SqliteConnection) -> Result<i64, Box<dyn Error>> {
     let result = sqlx::query!(
         r#"
         INSERT INTO coin_images (image_url, thumbnail_url, lettering, description, copyright)
@@ -94,7 +98,7 @@ async fn insert_coin_side(side: CoinQuerySide, db: &mut SqliteConnection) -> Res
         side.description,
         side.picture_copyright
     )
-    .fetch_one(db)
+    .fetch_one(transaction)
     .await?;
 
     Ok(result.id)
