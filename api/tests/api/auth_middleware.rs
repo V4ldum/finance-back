@@ -6,14 +6,9 @@ use crate::helpers::spawn_app;
 async fn auth_middleware_returns_401_for_missing_api_key() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     // Act
-    let response = client
-        .get(format!("{}/trade_values", app.address))
-        .send()
-        .await
-        .expect("Failed to execute request");
+    let response = app.get_auth_middleware(None).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 401);
@@ -23,15 +18,9 @@ async fn auth_middleware_returns_401_for_missing_api_key() {
 async fn auth_middleware_returns_401_for_invalid_api_key() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     // Act
-    let response = client
-        .get(format!("{}/trade_values", app.address))
-        .header("X-API-KEY", "invalid")
-        .send()
-        .await
-        .expect("Failed to execute request");
+    let response = app.get_auth_middleware(Some("invalid")).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 401);

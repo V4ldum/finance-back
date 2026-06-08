@@ -15,6 +15,46 @@ pub struct TestApp {
     pub pool: SqlitePool,
 }
 
+impl TestApp {
+    pub async fn get_healthcheck(&self) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/health", self.address))
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_auth_middleware(&self, api_key: Option<&str>) -> reqwest::Response {
+        let mut client = reqwest::Client::new().get(format!("{}/trade_values", self.address));
+
+        if let Some(api_key) = api_key {
+            client = client.header("X-API-KEY", api_key);
+        }
+
+        client.send().await.expect("Failed to execute request")
+    }
+
+    pub async fn post_raw_asset(&self, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(format!("{}/assets/raw", self.address))
+            .header("X-API-KEY", "123")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn post_cash_asset(&self, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(format!("{}/assets/cash", self.address))
+            .header("X-API-KEY", "123")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+}
+
 // Ensure the telemetry stack is only initialized once
 static TRACING: LazyLock<()> = LazyLock::new(|| {
     let default_filter_level = LevelFilter::INFO;

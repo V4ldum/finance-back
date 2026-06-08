@@ -4,14 +4,9 @@ use crate::helpers::spawn_app;
 async fn health_check_works() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     // Act
-    let response = client
-        .get(format!("{}/health", app.address))
-        .send()
-        .await
-        .expect("Failed to execute request");
+    let response = app.get_healthcheck().await;
 
     // Assert
     assert!(response.status().is_success());

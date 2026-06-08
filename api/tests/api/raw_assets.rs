@@ -7,7 +7,6 @@ use crate::helpers::spawn_app;
 async fn create_raw_asset_returns_201_for_valid_data() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     let name = Sentence(1..3).fake::<String>();
     let possessed = (1..1000).fake::<i64>();
@@ -23,13 +22,7 @@ async fn create_raw_asset_returns_201_for_valid_data() {
         "composition": composition,
         "purity": purity,
     });
-    let response = client
-        .post(format!("{}/assets/raw", app.address))
-        .header("X-API-KEY", "123")
-        .json(&json)
-        .send()
-        .await
-        .expect("Failed to execute request");
+    let response = app.post_raw_asset(&json).await;
 
     // Assert
     assert_eq!(response.status().as_u16(), 201);
@@ -50,7 +43,6 @@ async fn create_raw_asset_returns_201_for_valid_data() {
 async fn create_raw_asset_returns_422_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     let name = Sentence(1..3).fake::<String>();
     let possessed = (1..1000).fake::<i64>();
@@ -108,13 +100,7 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
 
     for (invalid_body, error_message) in test_cases {
         // Act
-        let response = client
-            .post(format!("{}/assets/raw", app.address))
-            .header("X-API-KEY", "123")
-            .json(&invalid_body)
-            .send()
-            .await
-            .expect("Failed to execute request");
+        let response = app.post_raw_asset(&invalid_body).await;
 
         // Assert
         assert_eq!(
@@ -129,7 +115,6 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
 async fn create_raw_asset_returns_400_when_data_is_invalid() {
     // Arrange
     let app = spawn_app().await;
-    let client = reqwest::Client::new();
 
     let name = Sentence(1..3).fake::<String>();
     let possessed = (1..1000).fake::<i64>();
@@ -192,13 +177,7 @@ async fn create_raw_asset_returns_400_when_data_is_invalid() {
 
     for (invalid_body, error_message) in test_cases {
         // Act
-        let response = client
-            .post(format!("{}/assets/raw", app.address))
-            .header("X-API-KEY", "123")
-            .json(&invalid_body)
-            .send()
-            .await
-            .expect("Failed to execute request");
+        let response = app.post_raw_asset(&invalid_body).await;
 
         // Assert
         assert_eq!(
