@@ -34,7 +34,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let db = SqliteConnection::connect(&database_url).await?;
 
-    let params = ProgramParameters { coin_id, api_key, db };
+    let params = ProgramParameters {
+        numista_url: "https://api.numista.com/api/v3/types/".to_string(),
+        numista_api_key: api_key,
+        coin_id,
+        db,
+    };
 
     run(params).await
 }

@@ -96,7 +96,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                     parts
                         .iter()
                         .find(|&&e| e.ends_with('‰'))
-                        .expect("the char ‰ was expected"),
+                        .ok_or_else(|| serde::de::Error::custom("the char ‰ was expected"))?,
                 )
                 .to_owned();
                 purity.pop().expect("purity should not be empty"); // Remove the ‰ sign to parse it to int
@@ -105,7 +105,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                 let purity: f32 = purity
                     .replace(',', ".")
                     .parse()
-                    .expect("purity should be a unsigned int");
+                    .map_err(|_| serde::de::Error::custom("purity should be a unsigned int"))?;
                 // Purity bounded by 0..10000 so the cast can't overflow
                 #[allow(clippy::cast_possible_truncation)]
                 let purity = (purity * 10.0).round() as i32;
@@ -115,7 +115,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                     composition: match composition.as_str() {
                         "Or" => "GOLD",
                         "Argent" => "SILVER",
-                        _ => panic!("Unexpected composition"),
+                        _ => return Err(serde::de::Error::custom("Unexpected composition")),
                     }
                     .into(),
                     purity,
@@ -124,5 +124,100 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
         }
 
         deserializer.deserialize_map(Visitor)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{deserialize_date_to_string, CoinQueryComposition};
+    use claims::assert_err;
+
+    #[test]
+    fn coin_query_composition_parses_gold() {
+        let composition = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Or 999‰"}"#).unwrap();
+        assert_eq!(composition.composition, "GOLD");
+        assert_eq!(composition.purity, 9990);
+    }
+
+    #[test]
+    fn coin_query_composition_parses_silver() {
+        let composition = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Argent 925‰"}"#).unwrap();
+        assert_eq!(composition.composition, "SILVER");
+        assert_eq!(composition.purity, 9250);
+    }
+
+    #[test]
+    fn coin_query_composition_parses_purity_with_comma_as_decimal() {
+        let composition = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Or 999,9‰"}"#).unwrap();
+        assert_eq!(composition.purity, 9999);
+    }
+
+    #[test]
+    fn coin_query_composition_ignores_extra_parts_after_purity() {
+        let composition =
+            serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Argent 800‰ some extra text"}"#).unwrap();
+        assert_eq!(composition.composition, "SILVER");
+        assert_eq!(composition.purity, 8000);
+    }
+
+    #[test]
+    fn coin_query_composition_locates_purity_by_permille_suffix() {
+        let composition = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Or coin 916‰"}"#).unwrap();
+        assert_eq!(composition.composition, "GOLD");
+        assert_eq!(composition.purity, 9160);
+    }
+
+    #[test]
+    fn coin_query_composition_errors_when_parsing_missing_text_field() {
+        let result = serde_json::from_str::<CoinQueryComposition>(r#"{"other": "Or 999‰"}"#);
+        assert_err!(result);
+    }
+
+    #[test]
+    fn coin_query_composition_errors_when_parsing_text_with_a_single_part() {
+        let result = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Or"}"#);
+        assert_err!(result);
+    }
+
+    #[test]
+    fn coin_query_composition_errors_when_parsing_empty_text() {
+        let result = serde_json::from_str::<CoinQueryComposition>(r#"{"text": ""}"#);
+        assert_err!(result);
+    }
+
+    #[test]
+    fn coin_query_composition_errors_when_parsing_text_without_a_permille_sign() {
+        let result = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Or 999"}"#);
+        assert_err!(result);
+    }
+
+    #[test]
+    fn coin_query_composition_errors_when_parsing_unknown_composition() {
+        let result = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Platine 999‰"}"#);
+        assert_err!(result);
+    }
+
+    #[test]
+    fn coin_query_composition_errors_when_parsing_non_numeric_purity() {
+        let result = serde_json::from_str::<CoinQueryComposition>(r#"{"text": "Or abc‰"}"#);
+        assert_err!(result);
+    }
+
+    #[test]
+    fn deserialize_date_to_string_converts_date_to_number() {
+        let mut de = serde_json::Deserializer::from_str("1852");
+        assert_eq!(deserialize_date_to_string(&mut de).unwrap(), "1852");
+    }
+
+    #[test]
+    fn deserialize_date_to_string_errors_on_non_numeric_date() {
+        let mut de = serde_json::Deserializer::from_str("eighteen fifty two");
+        assert!(deserialize_date_to_string(&mut de).is_err());
+    }
+
+    #[test]
+    fn deserialize_date_to_string_errors_on_negative_date() {
+        let mut de = serde_json::Deserializer::from_str("-1852");
+        assert!(deserialize_date_to_string(&mut de).is_err());
     }
 }
