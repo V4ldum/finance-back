@@ -1,0 +1,92 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM coins",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "numista_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "weight",
+        "ordinal": 3,
+        "type_info": "Float"
+      },
+      {
+        "name": "size",
+        "ordinal": 4,
+        "type_info": "Float"
+      },
+      {
+        "name": "thickness",
+        "ordinal": 5,
+        "type_info": "Float"
+      },
+      {
+        "name": "min_year",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "max_year",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "composition",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "purity",
+        "ordinal": 9,
+        "type_info": "Integer"
+      },
+      {
+        "name": "obverse",
+        "ordinal": 10,
+        "type_info": "Integer"
+      },
+      {
+        "name": "reverse",
+        "ordinal": 11,
+        "type_info": "Integer"
+      },
+      {
+        "name": "edge",
+        "ordinal": 12,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "9dff3710c1e07d1900e6b59d974027a4e7d5b9f27c5d4fcc17b0719f0d0ad9e1"
+}
