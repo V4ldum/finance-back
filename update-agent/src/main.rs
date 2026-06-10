@@ -1,17 +1,17 @@
 use crate::database::Database;
-use crate::values::{currencies_values, precious_metals_values, stocks_values};
+use crate::domain::{currency_price, metal_price, stock_price};
 
 mod database;
-mod values;
+mod domain;
 
 #[tokio::main]
 async fn main() {
     // TODO re-query a certain amount of time in case of error
 
     // Query values from the interwebs
-    let gold_price = precious_metals_values::get_metal_price("AU").await;
-    let silver_price = precious_metals_values::get_metal_price("AG").await;
-    let sp500_price = stocks_values::get_sp500_price().await;
+    let gold_price = metal_price::get_metal_price("AU").await;
+    let silver_price = metal_price::get_metal_price("AG").await;
+    let sp500_price = stock_price::get_sp500_price().await;
 
     // Save them in local db
     let database = Database::build().await.expect("Failed to build the database");
@@ -42,7 +42,7 @@ async fn main() {
 
     match sp500_price {
         Ok(sp500_price) => {
-            let currencies_price = currencies_values::get_usd_to_eur_exchange_rate().await;
+            let currencies_price = currency_price::get_usd_to_eur_exchange_rate().await;
 
             match currencies_price {
                 Ok(currencies_price) => {

@@ -1,10 +1,32 @@
 use std::error::Error;
 
 use reqwest::Client;
+use serde::Deserialize;
 
-use currencies_price::EURUSDExchangeRate;
+#[derive(Debug, Deserialize)]
+pub struct EURUSDExchangeRate {
+    pub chart: EURUSDExchangeRateChart,
+}
 
-mod currencies_price;
+#[derive(Debug, Deserialize)]
+pub struct EURUSDExchangeRateChart {
+    pub result: Vec<EURUSDExchangeRateResult>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EURUSDExchangeRateResult {
+    pub indicators: EURUSDExchangeRateResultIndicator,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EURUSDExchangeRateResultIndicator {
+    pub quote: Vec<EURUSDExchangeRateQuote>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct EURUSDExchangeRateQuote {
+    pub close: Vec<Option<f64>>,
+}
 
 pub async fn get_usd_to_eur_exchange_rate() -> Result<EURUSDExchangeRate, Box<dyn Error>> {
     const USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1";

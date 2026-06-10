@@ -1,11 +1,11 @@
 use std::error::Error;
 
-use crate::coin_query::{CoinQuery, CoinQuerySide};
+use crate::domain::{CoinQuery, CoinQuerySide};
 use crate::program_parameters::ProgramParameters;
 use reqwest::Client;
 use sqlx::{Connection, SqliteConnection};
 
-mod coin_query;
+mod domain;
 pub mod program_parameters;
 
 pub async fn run(mut params: ProgramParameters) -> Result<(), Box<dyn Error>> {
