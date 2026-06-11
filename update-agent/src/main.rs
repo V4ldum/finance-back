@@ -1,24 +1,27 @@
 use crate::database::Database;
-use crate::domain::{currency_price, metal_price, stock_price};
+use crate::update_agent::UpdateAgent;
 
 mod database;
 mod domain;
+mod update_agent;
 
 #[tokio::main]
 async fn main() {
     // TODO re-query a certain amount of time in case of error
 
     // Query values from the interwebs
-    let gold_price = metal_price::get_metal_price("AU").await;
-    let silver_price = metal_price::get_metal_price("AG").await;
-    let sp500_price = stock_price::get_sp500_price().await;
+    let update_agent = UpdateAgent::new();
+
+    let gold = update_agent.get_gold_price().await;
+    let silver = update_agent.get_silver_price().await;
+    let sp500 = update_agent.get_sp500_price().await;
 
     // Save them in local db
     let database = Database::build().await.expect("Failed to build the database");
 
-    match gold_price {
-        Ok(gold_price) => {
-            let gold_result = database.update_value("Gold", gold_price.data.quote.result.bid).await;
+    match gold {
+        Ok(gold) => {
+            let gold_result = database.update_gold_price(gold.price()).await;
 
             if let Err(err) = gold_result {
                 eprintln!("An error occurred updating gold price : {err:?}");
@@ -27,11 +30,9 @@ async fn main() {
         Err(err) => eprintln!("An error occurred with Gold: {err:?}"),
     }
 
-    match silver_price {
-        Ok(silver_price) => {
-            let silver_result = database
-                .update_value("Silver", silver_price.data.quote.result.bid)
-                .await;
+    match silver {
+        Ok(silver) => {
+            let silver_result = database.update_silver_price(silver.price()).await;
 
             if let Err(err) = silver_result {
                 eprintln!("An error occurred updating silver price : {err:?}");
@@ -40,48 +41,17 @@ async fn main() {
         Err(err) => eprintln!("An error occurred with Silver: {err:?}"),
     }
 
-    match sp500_price {
-        Ok(sp500_price) => {
-            let currencies_price = currency_price::get_usd_to_eur_exchange_rate().await;
+    match sp500 {
+        Ok(sp500) => {
+            let usd_to_eur = update_agent.get_usd_to_eur_exchange_rate().await;
 
-            match currencies_price {
-                Ok(currencies_price) => {
-                    let close_value = sp500_price
-                        .chart
-                        .result
-                        .first()
-                        .expect("Failed to find SP500PriceResult")
-                        .indicators
-                        .quote
-                        .first()
-                        .expect("Failed to find SP500PriceResultIndicatorQuote")
-                        .close
-                        .iter()
-                        .rfind(|item| item.is_some())
-                        .expect("Failed to find a value in SP500PriceResultIndicatorQuote")
-                        .expect("We filtered out None");
-                    let change_rate = currencies_price
-                        .chart
-                        .result
-                        .first()
-                        .expect("Failed to find EURUSDExchangeRateResult")
-                        .indicators
-                        .quote
-                        .first()
-                        .expect("Failed to find EURUSDExchangeRateResultIndicatorQuote")
-                        .close
-                        .iter()
-                        .rfind(|item| item.is_some())
-                        .expect("Failed to find a value in EURUSDExchangeRateResultIndicatorQuote")
-                        .expect("There should be a value since we filtered all None");
+            match usd_to_eur {
+                Ok(usd_to_eur) => {
+                    let close = sp500.price().expect("Failed to find a close value");
+                    let exchange_rate = usd_to_eur.exchange_rate().expect("Failed to find exchange rate");
 
-                    let sp_result = database
-                        .update_value(
-                            "SP500",
-                            // EUR = USD / Rate, SP500 quote is in USD
-                            close_value / change_rate,
-                        )
-                        .await;
+                    // EUR = USD / Rate, SP500 quote is in USD
+                    let sp_result = database.update_sp500_price(close / exchange_rate).await;
                     if let Err(err) = sp_result {
                         eprintln!("An error occurred updating SP500 price : {err:?}");
                     }

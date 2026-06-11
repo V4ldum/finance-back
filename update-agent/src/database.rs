@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use anyhow::Result;
 use chrono::{NaiveDate, Utc};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::{Sqlite, SqlitePool};
@@ -9,7 +8,7 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn build() -> Result<Self, Box<dyn Error>> {
+    pub async fn build() -> Result<Self> {
         dotenvy::dotenv()?;
         let database_url = dotenvy::var("DATABASE_URL")?;
 
@@ -23,7 +22,19 @@ impl Database {
         Ok(Database { db })
     }
 
-    pub async fn update_value(&self, key: &str, price: f64) -> Result<(), Box<dyn Error>> {
+    pub async fn update_gold_price(&self, price: f64) -> Result<()> {
+        self.update_value("Gold", price).await
+    }
+
+    pub async fn update_silver_price(&self, price: f64) -> Result<()> {
+        self.update_value("Silver", price).await
+    }
+
+    pub async fn update_sp500_price(&self, price: f64) -> Result<()> {
+        self.update_value("SP500", price).await
+    }
+
+    async fn update_value(&self, key: &str, price: f64) -> Result<()> {
         let price = (price * 100.0).round() / 100.0; // Rounding price to 2 digits after the decimal point
 
         let date = Utc::now().to_rfc3339();
