@@ -38,7 +38,7 @@ impl EURUSDExchangeRate {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use approx::relative_eq;
     use claims::{assert_none, assert_some};
     use fake::Fake;

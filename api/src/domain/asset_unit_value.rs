@@ -20,7 +20,7 @@ impl AsRef<i64> for AssetUnitValue {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::domain::AssetUnitValue;
     use claims::{assert_err, assert_ok};
     use proptest::prelude::*;

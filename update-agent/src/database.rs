@@ -89,7 +89,7 @@ impl Database {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use approx::assert_relative_eq;
     use chrono::{NaiveDate, Utc};
     use claims::assert_ok;

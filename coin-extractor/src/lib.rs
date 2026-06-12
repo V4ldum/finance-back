@@ -102,7 +102,7 @@ async fn insert_coin_side(side: CoinQuerySide, transaction: &mut SqliteConnectio
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use approx::assert_relative_eq;
     use claims::assert_ok;
     use fake::{faker::lorem::en::Sentence, Fake};

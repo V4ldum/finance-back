@@ -48,7 +48,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use approx::assert_relative_eq;
     use claims::{assert_err, assert_ok};
     use fake::Fake;

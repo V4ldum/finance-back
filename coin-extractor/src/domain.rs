@@ -128,7 +128,7 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::{deserialize_date_to_string, CoinQueryComposition};
     use claims::assert_err;
 

@@ -20,7 +20,7 @@ impl AsRef<i64> for AssetPossessed {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::domain::AssetPossessed;
     use claims::{assert_err, assert_ok};
     use proptest::prelude::*;
