@@ -100,7 +100,7 @@ mod tests {
 
     async fn database() -> Database {
         Database::build(&format!(
-            "sqlite:file:memory-{}?mode=memory&cache=shared",
+            "sqlite:file:memdb-{}?mode=memory&cache=shared",
             Uuid::new_v4()
         ))
         .await
