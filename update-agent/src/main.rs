@@ -1,12 +1,13 @@
 use crate::database::Database;
 use crate::update_agent::UpdateAgent;
+use anyhow::Result;
 
 mod database;
 mod domain;
 mod update_agent;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     // TODO re-query a certain amount of time in case of error
 
     // Query values from the interwebs
@@ -17,7 +18,9 @@ async fn main() {
     let sp500 = update_agent.get_sp500_price().await;
 
     // Save them in local db
-    let database = Database::build().await.expect("Failed to build the database");
+    dotenvy::dotenv()?;
+    let database_url = dotenvy::var("DATABASE_URL")?;
+    let database = Database::build(&database_url).await?;
 
     match gold {
         Ok(gold) => {
@@ -61,4 +64,6 @@ async fn main() {
         }
         Err(err) => eprintln!("An error occurred with SP500: {err:?}"),
     }
+
+    Ok(())
 }
