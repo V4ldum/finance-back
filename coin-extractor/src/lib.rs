@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::time::Duration;
 
 use crate::domain::{CoinQuery, CoinQuerySide};
 use crate::program_parameters::ProgramParameters;
@@ -13,6 +14,7 @@ pub async fn run(mut params: ProgramParameters) -> Result<(), Box<dyn Error>> {
     let response = Client::new()
         .get(format!("{}{}?lang=fr", params.numista_url, params.coin_id))
         .header("Numista-API-Key", params.numista_api_key.expose_secret())
+        .timeout(Duration::from_secs(1))
         .send()
         .await?;
 

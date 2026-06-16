@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use chrono::Utc;
 use reqwest::Client;
@@ -37,6 +39,7 @@ impl UpdateAgent {
     pub async fn get_sp500_price(&self) -> Result<SP500Price> {
         let result = Client::builder()
             .user_agent(USER_AGENT)
+            .timeout(Duration::from_secs(1))
             .build()?
             .get(&self.sp500)
             .send()
@@ -57,7 +60,12 @@ impl UpdateAgent {
             },
         });
 
-        let result = Client::new().post(&self.metal).json(&json_body).send().await?;
+        let result = Client::new()
+            .post(&self.metal)
+            .json(&json_body)
+            .timeout(Duration::from_secs(1))
+            .send()
+            .await?;
 
         serde_json::from_str::<MetalPrice>(&result.text().await?).map_err(|err| err.into())
     }
@@ -65,6 +73,7 @@ impl UpdateAgent {
     pub async fn get_usd_to_eur_exchange_rate(&self) -> Result<EURUSDExchangeRate> {
         let result = Client::builder()
             .user_agent(USER_AGENT)
+            .timeout(Duration::from_secs(1))
             .build()?
             .get(&self.exchange_rate)
             .send()
