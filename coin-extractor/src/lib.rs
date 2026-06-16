@@ -3,6 +3,7 @@ use std::error::Error;
 use crate::domain::{CoinQuery, CoinQuerySide};
 use crate::program_parameters::ProgramParameters;
 use reqwest::Client;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, SqliteConnection};
 
 mod domain;
@@ -11,7 +12,7 @@ pub mod program_parameters;
 pub async fn run(mut params: ProgramParameters) -> Result<(), Box<dyn Error>> {
     let response = Client::new()
         .get(format!("{}{}?lang=fr", params.numista_url, params.coin_id))
-        .header("Numista-API-Key", params.numista_api_key)
+        .header("Numista-API-Key", params.numista_api_key.expose_secret())
         .send()
         .await?;
 
@@ -106,6 +107,7 @@ mod tests {
     use approx::assert_relative_eq;
     use claims::assert_ok;
     use fake::{faker::lorem::en::Sentence, Fake};
+    use secrecy::{ExposeSecret, SecretString};
     use sqlx::{Connection, SqliteConnection};
     use uuid::Uuid;
     use wiremock::{matchers::method, Mock, MockServer, ResponseTemplate};
@@ -133,7 +135,7 @@ mod tests {
 
         let params = ProgramParameters {
             numista_url: format!("http://{url}/"),
-            numista_api_key: (1000..9999).fake::<u32>().to_string(),
+            numista_api_key: SecretString::from((1000..9999).fake::<u32>().to_string()),
             coin_id: (u32::MIN..u32::MAX).fake(),
             db: SqliteConnection::connect(&db_url)
                 .await
@@ -192,7 +194,7 @@ mod tests {
             .expect("Failed to retrieve received requests");
         let headers = &requests[0].headers;
 
-        assert_eq!(headers["Numista-API-Key"], numista_api_key);
+        assert_eq!(headers["Numista-API-Key"], numista_api_key.expose_secret());
         assert_ok!(result);
     }
 

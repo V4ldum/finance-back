@@ -5,13 +5,14 @@ use std::process::exit;
 use coin_extractor::program_parameters::ProgramParameters;
 use coin_extractor::run;
 
+use secrecy::SecretString;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::{Connection, Sqlite, SqliteConnection};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenvy::dotenv()?;
-    let api_key = dotenvy::var("API_KEY")?;
+    let api_key = SecretString::from(dotenvy::var("API_KEY")?);
     let database_url = dotenvy::var("DATABASE_URL")?;
 
     let args: Vec<String> = env::args().collect();
