@@ -26,3 +26,4 @@ need_stdout = true
 allow_warnings = true
 background = false # For long-running applications (server)
 on_change_strategy = "kill_then_restart"
+scroll_anchor = "last"
