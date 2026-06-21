@@ -7,15 +7,6 @@ command = ["cargo", "clippy", "-p", "api"]
 need_stdout = false
 on_success = "job:run"
 
-# Clippy Pedantic
-[jobs.pedantic]
-command = [
-	"cargo", "clippy",
-	"--",
-	"-W", "clippy::pedantic",
-]
-need_stdout = false
-
 # Tests
 [jobs.test]
 command = ["cargo", "test"]
