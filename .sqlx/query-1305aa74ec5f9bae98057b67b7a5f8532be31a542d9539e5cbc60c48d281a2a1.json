@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DROP TABLE coin_assets",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "1305aa74ec5f9bae98057b67b7a5f8532be31a542d9539e5cbc60c48d281a2a1"
+}

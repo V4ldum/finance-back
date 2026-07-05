@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DROP TABLE cash_assets",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "2fa06578a541d7bfe6983d6be4f69c1f9dc9480a089497eb6622293f08ee1aca"
+}

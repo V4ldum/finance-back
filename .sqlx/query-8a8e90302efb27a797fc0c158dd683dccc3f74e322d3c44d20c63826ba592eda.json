@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DROP TABLE raw_assets",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "8a8e90302efb27a797fc0c158dd683dccc3f74e322d3c44d20c63826ba592eda"
+}

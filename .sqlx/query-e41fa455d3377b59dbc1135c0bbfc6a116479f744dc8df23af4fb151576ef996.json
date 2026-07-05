@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DROP TABLE prices",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "e41fa455d3377b59dbc1135c0bbfc6a116479f744dc8df23af4fb151576ef996"
+}

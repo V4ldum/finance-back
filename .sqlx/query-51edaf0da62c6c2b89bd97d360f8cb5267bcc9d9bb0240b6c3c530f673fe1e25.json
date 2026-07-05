@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DROP TABLE coins",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "51edaf0da62c6c2b89bd97d360f8cb5267bcc9d9bb0240b6c3c530f673fe1e25"
+}

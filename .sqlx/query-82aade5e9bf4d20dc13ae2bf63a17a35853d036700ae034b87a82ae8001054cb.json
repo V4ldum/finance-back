@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM raw_assets WHERE user_id = $1 AND id = $2",
+  "query": "SELECT * FROM raw_assets WHERE id = $1 AND user_id = $2",
   "describe": {
     "columns": [
       {
@@ -52,5 +52,5 @@
       false
     ]
   },
-  "hash": "e2a1b165ef5370cef78c528c23332db391a36776f907fe79f63115710e5d792d"
+  "hash": "82aade5e9bf4d20dc13ae2bf63a17a35853d036700ae034b87a82ae8001054cb"
 }

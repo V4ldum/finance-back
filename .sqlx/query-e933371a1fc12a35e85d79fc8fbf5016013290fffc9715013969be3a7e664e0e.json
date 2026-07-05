@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "ALTER TABLE users RENAME COLUMN api_key TO dropped",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "e933371a1fc12a35e85d79fc8fbf5016013290fffc9715013969be3a7e664e0e"
+}
