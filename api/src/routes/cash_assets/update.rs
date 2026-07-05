@@ -1,0 +1,146 @@
+use std::fmt::Debug;
+
+use anyhow::{Context, Result};
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use axum::{Extension, Json};
+use serde::Deserialize;
+use sqlx::SqlitePool;
+
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, UpdateCashAsset};
+use crate::middleware::auth::AuthenticatedUserId;
+use crate::model::cash_asset::CashAsset;
+use crate::routes::cash_assets::query_cash_asset;
+use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+
+#[derive(Deserialize)]
+pub(crate) struct UpdateCashAssetRequest {
+    name: Option<String>,
+    possessed: Option<i64>,
+    unit_value: Option<i64>,
+}
+
+impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
+    type Error = String;
+
+    fn try_from(value: UpdateCashAssetRequest) -> Result<Self, String> {
+        let name = value.name.map(AssetName::parse).transpose()?;
+        let possessed = value.possessed.map(AssetPossessed::parse).transpose()?;
+        let unit_value = value.unit_value.map(AssetUnitValue::parse).transpose()?;
+
+        Ok(Self {
+            name,
+            possessed,
+            unit_value,
+        })
+    }
+}
+
+#[tracing::instrument(
+    skip_all,
+    fields(
+        id = %id,
+        user_id = %user_id,
+        name = ?request.name,
+        possessed = ?request.possessed,
+        unit_value = ?request.unit_value,
+    ),
+    err(Debug)
+)]
+pub(crate) async fn update_cash_asset(
+    Path(id): Path<i64>,
+    State(pool): State<SqlitePool>,
+    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Json(request): Json<UpdateCashAssetRequest>,
+) -> Result<StatusCode, UpdateCashAssetError> {
+    let update_cash_asset: UpdateCashAsset = request.try_into().map_err(UpdateCashAssetError::ValidationError)?;
+
+    let asset = query_cash_asset(&pool, id, user_id)
+        .await
+        .context("Failed to fetch cash asset")?
+        .ok_or(UpdateCashAssetError::InvalidId)?;
+
+    // Only write if a provided field actually differs from the stored value
+    if has_changes(&update_cash_asset, &asset) {
+        update_cash_asset_(&pool, user_id, id, &update_cash_asset)
+            .await
+            .context("Failed to update cash asset")?;
+    }
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+fn has_changes(update: &UpdateCashAsset, current: &CashAsset) -> bool {
+    update.name.as_ref().is_some_and(|v| v.as_ref() != current.name)
+        || update.possessed.as_ref().is_some_and(|v| *v.as_ref() != current.possessed)
+        || update.unit_value.as_ref().is_some_and(|v| *v.as_ref() != current.unit_value)
+}
+
+#[tracing::instrument(skip_all)]
+async fn update_cash_asset_(
+    pool: &SqlitePool,
+    user_id: i64,
+    asset_id: i64,
+    cash_asset: &UpdateCashAsset,
+) -> Result<()> {
+    let cash_asset_name = cash_asset.name.as_ref().map(|n| n.as_ref());
+    let cash_asset_possessed = cash_asset.possessed.as_ref().map(|p| p.as_ref());
+    let cash_asset_unit_value = cash_asset.unit_value.as_ref().map(|v| v.as_ref());
+
+    // COALESCE writes the first non-null argument in the pair
+    sqlx::query!(
+        r#"
+            UPDATE cash_assets
+            SET name = COALESCE($1, name),
+                possessed = COALESCE($2, possessed),
+                unit_value = COALESCE($3, unit_value)
+            WHERE id = $4 AND user_id = $5
+        "#,
+        cash_asset_name,
+        cash_asset_possessed,
+        cash_asset_unit_value,
+        asset_id,
+        user_id,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+#[derive(thiserror::Error)]
+pub(crate) enum UpdateCashAssetError {
+    #[error("The provided id is invalid")]
+    InvalidId,
+    #[error("{0}")]
+    ValidationError(String),
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
+impl ApiErrorResponse for UpdateCashAssetError {
+    fn status(&self) -> StatusCode {
+        match self {
+            UpdateCashAssetError::InvalidId => StatusCode::NOT_FOUND,
+            UpdateCashAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
+            UpdateCashAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn reason(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl IntoResponse for UpdateCashAssetError {
+    fn into_response(self) -> Response {
+        response(&self)
+    }
+}
+
+impl Debug for UpdateCashAssetError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        error_chain_fmt(self, f)
+    }
+}

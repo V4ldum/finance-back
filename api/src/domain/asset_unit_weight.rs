@@ -1,12 +1,12 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct AssetUnitWeight(i64);
 
 impl AssetUnitWeight {
-    pub(crate) fn parse(unit_weight: i64) -> Result<Self> {
+    pub(crate) fn parse(unit_weight: i64) -> Result<Self, String> {
         if unit_weight < 0 {
-            return Err(anyhow!("unit_weight must be >= 0"));
+            return Err("unit_weight must be >= 0".to_string());
         }
 
         Ok(Self(unit_weight))

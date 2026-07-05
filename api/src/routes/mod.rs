@@ -1,16 +1,6 @@
 use std::time::Duration;
 
-use self::cash_assets::{create_cash_asset, get_cash_asset};
-use self::coin_assets::{create_coin_asset, get_coin_asset};
-use self::raw_assets::{create_raw_asset, get_raw_asset};
-use crate::middleware::check_api_key::check_api_key;
-use crate::routes::assets::get_assets;
-use crate::routes::cash_assets::{delete_cash_asset, update_cash_asset};
-use crate::routes::coin_assets::{delete_coin_asset, update_coin_asset};
-use crate::routes::coins::{get_coin, search_coin};
-use crate::routes::health_check::health_check;
-use crate::routes::raw_assets::{delete_raw_asset, update_raw_asset};
-use crate::routes::trade_values::{get_all_trade_values, get_one_trade_value};
+use crate::middleware::auth::check_api_key;
 use axum::http::{Method, Request, Response};
 use axum::routing::{get, post};
 use axum::{Router, middleware};
@@ -26,8 +16,8 @@ mod cash_assets;
 mod coin_assets;
 mod coins;
 mod health_check;
+mod prices;
 mod raw_assets;
-mod trade_values;
 
 pub(crate) fn router(pool: SqlitePool) -> Router {
     // CORS Middleware
@@ -47,38 +37,45 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
         })
         .on_response(|response: &Response<_>, latency: Duration, _span: &Span| {
             tracing::info!(
-                latency_ms = latency.as_millis() as u64,
+                latency_ms = latency.as_millis(),
                 status = response.status().as_u16(),
                 "finished processing request"
             );
-        });
+        })
+        .on_failure(());
 
     Router::new()
-        .route("/trade_values", get(get_all_trade_values))
-        .route("/trade_values/{query}", get(get_one_trade_value))
-        .route("/coins/search", get(search_coin))
-        .route("/coins/{id}", get(get_coin))
-        .route("/assets", get(get_assets))
-        .route("/assets/coin", post(create_coin_asset))
+        .route("/prices", get(prices::get_all_prices))
+        .route("/prices/{query}", get(prices::get_one_price))
+        .route("/coins/search", get(coins::search_coins))
+        .route("/coins/{id}", get(coins::get_coin))
+        .route("/assets", get(assets::get_assets))
+        .route("/assets/coin", post(coin_assets::create_coin_asset))
         .route(
             "/assets/coin/{id}",
-            get(get_coin_asset).patch(update_coin_asset).delete(delete_coin_asset),
+            get(coin_assets::get_coin_asset)
+                .patch(coin_assets::update_coin_asset)
+                .delete(coin_assets::delete_coin_asset),
         )
-        .route("/assets/raw", post(create_raw_asset))
+        .route("/assets/raw", post(raw_assets::create_raw_asset))
         .route(
             "/assets/raw/{id}",
-            get(get_raw_asset).patch(update_raw_asset).delete(delete_raw_asset),
+            get(raw_assets::get_raw_asset)
+                .patch(raw_assets::update_raw_asset)
+                .delete(raw_assets::delete_raw_asset),
         )
-        .route("/assets/cash", post(create_cash_asset))
+        .route("/assets/cash", post(cash_assets::create_cash_asset))
         .route(
             "/assets/cash/{id}",
-            get(get_cash_asset).patch(update_cash_asset).delete(delete_cash_asset),
+            get(cash_assets::get_cash_asset)
+                .patch(cash_assets::update_cash_asset)
+                .delete(cash_assets::delete_cash_asset),
         )
         // Anything above needs authentication
         .route_layer(from_fn_with_state(pool.clone(), check_api_key))
         // Anything above can use the state
         .with_state(pool)
-        .route("/health", get(health_check))
+        .route("/health", get(health_check::health_check))
         .layer(cors)
         .layer(trace_layer)
 }

@@ -10,7 +10,6 @@ use tracing::level_filters::LevelFilter;
 async fn main() -> Result<()> {
     // Setup telemetry
     let subscriber = get_subscriber(SubscriberConfig {
-        service: "finance".into(),
         json_filter: LevelFilter::INFO,
         json_sink: std::io::stdout,
         text_filter: LevelFilter::WARN,

@@ -26,7 +26,7 @@ impl TestApp {
     }
 
     pub async fn get_auth_middleware(&self, api_key: Option<&str>) -> reqwest::Response {
-        let mut client = reqwest::Client::new().get(format!("{}/trade_values", self.address));
+        let mut client = reqwest::Client::new().get(format!("{}/assets", self.address));
 
         if let Some(api_key) = api_key {
             client = client.header("X-API-KEY", api_key);
@@ -45,6 +45,34 @@ impl TestApp {
             .expect("Failed to execute request")
     }
 
+    pub async fn delete_raw_asset(&self, id: i64) -> reqwest::Response {
+        reqwest::Client::new()
+            .delete(format!("{}/assets/raw/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn patch_raw_asset(&self, id: i64, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .patch(format!("{}/assets/raw/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_raw_asset(&self, id: i64) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/assets/raw/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
     pub async fn post_cash_asset(&self, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .post(format!("{}/assets/cash", self.address))
@@ -54,10 +82,126 @@ impl TestApp {
             .await
             .expect("Failed to execute request")
     }
+
+    pub async fn delete_cash_asset(&self, id: i64) -> reqwest::Response {
+        reqwest::Client::new()
+            .delete(format!("{}/assets/cash/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn patch_cash_asset(&self, id: i64, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .patch(format!("{}/assets/cash/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_cash_asset(&self, id: i64) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/assets/cash/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn post_coin_asset(&self, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(format!("{}/assets/coin", self.address))
+            .header("X-API-KEY", "123")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn delete_coin_asset(&self, id: i64) -> reqwest::Response {
+        reqwest::Client::new()
+            .delete(format!("{}/assets/coin/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn patch_coin_asset(&self, id: i64, body: &serde_json::Value) -> reqwest::Response {
+        reqwest::Client::new()
+            .patch(format!("{}/assets/coin/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .json(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_coin_asset(&self, id: i64) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/assets/coin/{}", self.address, id))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_price(&self, name: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/prices/{}", self.address, name))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_prices(&self) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/prices", self.address))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_assets(&self) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/assets", self.address))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_coin(&self) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/coins/1", self.address))
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn search_coins(&self, query: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/coins/search", self.address))
+            .query(&[("q", query)])
+            .header("X-API-KEY", "123")
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
 }
 
 pub fn name() -> String {
     Sentence(1..3).fake()
+}
+
+pub fn fake_id() -> i64 {
+    (1..1000).fake()
 }
 
 pub fn possessed() -> i64 {
@@ -83,12 +227,10 @@ pub fn purity() -> i64 {
 // Ensure the telemetry stack is only initialized once
 static TRACING: LazyLock<()> = LazyLock::new(|| {
     let default_filter_level = LevelFilter::INFO;
-    let subscriber_name = "test".to_string();
 
     // If the environment variable TEST_LOG is set, output tracing to stdout, otherwise don't output it
     if std::env::var("TEST_LOG").is_ok() {
         let subscriber = get_subscriber(SubscriberConfig {
-            service: subscriber_name,
             json_filter: default_filter_level,
             json_sink: std::io::sink,
             text_filter: default_filter_level,
@@ -97,14 +239,13 @@ static TRACING: LazyLock<()> = LazyLock::new(|| {
         init_subscriber(subscriber);
     } else {
         let subscriber = get_subscriber(SubscriberConfig {
-            service: subscriber_name,
             json_filter: default_filter_level,
             json_sink: std::io::sink,
             text_filter: default_filter_level,
             text_sink: std::io::sink,
         });
         init_subscriber(subscriber);
-    };
+    }
 });
 
 // Build the SQLite extension and return the absolute path to the resulting library.
@@ -145,6 +286,26 @@ async fn configure_database(pool: &SqlitePool) {
         .execute(pool)
         .await
         .expect("Failed to insert user into database");
+
+    // Insert fake prices into the database
+    let gold = (2000..5000).fake::<i64>();
+    let silver = (50..100).fake::<i64>();
+    let sp = (5000..9000).fake::<i64>();
+    sqlx::query!(
+        r#"
+        INSERT OR IGNORE INTO prices
+        VALUES ('Gold', $1, $4),
+               ('Silver', $2, $4),
+               ('SP500', $3, $4)
+        "#,
+        gold,
+        silver,
+        sp,
+        "2026-01-01",
+    )
+    .execute(pool)
+    .await
+    .expect("Failed to insert user into database");
 }
 
 pub async fn spawn_app() -> TestApp {

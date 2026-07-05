@@ -1,12 +1,12 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct AssetPurity(i64);
 
 impl AssetPurity {
-    pub(crate) fn parse(purity: i64) -> Result<Self> {
+    pub(crate) fn parse(purity: i64) -> Result<Self, String> {
         if !(1..=9999).contains(&purity) {
-            return Err(anyhow!("purity must be between 1 and 9999"));
+            return Err("purity must be between 1 and 9999".to_string());
         }
 
         Ok(Self(purity))

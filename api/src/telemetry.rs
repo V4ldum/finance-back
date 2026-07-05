@@ -14,11 +14,11 @@ use tracing::level_filters::LevelFilter;
 use tracing::{Subscriber, subscriber::set_global_default};
 use tracing_log::LogTracer;
 use tracing_subscriber::Layer;
+use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::ChronoUtc;
 use tracing_subscriber::{Registry, fmt::MakeWriter, layer::SubscriberExt};
 
 pub struct SubscriberConfig<Sink1, Sink2> {
-    pub service: String,
     pub json_filter: LevelFilter,
     pub json_sink: Sink1,
     pub text_filter: LevelFilter,
@@ -27,11 +27,10 @@ pub struct SubscriberConfig<Sink1, Sink2> {
 
 pub fn get_subscriber<Sink1, Sink2>(config: SubscriberConfig<Sink1, Sink2>) -> impl Subscriber + Send + Sync
 where
-    Sink1: for<'a> MakeWriter<'a> + Send + Sync + 'static,
+    Sink1: for<'a> MakeWriter<'a> + Clone + Send + Sync + 'static,
     Sink2: for<'a> MakeWriter<'a> + Send + Sync + 'static,
 {
     let SubscriberConfig {
-        service,
         json_filter,
         json_sink,
         text_filter,
@@ -39,17 +38,17 @@ where
     } = config;
 
     // Json Layer
-    let mut json_formatting_layer = json_subscriber::JsonLayer::new(json_sink);
-    json_formatting_layer
-        .with_line_number("line")
-        .with_file("file")
-        .with_target("target")
-        .with_flattened_event()
-        .with_timer("time", ChronoUtc::rfc_3339())
-        .with_level("level")
-        .with_top_level_flattened_span_list()
-        .add_static_field("service", service.into());
-    let json_formatting_layer = json_formatting_layer.with_filter(json_filter);
+    let json_formatting_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .flatten_event(true)
+        .with_current_span(true)
+        .with_span_list(true)
+        .with_timer(ChronoUtc::rfc_3339())
+        .with_target(true)
+        .with_level(true)
+        .with_span_events(FmtSpan::CLOSE)
+        .with_writer(json_sink)
+        .with_filter(json_filter);
 
     // Text Layer
     let text_formatting_layer = tracing_subscriber::fmt::layer()

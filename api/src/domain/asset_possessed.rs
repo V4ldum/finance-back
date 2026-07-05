@@ -1,12 +1,12 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct AssetPossessed(i64);
 
 impl AssetPossessed {
-    pub(crate) fn parse(possessed: i64) -> Result<Self> {
+    pub(crate) fn parse(possessed: i64) -> Result<Self, String> {
         if possessed < 1 {
-            return Err(anyhow!("possessed must be >= 1"));
+            return Err("possessed must be >= 1".to_string());
         }
 
         Ok(Self(possessed))

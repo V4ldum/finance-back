@@ -1,11 +1,11 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Debug)]
 pub(crate) struct AssetName(String);
 
 impl AssetName {
-    pub(crate) fn parse(name: String) -> Result<Self> {
+    pub(crate) fn parse(name: String) -> Result<Self, String> {
         let is_empty_or_whitespace = name.trim().is_empty();
         let is_too_long = name.graphemes(true).count() > 256;
 
@@ -13,7 +13,7 @@ impl AssetName {
         let contains_forbidden_characters = name.chars().any(|c| forbidden_characters.contains(&c));
 
         if is_empty_or_whitespace || is_too_long || contains_forbidden_characters {
-            return Err(anyhow!("Invalid asset name: '{}'", name));
+            return Err(format!("Invalid asset name: '{name}'"));
         }
 
         Ok(Self(name))
@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn an_empty_string_is_rejected() {
-        let name = "".to_string();
+        let name = String::new();
         assert_err!(AssetName::parse(name));
     }
 

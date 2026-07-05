@@ -1,12 +1,12 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct AssetUnitValue(i64);
 
 impl AssetUnitValue {
-    pub(crate) fn parse(unit_value: i64) -> Result<Self> {
+    pub(crate) fn parse(unit_value: i64) -> Result<Self, String> {
         if unit_value < 0 {
-            return Err(anyhow!("unit_value must be >= 0"));
+            return Err("unit_value must be >= 0".to_string());
         }
 
         Ok(Self(unit_value))

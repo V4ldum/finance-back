@@ -1,53 +1,32 @@
+use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
 use crate::model::coin::Coin;
 use crate::model::coin_image::CoinImage;
-use crate::utils::api_error::APIError;
 use crate::utils::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
 
-pub(crate) async fn convert_coin_model_to_coin_response(
-    coin: Coin,
-    pool: &SqlitePool,
-) -> Result<CoinDataDto, APIError> {
+pub(crate) async fn convert_coin_model_to_coin_response(coin: Coin, pool: &SqlitePool) -> Result<CoinDataDto> {
     let obverse = if let Some(obverse) = coin.obverse {
-        match sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", obverse)
+        sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", obverse)
             .fetch_optional(pool)
             .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                tracing::error!("Failed to execute query: {e:?}");
-                return Err(APIError::database_error());
-            }
-        }
+            .context("Failed to fetch obverse")?
     } else {
         None
     };
     let reverse = if let Some(reverse) = coin.reverse {
-        match sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", reverse)
+        sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", reverse)
             .fetch_optional(pool)
             .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                tracing::error!("Failed to execute query: {e:?}");
-                return Err(APIError::database_error());
-            }
-        }
+            .context("Failed to fetch reverse")?
     } else {
         None
     };
     let edge = if let Some(edge) = coin.edge {
-        match sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", edge)
+        sqlx::query_as!(CoinImage, "SELECT * FROM coin_images WHERE id = $1", edge)
             .fetch_optional(pool)
             .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                tracing::error!("Failed to execute query: {e:?}");
-                return Err(APIError::database_error());
-            }
-        }
+            .context("Failed to fetch edge")?
     } else {
         None
     };

@@ -1,16 +1,16 @@
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Debug)]
 pub(crate) struct CoinSearchQuery(String);
 
 impl CoinSearchQuery {
-    pub(crate) fn parse(query: String) -> Result<Self> {
+    pub(crate) fn parse(query: String) -> Result<Self, String> {
         let is_empty_or_whitespace = query.trim().is_empty();
         let is_too_long = query.graphemes(true).count() > 256;
 
         if is_empty_or_whitespace || is_too_long {
-            return Err(anyhow!("Invalid search query: '{}'", query));
+            return Err(format!("Invalid search query: '{query}'"));
         }
 
         Ok(Self(query))
@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn an_empty_string_is_rejected() {
-        let query = "".to_string();
+        let query = String::new();
         assert_err!(CoinSearchQuery::parse(query));
     }
 
