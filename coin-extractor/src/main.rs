@@ -1,19 +1,19 @@
 use std::env;
-use std::error::Error;
 use std::process::exit;
 
 use coin_extractor::program_parameters::ProgramParameters;
 use coin_extractor::run;
 
+use anyhow::{Context, Result};
 use secrecy::SecretString;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::{Connection, Sqlite, SqliteConnection};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     dotenvy::dotenv()?;
-    let api_key = SecretString::from(dotenvy::var("API_KEY")?);
-    let database_url = dotenvy::var("DATABASE_URL")?;
+    let api_key = SecretString::from(dotenvy::var("API_KEY").context("API_KEY not set")?);
+    let database_url = dotenvy::var("DATABASE_URL").context("DATABASE_URL not set")?;
 
     let args: Vec<String> = env::args().collect();
 
@@ -42,5 +42,5 @@ async fn main() -> Result<(), Box<dyn Error>> {
         db,
     };
 
-    run(params).await
+    run(params).await.context("Failed to run")
 }

@@ -1,6 +1,6 @@
 use crate::database::Database;
 use crate::update_agent::UpdateAgent;
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 mod database;
 mod domain;
@@ -18,9 +18,11 @@ async fn main() -> Result<()> {
     let sp500 = update_agent.get_sp500_price().await;
 
     // Save them in local db
-    dotenvy::dotenv()?;
-    let database_url = dotenvy::var("DATABASE_URL")?;
-    let database = Database::build(&database_url).await?;
+    dotenvy::dotenv().context("Failed to load .env file")?;
+    let database_url = dotenvy::var("DATABASE_URL").context("DATABASE_URL not set")?;
+    let database = Database::build(&database_url)
+        .await
+        .context("Failed to build database")?;
 
     match gold {
         Ok(gold) => {

@@ -1,8 +1,8 @@
-use std::error::Error;
 use std::time::Duration;
 
 use crate::domain::{CoinQuery, CoinQuerySide};
 use crate::program_parameters::ProgramParameters;
+use anyhow::{Context, Result};
 use reqwest::Client;
 use secrecy::ExposeSecret;
 use sqlx::{Connection, SqliteConnection};
@@ -10,50 +10,59 @@ use sqlx::{Connection, SqliteConnection};
 mod domain;
 pub mod program_parameters;
 
-pub async fn run(mut params: ProgramParameters) -> Result<(), Box<dyn Error>> {
+pub async fn run(mut params: ProgramParameters) -> Result<()> {
     let response = Client::new()
         .get(format!("{}{}?lang=fr", params.numista_url, params.coin_id))
         .header("Numista-API-Key", params.numista_api_key.expose_secret())
         .timeout(Duration::from_secs(1))
         .send()
-        .await?;
+        .await
+        .context("Failed to fetch coin data from numista API")?;
 
-    let coin = serde_json::from_str::<CoinQuery>(&response.text().await?)?;
+    let coin = serde_json::from_str::<CoinQuery>(&response.text().await?).context("Failed to parse coin data")?;
 
     assert!(coin.watermark.is_none(), "Watermark found");
 
-    insert_in_database(coin, params.coin_id, &mut params.db).await?;
+    insert_in_database(coin, params.coin_id, &mut params.db)
+        .await
+        .context("Failed to insert coin data into database")?;
 
     Ok(())
 }
 
-async fn insert_in_database(coin: CoinQuery, numista_id: u32, db: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
+async fn insert_in_database(coin: CoinQuery, numista_id: u32, db: &mut SqliteConnection) -> Result<()> {
     let mut transaction = db.begin().await?;
 
     let obverse_id = match coin.obverse {
         Some(obverse) => {
-            let id = insert_coin_side(obverse, &mut transaction).await?;
+            let id = insert_coin_side(obverse, &mut transaction)
+                .await
+                .context("Failed to insert obverse")?;
             Some(id)
         }
         None => None,
     };
     let reverse_id = match coin.reverse {
         Some(reverse) => {
-            let id = insert_coin_side(reverse, &mut transaction).await?;
+            let id = insert_coin_side(reverse, &mut transaction)
+                .await
+                .context("Failed to insert reverse")?;
             Some(id)
         }
         None => None,
     };
     let edge_id = match coin.edge {
         Some(edge) => {
-            let id = insert_coin_side(edge, &mut transaction).await?;
+            let id = insert_coin_side(edge, &mut transaction)
+                .await
+                .context("Failed to insert edge")?;
             Some(id)
         }
         None => None,
     };
     // let watermark_id = match coin.watermark {
     //     Some(watermark) => {
-    //         let model = insert_coin_side(watermark, &db).await?;
+    //         let model = insert_coin_side(watermark, &db).await.context("Failed to insert watermark")?;
     //         Some(id)
     //     },
     //     None => None,
@@ -78,14 +87,15 @@ async fn insert_in_database(coin: CoinQuery, numista_id: u32, db: &mut SqliteCon
         edge_id
     )
     .execute(&mut *transaction)
-    .await?;
+    .await
+    .context("Failed to insert coin data")?;
 
-    transaction.commit().await?;
+    transaction.commit().await.context("Failed to commit transaction")?;
 
     Ok(())
 }
 
-async fn insert_coin_side(side: CoinQuerySide, transaction: &mut SqliteConnection) -> Result<i64, Box<dyn Error>> {
+async fn insert_coin_side(side: CoinQuerySide, transaction: &mut SqliteConnection) -> Result<i64> {
     let result = sqlx::query!(
         r#"
         INSERT INTO coin_images (image_url, thumbnail_url, lettering, description, copyright)
@@ -99,7 +109,8 @@ async fn insert_coin_side(side: CoinQuerySide, transaction: &mut SqliteConnectio
         side.picture_copyright
     )
     .fetch_one(transaction)
-    .await?;
+    .await
+    .context("Failed to insert coin side")?;
 
     Ok(result.id)
 }

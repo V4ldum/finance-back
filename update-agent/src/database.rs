@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use chrono::{NaiveDate, Utc};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::{Sqlite, SqlitePool};
@@ -17,22 +17,33 @@ impl Database {
             bail!("Database not found")
         }
 
-        let db = SqlitePool::connect(database_url).await?;
-        sqlx::migrate!("../api/migrations").run(&db).await?;
+        let db = SqlitePool::connect(database_url)
+            .await
+            .context("Failed to connect to database")?;
+        sqlx::migrate!("../api/migrations")
+            .run(&db)
+            .await
+            .context("Failed to run migrations")?;
 
         Ok(Database { db })
     }
 
     pub async fn update_gold_price(&self, price: f64) -> Result<()> {
-        self.update_value(GOLD_PRICE_LABEL, price).await
+        self.update_value(GOLD_PRICE_LABEL, price)
+            .await
+            .context("Failed to update gold price")
     }
 
     pub async fn update_silver_price(&self, price: f64) -> Result<()> {
-        self.update_value(SILVER_PRICE_LABEL, price).await
+        self.update_value(SILVER_PRICE_LABEL, price)
+            .await
+            .context("Failed to update silver price")
     }
 
     pub async fn update_sp500_price(&self, price: f64) -> Result<()> {
-        self.update_value(SP500_PRICE_LABEL, price).await
+        self.update_value(SP500_PRICE_LABEL, price)
+            .await
+            .context("Failed to update SP500 price")
     }
 
     async fn update_value(&self, key: &str, price: f64) -> Result<()> {
@@ -52,7 +63,8 @@ impl Database {
             key
         )
         .fetch_optional(&self.db)
-        .await?;
+        .await
+        .context("Failed to fetch price entry")?;
 
         match entry {
             Some(_) => {
@@ -66,7 +78,8 @@ impl Database {
                     key
                 )
                 .execute(&self.db)
-                .await?;
+                .await
+                .context("Failed to update price entry")?;
             }
             None => {
                 // INSERT
@@ -80,7 +93,8 @@ impl Database {
                     date,
                 )
                 .execute(&self.db)
-                .await?;
+                .await
+                .context("Failed to insert price entry")?;
             }
         }
 

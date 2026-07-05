@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use chrono::Utc;
 use reqwest::Client;
 use serde_json::json;
@@ -29,23 +29,30 @@ impl UpdateAgent {
     }
 
     pub async fn get_gold_price(&self) -> Result<MetalPrice> {
-        self.get_metal_price(EUR_CURRENCY_SYMBOL, GOLD_SYMBOL).await
+        self.get_metal_price(EUR_CURRENCY_SYMBOL, GOLD_SYMBOL)
+            .await
+            .context("Failed to get gold price")
     }
 
     pub async fn get_silver_price(&self) -> Result<MetalPrice> {
-        self.get_metal_price(EUR_CURRENCY_SYMBOL, SILVER_SYMBOL).await
+        self.get_metal_price(EUR_CURRENCY_SYMBOL, SILVER_SYMBOL)
+            .await
+            .context("Failed to get silver price")
     }
 
     pub async fn get_sp500_price(&self) -> Result<SP500Price> {
         let result = Client::builder()
             .user_agent(USER_AGENT)
             .timeout(Duration::from_secs(1))
-            .build()?
+            .build()
+            .context("Failed to build HTTP client")?
             .get(&self.sp500)
             .send()
-            .await?;
+            .await
+            .context("Failed to get SP500 price")?;
 
-        serde_json::from_str::<SP500Price>(&result.text().await?).map_err(|err| err.into())
+        serde_json::from_str::<SP500Price>(&result.text().await.context("Failed to read SP500 price")?)
+            .context("Failed to parse SP500 price")
     }
 
     async fn get_metal_price(&self, fiat_currency_symbol: &str, metal_symbol: &str) -> Result<MetalPrice> {
@@ -65,21 +72,28 @@ impl UpdateAgent {
             .json(&json_body)
             .timeout(Duration::from_secs(1))
             .send()
-            .await?;
+            .await
+            .context("Failed to get metal price")?;
 
-        serde_json::from_str::<MetalPrice>(&result.text().await?).map_err(|err| err.into())
+        serde_json::from_str::<MetalPrice>(&result.text().await.context("Failed to read metal price")?)
+            .context("Failed to parse metal price")
     }
 
     pub async fn get_usd_to_eur_exchange_rate(&self) -> Result<EURUSDExchangeRate> {
         let result = Client::builder()
             .user_agent(USER_AGENT)
             .timeout(Duration::from_secs(1))
-            .build()?
+            .build()
+            .context("Failed to build HTTP client")?
             .get(&self.exchange_rate)
             .send()
-            .await?;
+            .await
+            .context("Failed to get USD to EUR exchange rate")?;
 
-        serde_json::from_str::<EURUSDExchangeRate>(&result.text().await?).map_err(|err| err.into())
+        serde_json::from_str::<EURUSDExchangeRate>(
+            &result.text().await.context("Failed to read USD to EUR exchange rate")?,
+        )
+        .context("Failed to parse USD to EUR exchange rate")
     }
 }
 
