@@ -5,8 +5,9 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, CreateCashAsset};
-use crate::middleware::auth::AuthenticatedUserId;
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, AuthenticatedUserId, CreateCashAsset};
+
+/***** REQUEST *****/
 
 #[derive(Deserialize)]
 pub(crate) struct CreateCashAssetRequest {
@@ -30,6 +31,8 @@ impl TryFrom<CreateCashAssetRequest> for CreateCashAsset {
         })
     }
 }
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -55,6 +58,8 @@ pub(crate) async fn create_cash_asset(
     Ok(StatusCode::CREATED)
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn insert_cash_asset(pool: &SqlitePool, user_id: i64, cash_asset: &CreateCashAsset) -> Result<()> {
     let cash_asset_name = cash_asset.name.as_ref();
@@ -76,6 +81,8 @@ async fn insert_cash_asset(pool: &SqlitePool, user_id: i64, cash_asset: &CreateC
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CreateCashAssetError {

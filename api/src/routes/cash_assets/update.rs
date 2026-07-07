@@ -1,13 +1,15 @@
-use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, UpdateCashAsset};
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::model::cash_asset::CashAsset;
-use crate::routes::cash_assets::query_cash_asset;
 use anyhow::{Context, Result};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
+
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, AuthenticatedUserId, UpdateCashAsset};
+use crate::model::cash_asset::CashAsset;
+use crate::routes::cash_assets::query_cash_asset;
+
+/***** REQUEST *****/
 
 #[derive(Deserialize)]
 pub(crate) struct UpdateCashAssetRequest {
@@ -31,6 +33,8 @@ impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
         })
     }
 }
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -66,6 +70,7 @@ pub(crate) async fn update_cash_asset(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/***** HELPERS *****/
 fn has_changes(update: &UpdateCashAsset, current: &CashAsset) -> bool {
     update.name.as_ref().is_some_and(|v| v.as_ref() != current.name)
         || update
@@ -77,6 +82,8 @@ fn has_changes(update: &UpdateCashAsset, current: &CashAsset) -> bool {
             .as_ref()
             .is_some_and(|v| *v.as_ref() != current.unit_value)
 }
+
+/***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
 async fn update_cash_asset_(
@@ -109,6 +116,8 @@ async fn update_cash_asset_(
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum UpdateCashAssetError {

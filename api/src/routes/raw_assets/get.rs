@@ -1,10 +1,13 @@
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::routes::raw_assets::query_raw_asset;
-use crate::utils::dto::assets_dto::RawAssetsDto;
 use anyhow::{Context, Result};
 use axum::extract::{Path, State};
 use axum::{Extension, Json};
 use sqlx::SqlitePool;
+
+use crate::domain::AuthenticatedUserId;
+use crate::routes::raw_assets::query_raw_asset;
+use crate::utils::dto::assets_dto::RawAssetsDto;
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -33,6 +36,8 @@ pub(crate) async fn get_raw_asset(
         purity: asset.purity,
     }))
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetRawAssetError {

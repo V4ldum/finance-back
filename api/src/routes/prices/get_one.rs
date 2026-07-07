@@ -1,10 +1,13 @@
-use crate::domain::AssetPrice;
-use crate::model::price::PriceDb;
-use crate::routes::prices::Price;
 use anyhow::{Context, Result};
 use axum::Json;
 use axum::extract::{Path, State};
 use sqlx::SqlitePool;
+
+use crate::domain::AssetPrice;
+use crate::model::price::PriceDb;
+use crate::routes::prices::PriceDto;
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -16,7 +19,7 @@ use sqlx::SqlitePool;
 pub(crate) async fn get_one_price(
     Path(query): Path<String>,
     State(pool): State<SqlitePool>,
-) -> Result<Json<Price>, GetPriceError> {
+) -> Result<Json<PriceDto>, GetPriceError> {
     let price = AssetPrice::parse(&query).map_err(GetPriceError::UnknownPrice)?;
 
     let value = query_price(&pool, &price)
@@ -30,11 +33,13 @@ pub(crate) async fn get_one_price(
             ))
         })?;
 
-    Ok(Json(Price {
+    Ok(Json(PriceDto {
         price: value.value,
         last_update: value.date.to_string(),
     }))
 }
+
+/***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
 async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<PriceDb>> {
@@ -46,6 +51,8 @@ async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<Pri
 
     Ok(price)
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetPriceError {

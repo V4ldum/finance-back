@@ -1,16 +1,20 @@
-use crate::middleware::auth::AuthenticatedUserId;
 use anyhow::{Context, Result};
 use axum::Extension;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use sqlx::SqlitePool;
 
+use crate::domain::AuthenticatedUserId;
+
+/***** ENDPOINT *****/
+
 #[tracing::instrument(
     skip_all,
     fields(
         id = %id,
         user_id = %user_id
-    ), err(Debug)
+    ),
+    err(Debug)
 )]
 pub(crate) async fn delete_raw_asset(
     Path(id): Path<i64>,
@@ -24,6 +28,8 @@ pub(crate) async fn delete_raw_asset(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn delete_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64) -> Result<()> {
     sqlx::query!(
@@ -36,6 +42,8 @@ async fn delete_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64) -> Re
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum DeleteRawAssetError {

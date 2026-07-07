@@ -1,8 +1,9 @@
+use std::error::Error;
+
 use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
-use std::error::Error;
 
 #[derive(Serialize)]
 struct ApiError {

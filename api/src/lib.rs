@@ -1,13 +1,12 @@
-use crate::routes::router;
 use anyhow::Result;
 use axum::Router;
 use axum::serve::Serve;
-pub use configuration::Configuration;
-pub use configuration::get_configuration;
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnectOptions;
 use std::str::FromStr;
 use tokio::net::TcpListener;
+
+use crate::routes::router;
 
 mod configuration;
 mod domain;
@@ -17,6 +16,8 @@ mod routes;
 pub mod telemetry;
 mod utils;
 
+pub use configuration::Configuration;
+pub use configuration::get_configuration;
 pub(crate) use utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 
 type Server = Serve<TcpListener, Router, Router>;

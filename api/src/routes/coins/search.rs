@@ -1,17 +1,22 @@
-use crate::domain::CoinSearchQuery;
-use crate::model::coin::Coin;
-use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::utils::dto::coins_dto::CoinDataDto;
 use anyhow::{Context, Result};
 use axum::Json;
 use axum::extract::{Query, State};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
+use crate::domain::CoinSearchQuery;
+use crate::model::coin::Coin;
+use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
+use crate::utils::dto::coins_dto::CoinDataDto;
+
+/***** REQUEST *****/
+
 #[derive(Deserialize)]
 pub(crate) struct QueryParams {
     q: String,
 }
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -40,6 +45,8 @@ pub(crate) async fn search_coins(
     Ok(Json(response))
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<Coin>> {
     // TODO migrate back to query_as! macro then comptime extension is merged :
@@ -52,6 +59,8 @@ async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<Co
 
     Ok(coins)
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum SearchCoinsError {

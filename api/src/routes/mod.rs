@@ -1,14 +1,16 @@
-use crate::middleware::auth::check_api_key;
+use std::time::Duration;
+
 use axum::http::{Method, Request, Response};
 use axum::routing::{get, post};
 use axum::{Router, middleware};
 use middleware::from_fn_with_state;
 use sqlx::SqlitePool;
-use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Span;
 use uuid::Uuid;
+
+use crate::middleware::auth::check_api_key;
 
 mod assets;
 mod cash_assets;

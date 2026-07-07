@@ -1,20 +1,16 @@
-use crate::model::price::PriceDb;
-use crate::routes::prices::Price;
 use anyhow::{Context, Result};
 use axum::Json;
 use axum::extract::State;
 use serde::Serialize;
 use sqlx::SqlitePool;
 
-#[derive(Serialize)]
-pub(crate) struct Prices {
-    gold: Price,
-    silver: Price,
-    sp_500: Price,
-}
+use crate::model::price::PriceDb;
+use crate::routes::prices::PriceDto;
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(skip_all, err(Debug))]
-pub(crate) async fn get_all_prices(State(pool): State<SqlitePool>) -> Result<Json<Prices>, GetPricesError> {
+pub(crate) async fn get_all_prices(State(pool): State<SqlitePool>) -> Result<Json<PricesDto>, GetPricesError> {
     let prices = query_prices(&pool).await.context("Failed to fetch prices")?;
 
     let gold_value = prices
@@ -30,21 +26,23 @@ pub(crate) async fn get_all_prices(State(pool): State<SqlitePool>) -> Result<Jso
         .find(|v| v.name == "SP500")
         .ok_or_else(|| GetPricesError::ValueNotFound("SP500".to_string()))?;
 
-    Ok(Json(Prices {
-        gold: Price {
+    Ok(Json(PricesDto {
+        gold: PriceDto {
             price: gold_value.value,
             last_update: gold_value.date.to_string(),
         },
-        silver: Price {
+        silver: PriceDto {
             price: silver_value.value,
             last_update: silver_value.date.to_string(),
         },
-        sp_500: Price {
+        sp_500: PriceDto {
             price: sp_value.value,
             last_update: sp_value.date.to_string(),
         },
     }))
 }
+
+/***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
 async fn query_prices(pool: &SqlitePool) -> Result<Vec<PriceDb>> {
@@ -52,6 +50,17 @@ async fn query_prices(pool: &SqlitePool) -> Result<Vec<PriceDb>> {
 
     Ok(prices)
 }
+
+/***** DATA TRANSFER OBJECTS *****/
+
+#[derive(Serialize)]
+pub(crate) struct PricesDto {
+    gold: PriceDto,
+    silver: PriceDto,
+    sp_500: PriceDto,
+}
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetPricesError {

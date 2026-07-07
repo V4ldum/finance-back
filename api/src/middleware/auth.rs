@@ -7,8 +7,9 @@ use axum::response::Response;
 use sqlx::SqlitePool;
 use std::fmt::Debug;
 
-#[derive(Clone, Copy)]
-pub(crate) struct AuthenticatedUserId(pub i64);
+use crate::domain::AuthenticatedUserId;
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn check_api_key(
@@ -32,6 +33,8 @@ pub(crate) async fn check_api_key(
     Ok(next.run(request).await)
 }
 
+/***** DATABASE *****/
+
 async fn fetch_user_id(pool: &SqlitePool, key: &str) -> Result<Option<i64>> {
     let user = sqlx::query!("SELECT id FROM users WHERE api_key = $1", key)
         .fetch_optional(pool)
@@ -39,6 +42,8 @@ async fn fetch_user_id(pool: &SqlitePool, key: &str) -> Result<Option<i64>> {
 
     Ok(user.map(|u| u.id))
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CheckApiKeyError {

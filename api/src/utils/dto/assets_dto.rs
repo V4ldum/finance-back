@@ -1,5 +1,6 @@
-use crate::utils::dto::coins_dto::CoinDataDto;
 use serde::Serialize;
+
+use crate::utils::dto::coins_dto::CoinDataDto;
 
 #[allow(clippy::struct_field_names)]
 #[derive(Serialize)]

@@ -1,7 +1,3 @@
-use crate::domain::AssetPossessed;
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::model::coin_asset::CoinAsset;
-use crate::routes::coin_assets::query_coin_asset;
 use anyhow::{Context, Result};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
@@ -9,10 +5,18 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
+use crate::domain::{AssetPossessed, AuthenticatedUserId};
+use crate::model::coin_asset::CoinAsset;
+use crate::routes::coin_assets::query_coin_asset;
+
+/***** REQUEST *****/
+
 #[derive(Deserialize)]
 pub(crate) struct UpdateCoinAssetRequest {
     possessed: i64,
 }
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -46,9 +50,13 @@ pub(crate) async fn update_coin_asset(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/***** HELPERS *****/
+
 fn has_changes(possessed: AssetPossessed, current: &CoinAsset) -> bool {
     *possessed.as_ref() != current.possessed
 }
+
+/***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
 async fn update_coin_asset_(pool: &SqlitePool, user_id: i64, coin_id: i64, possessed: AssetPossessed) -> Result<()> {
@@ -65,6 +73,8 @@ async fn update_coin_asset_(pool: &SqlitePool, user_id: i64, coin_id: i64, posse
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum UpdateCoinAssetError {

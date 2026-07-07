@@ -1,14 +1,17 @@
-use crate::middleware::auth::AuthenticatedUserId;
+use anyhow::{Context, Result};
+use axum::extract::State;
+use axum::{Extension, Json};
+use sqlx::SqlitePool;
+
+use crate::domain::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
 use crate::model::coin::Coin;
 use crate::model::coin_asset::CoinAsset;
 use crate::model::raw_asset::RawAsset;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, RawAssetsDto};
-use anyhow::{Context, Result};
-use axum::extract::State;
-use axum::{Extension, Json};
-use sqlx::SqlitePool;
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -83,6 +86,8 @@ pub(crate) async fn get_assets(
     }))
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn query_raw_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<RawAsset>> {
     let assets = sqlx::query_as!(RawAsset, "SELECT * FROM raw_assets WHERE user_id = $1", user_id)
@@ -118,6 +123,8 @@ async fn query_coin(pool: &SqlitePool, coin_id: i64) -> Result<Option<Coin>> {
 
     Ok(coin)
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetAssetsError {

@@ -1,13 +1,17 @@
-use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, UpdateRawAsset};
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::model::raw_asset::RawAsset;
-use crate::routes::raw_assets::query_raw_asset;
 use anyhow::{Context, Result};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
+
+use crate::domain::{
+    AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, AuthenticatedUserId, UpdateRawAsset,
+};
+use crate::model::raw_asset::RawAsset;
+use crate::routes::raw_assets::query_raw_asset;
+
+/***** REQUEST *****/
 
 #[derive(Deserialize)]
 pub(crate) struct UpdateRawAssetRequest {
@@ -37,6 +41,8 @@ impl TryFrom<UpdateRawAssetRequest> for UpdateRawAsset {
         })
     }
 }
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -74,6 +80,8 @@ pub(crate) async fn update_raw_asset(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/***** HELPERS *****/
+
 fn has_changes(update: &UpdateRawAsset, current: &RawAsset) -> bool {
     update.name.as_ref().is_some_and(|v| v.as_ref() != current.name)
         || update
@@ -90,6 +98,8 @@ fn has_changes(update: &UpdateRawAsset, current: &RawAsset) -> bool {
             .is_some_and(|v| v.as_ref() != current.composition)
         || update.purity.as_ref().is_some_and(|v| *v.as_ref() != current.purity)
 }
+
+/***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
 async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_asset: &UpdateRawAsset) -> Result<()> {
@@ -123,6 +133,8 @@ async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_a
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum UpdateRawAssetError {

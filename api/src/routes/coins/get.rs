@@ -1,10 +1,13 @@
-use crate::model::coin::Coin;
-use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::utils::dto::coins_dto::CoinDataDto;
 use anyhow::{Context, Result};
 use axum::Json;
 use axum::extract::{Path, State};
 use sqlx::SqlitePool;
+
+use crate::model::coin::Coin;
+use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
+use crate::utils::dto::coins_dto::CoinDataDto;
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -29,6 +32,8 @@ pub(crate) async fn get_coin(
     Ok(Json(coin))
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn query_coin(pool: &SqlitePool, id: i64) -> Result<Option<Coin>> {
     let coin = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", id)
@@ -37,6 +42,8 @@ async fn query_coin(pool: &SqlitePool, id: i64) -> Result<Option<Coin>> {
 
     Ok(coin)
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetCoinError {

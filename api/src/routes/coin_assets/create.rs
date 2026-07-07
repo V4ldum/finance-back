@@ -1,5 +1,3 @@
-use crate::domain::{AssetPossessed, CreateCoinAsset};
-use crate::middleware::auth::AuthenticatedUserId;
 use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -7,6 +5,10 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
+
+use crate::domain::{AssetPossessed, AuthenticatedUserId, CreateCoinAsset};
+
+/***** REQUEST *****/
 
 #[derive(Deserialize)]
 pub(crate) struct CreateCoinAssetRequest {
@@ -26,6 +28,8 @@ impl TryFrom<CreateCoinAssetRequest> for CreateCoinAsset {
         })
     }
 }
+
+/***** ENDPOINT *****/
 
 #[tracing::instrument(
     skip_all,
@@ -59,6 +63,8 @@ pub(crate) async fn create_coin_asset(
     Ok(StatusCode::CREATED)
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn insert_coin_asset(pool: &SqlitePool, user_id: i64, coin_asset: &CreateCoinAsset) -> Result<()> {
     let coin_asset_possessed = coin_asset.possessed.as_ref();
@@ -77,6 +83,8 @@ async fn insert_coin_asset(pool: &SqlitePool, user_id: i64, coin_asset: &CreateC
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CreateCoinAssetError {

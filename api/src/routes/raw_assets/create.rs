@@ -1,11 +1,15 @@
-use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, CreateRawAsset};
-use crate::middleware::auth::AuthenticatedUserId;
 use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
+
+use crate::domain::{
+    AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, AuthenticatedUserId, CreateRawAsset,
+};
+
+/***** REQUEST *****/
 
 #[derive(Deserialize)]
 pub(crate) struct CreateRawAssetRequest {
@@ -36,6 +40,8 @@ impl TryFrom<CreateRawAssetRequest> for CreateRawAsset {
     }
 }
 
+/***** ENDPOINT *****/
+
 #[tracing::instrument(
     skip_all,
     fields(
@@ -62,6 +68,8 @@ pub(crate) async fn create_raw_asset(
     Ok(StatusCode::CREATED)
 }
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn insert_raw_asset(pool: &SqlitePool, user_id: i64, raw_asset: &CreateRawAsset) -> Result<()> {
     let raw_asset_name = raw_asset.name.as_ref();
@@ -87,6 +95,8 @@ async fn insert_raw_asset(pool: &SqlitePool, user_id: i64, raw_asset: &CreateRaw
 
     Ok(())
 }
+
+/***** ERRORS *****/
 
 #[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CreateRawAssetError {
