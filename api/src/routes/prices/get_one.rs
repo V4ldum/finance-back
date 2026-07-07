@@ -1,16 +1,10 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::Json;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use sqlx::SqlitePool;
-
 use crate::domain::AssetPrice;
 use crate::model::price::PriceDb;
 use crate::routes::prices::Price;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::Json;
+use axum::extract::{Path, State};
+use sqlx::SqlitePool;
 
 #[tracing::instrument(
     skip_all,
@@ -53,35 +47,12 @@ async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<Pri
     Ok(price)
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetPriceError {
     #[error("{0}")]
+    #[status(NOT_FOUND)]
     UnknownPrice(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for GetPriceError {
-    fn status(&self) -> StatusCode {
-        match self {
-            GetPriceError::UnknownPrice(_) => StatusCode::NOT_FOUND,
-            GetPriceError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for GetPriceError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for GetPriceError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

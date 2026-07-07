@@ -1,16 +1,12 @@
-use std::fmt::Debug;
-
 use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
 use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, CreateCashAsset};
 use crate::middleware::auth::AuthenticatedUserId;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 
 #[derive(Deserialize)]
 pub(crate) struct CreateCashAssetRequest {
@@ -81,35 +77,12 @@ async fn insert_cash_asset(pool: &SqlitePool, user_id: i64, cash_asset: &CreateC
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CreateCashAssetError {
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for CreateCashAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            CreateCashAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            CreateCashAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for CreateCashAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for CreateCashAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

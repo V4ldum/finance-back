@@ -1,7 +1,6 @@
+use crate::model::coin_asset::CoinAsset;
 use anyhow::Result;
 use sqlx::SqlitePool;
-
-use crate::model::coin_asset::CoinAsset;
 
 mod create;
 mod delete;

@@ -37,6 +37,7 @@ name = "api"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "api-error-derive",
  "axum",
  "chrono",
  "claims",
@@ -56,6 +57,15 @@ dependencies = [
  "tracing-subscriber",
  "unicode-segmentation",
  "uuid",
+]
+
+[[package]]
+name = "api-error-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

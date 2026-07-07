@@ -1,18 +1,12 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::Json;
-use axum::extract::{Query, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use serde::Deserialize;
-use sqlx::SqlitePool;
-
 use crate::domain::CoinSearchQuery;
 use crate::model::coin::Coin;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
 use crate::utils::dto::coins_dto::CoinDataDto;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::Json;
+use axum::extract::{Query, State};
+use serde::Deserialize;
+use sqlx::SqlitePool;
 
 #[derive(Deserialize)]
 pub(crate) struct QueryParams {
@@ -59,35 +53,12 @@ async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<Co
     Ok(coins)
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum SearchCoinsError {
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for SearchCoinsError {
-    fn status(&self) -> StatusCode {
-        match self {
-            SearchCoinsError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            SearchCoinsError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for SearchCoinsError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for SearchCoinsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

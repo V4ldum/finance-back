@@ -1,7 +1,6 @@
+use crate::model::raw_asset::RawAsset;
 use anyhow::Result;
 use sqlx::SqlitePool;
-
-use crate::model::raw_asset::RawAsset;
 
 mod create;
 mod delete;

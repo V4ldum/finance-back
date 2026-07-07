@@ -1,9 +1,8 @@
-use std::error::Error;
-
 use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
+use std::error::Error;
 
 #[derive(Serialize)]
 struct ApiError {
@@ -23,7 +22,10 @@ impl IntoResponse for ApiError {
 
 pub trait ApiErrorResponse: Error {
     fn status(&self) -> StatusCode;
-    fn reason(&self) -> String;
+
+    fn reason(&self) -> String {
+        self.to_string()
+    }
 }
 
 pub(crate) fn response<E: ApiErrorResponse>(error: &E) -> Response {

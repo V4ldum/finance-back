@@ -1,18 +1,13 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::{Extension, Json};
-use serde::Deserialize;
-use sqlx::SqlitePool;
-
 use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, UpdateCashAsset};
 use crate::middleware::auth::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
 use crate::routes::cash_assets::query_cash_asset;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::{Extension, Json};
+use serde::Deserialize;
+use sqlx::SqlitePool;
 
 #[derive(Deserialize)]
 pub(crate) struct UpdateCashAssetRequest {
@@ -73,8 +68,14 @@ pub(crate) async fn update_cash_asset(
 
 fn has_changes(update: &UpdateCashAsset, current: &CashAsset) -> bool {
     update.name.as_ref().is_some_and(|v| v.as_ref() != current.name)
-        || update.possessed.as_ref().is_some_and(|v| *v.as_ref() != current.possessed)
-        || update.unit_value.as_ref().is_some_and(|v| *v.as_ref() != current.unit_value)
+        || update
+            .possessed
+            .as_ref()
+            .is_some_and(|v| *v.as_ref() != current.possessed)
+        || update
+            .unit_value
+            .as_ref()
+            .is_some_and(|v| *v.as_ref() != current.unit_value)
 }
 
 #[tracing::instrument(skip_all)]
@@ -109,38 +110,15 @@ async fn update_cash_asset_(
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum UpdateCashAssetError {
     #[error("The provided id is invalid")]
+    #[status(NOT_FOUND)]
     InvalidId,
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for UpdateCashAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            UpdateCashAssetError::InvalidId => StatusCode::NOT_FOUND,
-            UpdateCashAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            UpdateCashAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for UpdateCashAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for UpdateCashAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

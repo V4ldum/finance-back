@@ -1,16 +1,10 @@
-use std::fmt::Debug;
-
+use crate::model::price::PriceDb;
+use crate::routes::prices::Price;
 use anyhow::{Context, Result};
 use axum::Json;
 use axum::extract::State;
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use sqlx::SqlitePool;
-
-use crate::model::price::PriceDb;
-use crate::routes::prices::Price;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 
 #[derive(Serialize)]
 pub(crate) struct Prices {
@@ -59,35 +53,12 @@ async fn query_prices(pool: &SqlitePool) -> Result<Vec<PriceDb>> {
     Ok(prices)
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetPricesError {
     #[error("No price found for {0}. This should not happen")]
+    #[status(INTERNAL_SERVER_ERROR)]
     ValueNotFound(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for GetPricesError {
-    fn status(&self) -> StatusCode {
-        match self {
-            GetPricesError::ValueNotFound(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            GetPricesError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for GetPricesError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for GetPricesError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

@@ -1,16 +1,10 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::{Extension, Json};
-use sqlx::SqlitePool;
-
 use crate::middleware::auth::AuthenticatedUserId;
 use crate::routes::raw_assets::query_raw_asset;
 use crate::utils::dto::assets_dto::RawAssetsDto;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::extract::{Path, State};
+use axum::{Extension, Json};
+use sqlx::SqlitePool;
 
 #[tracing::instrument(
     skip_all,
@@ -40,35 +34,12 @@ pub(crate) async fn get_raw_asset(
     }))
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetRawAssetError {
     #[error("The provided id is invalid")]
+    #[status(NOT_FOUND)]
     InvalidId,
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for GetRawAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            GetRawAssetError::InvalidId => StatusCode::NOT_FOUND,
-            GetRawAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for GetRawAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for GetRawAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

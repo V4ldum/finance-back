@@ -1,9 +1,8 @@
-use anyhow::{Context, Result};
-use sqlx::SqlitePool;
-
 use crate::model::coin::Coin;
 use crate::model::coin_image::CoinImage;
 use crate::utils::dto::coins_dto::{CoinDataDto, CoinSideDataDto};
+use anyhow::{Context, Result};
+use sqlx::SqlitePool;
 
 pub(crate) async fn convert_coin_model_to_coin_response(coin: Coin, pool: &SqlitePool) -> Result<CoinDataDto> {
     let obverse = if let Some(obverse) = coin.obverse {

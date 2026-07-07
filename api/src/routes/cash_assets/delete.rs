@@ -1,14 +1,9 @@
-use std::fmt::Debug;
-
+use crate::middleware::auth::AuthenticatedUserId;
 use anyhow::{Context, Result};
 use axum::Extension;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use sqlx::SqlitePool;
-
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 
 #[tracing::instrument(
     skip_all,
@@ -43,32 +38,9 @@ async fn delete_cash_asset_(pool: &SqlitePool, asset_id: i64, user_id: i64) -> R
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum DeleteCashAssetError {
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for DeleteCashAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            DeleteCashAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for DeleteCashAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for DeleteCashAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

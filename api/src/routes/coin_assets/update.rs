@@ -1,18 +1,13 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::{Extension, Json};
-use serde::Deserialize;
-use sqlx::SqlitePool;
-
 use crate::domain::AssetPossessed;
 use crate::middleware::auth::AuthenticatedUserId;
 use crate::model::coin_asset::CoinAsset;
 use crate::routes::coin_assets::query_coin_asset;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::{Extension, Json};
+use serde::Deserialize;
+use sqlx::SqlitePool;
 
 #[derive(Deserialize)]
 pub(crate) struct UpdateCoinAssetRequest {
@@ -71,38 +66,15 @@ async fn update_coin_asset_(pool: &SqlitePool, user_id: i64, coin_id: i64, posse
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum UpdateCoinAssetError {
     #[error("The provided id is invalid")]
+    #[status(NOT_FOUND)]
     InvalidId,
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for UpdateCoinAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            UpdateCoinAssetError::InvalidId => StatusCode::NOT_FOUND,
-            UpdateCoinAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            UpdateCoinAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for UpdateCoinAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for UpdateCoinAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

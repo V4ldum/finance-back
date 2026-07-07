@@ -1,18 +1,13 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::{Extension, Json};
-use serde::Deserialize;
-use sqlx::SqlitePool;
-
 use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, UpdateRawAsset};
 use crate::middleware::auth::AuthenticatedUserId;
 use crate::model::raw_asset::RawAsset;
 use crate::routes::raw_assets::query_raw_asset;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::{Extension, Json};
+use serde::Deserialize;
+use sqlx::SqlitePool;
 
 #[derive(Deserialize)]
 pub(crate) struct UpdateRawAssetRequest {
@@ -129,38 +124,15 @@ async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_a
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum UpdateRawAssetError {
     #[error("The provided id is invalid")]
+    #[status(NOT_FOUND)]
     InvalidId,
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for UpdateRawAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            UpdateRawAssetError::InvalidId => StatusCode::NOT_FOUND,
-            UpdateRawAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            UpdateRawAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for UpdateRawAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for UpdateRawAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

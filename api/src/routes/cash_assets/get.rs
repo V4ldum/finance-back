@@ -1,16 +1,10 @@
-use std::fmt::Debug;
-
-use anyhow::{Context, Result};
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::{Extension, Json};
-use sqlx::SqlitePool;
-
 use crate::middleware::auth::AuthenticatedUserId;
 use crate::routes::cash_assets::query_cash_asset;
 use crate::utils::dto::assets_dto::CashAssetsDto;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+use anyhow::{Context, Result};
+use axum::extract::{Path, State};
+use axum::{Extension, Json};
+use sqlx::SqlitePool;
 
 #[tracing::instrument(
     skip_all,
@@ -38,35 +32,12 @@ pub(crate) async fn get_cash_asset(
     }))
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum GetCashAssetError {
     #[error("The provided id is invalid")]
+    #[status(NOT_FOUND)]
     InvalidId,
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for GetCashAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            GetCashAssetError::InvalidId => StatusCode::NOT_FOUND,
-            GetCashAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for GetCashAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for GetCashAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

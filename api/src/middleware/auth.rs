@@ -1,14 +1,11 @@
-use std::fmt::Debug;
-
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 use anyhow::{Context, Result};
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::HeaderMap;
-use axum::http::StatusCode;
 use axum::middleware::Next;
-use axum::response::{IntoResponse, Response};
+use axum::response::Response;
 use sqlx::SqlitePool;
+use std::fmt::Debug;
 
 #[derive(Clone, Copy)]
 pub(crate) struct AuthenticatedUserId(pub i64);
@@ -43,38 +40,15 @@ async fn fetch_user_id(pool: &SqlitePool, key: &str) -> Result<Option<i64>> {
     Ok(user.map(|u| u.id))
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CheckApiKeyError {
     #[error("X-API-KEY header not provided")]
+    #[status(UNAUTHORIZED)]
     NoApiKey,
     #[error("Invalid X-API-KEY provided")]
+    #[status(UNAUTHORIZED)]
     InvalidApiKey,
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for CheckApiKeyError {
-    fn status(&self) -> StatusCode {
-        match self {
-            CheckApiKeyError::NoApiKey => StatusCode::UNAUTHORIZED,
-            CheckApiKeyError::InvalidApiKey => StatusCode::UNAUTHORIZED,
-            CheckApiKeyError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for CheckApiKeyError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for CheckApiKeyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

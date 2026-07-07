@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "api",
+    "api-error-derive",
     "coin-extractor",
     "update-agent",
 ]

@@ -1,16 +1,11 @@
-use std::fmt::Debug;
-
+use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, CreateRawAsset};
+use crate::middleware::auth::AuthenticatedUserId;
 use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
-
-use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, CreateRawAsset};
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 
 #[derive(Deserialize)]
 pub(crate) struct CreateRawAssetRequest {
@@ -93,35 +88,12 @@ async fn insert_raw_asset(pool: &SqlitePool, user_id: i64, raw_asset: &CreateRaw
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CreateRawAssetError {
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for CreateRawAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            CreateRawAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            CreateRawAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for CreateRawAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for CreateRawAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }

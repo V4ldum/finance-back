@@ -1,17 +1,12 @@
-use std::fmt::Debug;
-
+use crate::domain::{AssetPossessed, CreateCoinAsset};
+use crate::middleware::auth::AuthenticatedUserId;
 use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
-
-use crate::domain::{AssetPossessed, CreateCoinAsset};
-use crate::middleware::auth::AuthenticatedUserId;
-use crate::utils::errors::{ApiErrorResponse, error_chain_fmt, response};
 
 #[derive(Deserialize)]
 pub(crate) struct CreateCoinAssetRequest {
@@ -83,38 +78,15 @@ async fn insert_coin_asset(pool: &SqlitePool, user_id: i64, coin_asset: &CreateC
     Ok(())
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, api_error_derive::ApiError)]
 pub(crate) enum CreateCoinAssetError {
     #[error("{0}")]
+    #[status(BAD_REQUEST)]
     ValidationError(String),
     #[error("You already possess coin_id {0}")]
+    #[status(CONFLICT)]
     DuplicateCoin(i64),
     #[error(transparent)]
+    #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
-}
-
-impl ApiErrorResponse for CreateCoinAssetError {
-    fn status(&self) -> StatusCode {
-        match self {
-            CreateCoinAssetError::ValidationError(_) => StatusCode::BAD_REQUEST,
-            CreateCoinAssetError::DuplicateCoin(_) => StatusCode::CONFLICT,
-            CreateCoinAssetError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    fn reason(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl IntoResponse for CreateCoinAssetError {
-    fn into_response(self) -> Response {
-        response(&self)
-    }
-}
-
-impl Debug for CreateCoinAssetError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        error_chain_fmt(self, f)
-    }
 }
