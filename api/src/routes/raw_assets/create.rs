@@ -5,9 +5,8 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::domain::{
-    AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, AuthenticatedUserId, CreateRawAsset,
-};
+use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, CreateRawAsset};
+use crate::middleware::AuthenticatedUserId;
 
 /***** REQUEST *****/
 
@@ -45,7 +44,7 @@ impl TryFrom<CreateRawAssetRequest> for CreateRawAsset {
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = %user_id,
+        user_id = %user.id(),
         name = %request.name,
         possessed = %request.possessed,
         unit_weight = %request.unit_weight,
@@ -56,12 +55,12 @@ impl TryFrom<CreateRawAssetRequest> for CreateRawAsset {
 )]
 pub(crate) async fn create_raw_asset(
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
     Json(request): Json<CreateRawAssetRequest>,
 ) -> Result<StatusCode, CreateRawAssetError> {
     let create_raw_asset: CreateRawAsset = request.try_into().map_err(CreateRawAssetError::ValidationError)?;
 
-    insert_raw_asset(&pool, user_id, &create_raw_asset)
+    insert_raw_asset(&pool, user.id(), &create_raw_asset)
         .await
         .context("Failed to insert raw asset")?;
 

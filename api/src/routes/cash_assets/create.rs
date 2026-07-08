@@ -5,7 +5,8 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, AuthenticatedUserId, CreateCashAsset};
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, CreateCashAsset};
+use crate::middleware::AuthenticatedUserId;
 
 /***** REQUEST *****/
 
@@ -37,7 +38,7 @@ impl TryFrom<CreateCashAssetRequest> for CreateCashAsset {
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = %user_id,
+        user_id = %user.id(),
         name = %request.name,
         possessed = %request.possessed,
         unit_value = %request.unit_value
@@ -46,12 +47,12 @@ impl TryFrom<CreateCashAssetRequest> for CreateCashAsset {
 )]
 pub(crate) async fn create_cash_asset(
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
     Json(request): Json<CreateCashAssetRequest>,
 ) -> Result<StatusCode, CreateCashAssetError> {
     let create_cash_asset: CreateCashAsset = request.try_into().map_err(CreateCashAssetError::ValidationError)?;
 
-    insert_cash_asset(&pool, user_id, &create_cash_asset)
+    insert_cash_asset(&pool, user.id(), &create_cash_asset)
         .await
         .context("Failed to insert cash asset")?;
 

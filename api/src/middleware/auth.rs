@@ -7,8 +7,6 @@ use axum::response::Response;
 use sqlx::SqlitePool;
 use std::fmt::Debug;
 
-use crate::domain::AuthenticatedUserId;
-
 /***** ENDPOINT *****/
 
 #[tracing::instrument(skip_all)]
@@ -29,8 +27,26 @@ pub(crate) async fn check_api_key(
         .context("Failed to fetch api key")?
         .ok_or(CheckApiKeyError::InvalidApiKey)?;
 
-    request.extensions_mut().insert(AuthenticatedUserId(user_id));
+    request.extensions_mut().insert(AuthenticatedUserId::new(user_id));
     Ok(next.run(request).await)
+}
+
+/***** AUTHENTICATED USER *****/
+
+#[derive(Clone, Copy)]
+pub(crate) struct AuthenticatedUserId(i64);
+
+impl AuthenticatedUserId {
+    /// Minting an `AuthenticatedUserId` asserts the request was authenticated, so
+    /// construction is private to this module. The rest of the crate can only read
+    /// the id via `id()`, never forge or mutate one.
+    fn new(id: i64) -> Self {
+        Self(id)
+    }
+
+    pub(crate) fn id(self) -> i64 {
+        self.0
+    }
 }
 
 /***** DATABASE *****/

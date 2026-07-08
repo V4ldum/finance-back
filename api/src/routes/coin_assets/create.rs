@@ -6,7 +6,8 @@ use serde::Deserialize;
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
 
-use crate::domain::{AssetPossessed, AuthenticatedUserId, CreateCoinAsset};
+use crate::domain::{AssetPossessed, CreateCoinAsset};
+use crate::middleware::AuthenticatedUserId;
 
 /***** REQUEST *****/
 
@@ -35,19 +36,19 @@ impl TryFrom<CreateCoinAssetRequest> for CreateCoinAsset {
     skip_all,
     fields(
         id = %request.coin_id,
-        user_id = %user_id,
+        user_id = %user.id(),
         possessed = %request.possessed,
     ),
     err(Debug)
 )]
 pub(crate) async fn create_coin_asset(
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
     Json(request): Json<CreateCoinAssetRequest>,
 ) -> Result<StatusCode, CreateCoinAssetError> {
     let create_coin_asset: CreateCoinAsset = request.try_into().map_err(CreateCoinAssetError::ValidationError)?;
 
-    insert_coin_asset(&pool, user_id, &create_coin_asset)
+    insert_coin_asset(&pool, user.id(), &create_coin_asset)
         .await
         .context("Failed to insert coin asset")
         .map_err(|e| {

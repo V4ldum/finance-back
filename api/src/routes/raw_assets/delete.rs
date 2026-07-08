@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use sqlx::SqlitePool;
 
-use crate::domain::AuthenticatedUserId;
+use crate::middleware::AuthenticatedUserId;
 
 /***** ENDPOINT *****/
 
@@ -12,16 +12,16 @@ use crate::domain::AuthenticatedUserId;
     skip_all,
     fields(
         id = %id,
-        user_id = %user_id
+        user_id = %user.id()
     ),
     err(Debug)
 )]
 pub(crate) async fn delete_raw_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
 ) -> Result<StatusCode, DeleteRawAssetError> {
-    delete_raw_asset_(&pool, user_id, id)
+    delete_raw_asset_(&pool, user.id(), id)
         .await
         .context("Failed to delete raw asset")?;
 

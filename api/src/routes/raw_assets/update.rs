@@ -5,9 +5,8 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::domain::{
-    AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, AuthenticatedUserId, UpdateRawAsset,
-};
+use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, UpdateRawAsset};
+use crate::middleware::AuthenticatedUserId;
 use crate::model::raw_asset::RawAsset;
 use crate::routes::raw_assets::query_raw_asset;
 
@@ -48,7 +47,7 @@ impl TryFrom<UpdateRawAssetRequest> for UpdateRawAsset {
     skip_all,
     fields(
         id = %id,
-        user_id = %user_id,
+        user_id = %user.id(),
         name = ?request.name,
         possessed = ?request.possessed,
         unit_weight = ?request.unit_weight,
@@ -60,19 +59,19 @@ impl TryFrom<UpdateRawAssetRequest> for UpdateRawAsset {
 pub(crate) async fn update_raw_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
     Json(request): Json<UpdateRawAssetRequest>,
 ) -> Result<StatusCode, UpdateRawAssetError> {
     let update_raw_asset: UpdateRawAsset = request.try_into().map_err(UpdateRawAssetError::ValidationError)?;
 
-    let asset = query_raw_asset(&pool, id, user_id)
+    let asset = query_raw_asset(&pool, id, user.id())
         .await
         .context("Failed to fetch raw asset")?
         .ok_or(UpdateRawAssetError::InvalidId)?;
 
     // Only write if a provided field actually differs from the stored value
     if has_changes(&update_raw_asset, &asset) {
-        update_raw_asset_(&pool, user_id, id, &update_raw_asset)
+        update_raw_asset_(&pool, user.id(), id, &update_raw_asset)
             .await
             .context("Failed to update raw asset")?;
     }

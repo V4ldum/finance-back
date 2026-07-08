@@ -3,7 +3,7 @@ use axum::extract::State;
 use axum::{Extension, Json};
 use sqlx::SqlitePool;
 
-use crate::domain::AuthenticatedUserId;
+use crate::middleware::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
 use crate::model::coin::Coin;
 use crate::model::coin_asset::CoinAsset;
@@ -16,26 +16,26 @@ use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, Raw
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = %user_id
+        user_id = %user.id()
     ),
     err(Debug),
 )]
 pub(crate) async fn get_assets(
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
 ) -> Result<Json<AssetsDto>, GetAssetsError> {
     // Query Raw Assets
-    let raw_assets = query_raw_assets(&pool, user_id)
+    let raw_assets = query_raw_assets(&pool, user.id())
         .await
         .context("Failed to fetch raw assets")?;
 
     // Query Cash Assets
-    let cash_assets = query_cash_assets(&pool, user_id)
+    let cash_assets = query_cash_assets(&pool, user.id())
         .await
         .context("Failed to fetch cash assets")?;
 
     // Query Coin Assets
-    let coin_assets = query_coin_assets(&pool, user_id)
+    let coin_assets = query_coin_assets(&pool, user.id())
         .await
         .context("Failed to fetch coin assets")?;
 

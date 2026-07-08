@@ -5,7 +5,8 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
-use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, AuthenticatedUserId, UpdateCashAsset};
+use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, UpdateCashAsset};
+use crate::middleware::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
 use crate::routes::cash_assets::query_cash_asset;
 
@@ -40,7 +41,7 @@ impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
     skip_all,
     fields(
         id = %id,
-        user_id = %user_id,
+        user_id = %user.id(),
         name = ?request.name,
         possessed = ?request.possessed,
         unit_value = ?request.unit_value,
@@ -50,19 +51,19 @@ impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
 pub(crate) async fn update_cash_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
     Json(request): Json<UpdateCashAssetRequest>,
 ) -> Result<StatusCode, UpdateCashAssetError> {
     let update_cash_asset: UpdateCashAsset = request.try_into().map_err(UpdateCashAssetError::ValidationError)?;
 
-    let asset = query_cash_asset(&pool, id, user_id)
+    let asset = query_cash_asset(&pool, id, user.id())
         .await
         .context("Failed to fetch cash asset")?
         .ok_or(UpdateCashAssetError::InvalidId)?;
 
     // Only write if a provided field actually differs from the stored value
     if has_changes(&update_cash_asset, &asset) {
-        update_cash_asset_(&pool, user_id, id, &update_cash_asset)
+        update_cash_asset_(&pool, user.id(), id, &update_cash_asset)
             .await
             .context("Failed to update cash asset")?;
     }

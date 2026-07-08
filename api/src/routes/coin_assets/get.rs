@@ -3,7 +3,7 @@ use axum::extract::{Path, State};
 use axum::{Extension, Json};
 use sqlx::SqlitePool;
 
-use crate::domain::AuthenticatedUserId;
+use crate::middleware::AuthenticatedUserId;
 use crate::model::coin::Coin;
 use crate::routes::coin_assets::query_coin_asset;
 use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
@@ -15,16 +15,16 @@ use crate::utils::dto::assets_dto::CoinAssetsDto;
     skip_all,
     fields(
         id = %id,
-        user_id = %user_id
+        user_id = %user.id()
     ),
     err(Debug)
 )]
 pub(crate) async fn get_coin_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
-    Extension(AuthenticatedUserId(user_id)): Extension<AuthenticatedUserId>,
+    Extension(user): Extension<AuthenticatedUserId>,
 ) -> Result<Json<CoinAssetsDto>, GetCoinAssetError> {
-    let coin_asset = query_coin_asset(&pool, id, user_id)
+    let coin_asset = query_coin_asset(&pool, id, user.id())
         .await
         .context("Failed to fetch coin asset")?
         .ok_or(GetCoinAssetError::InvalidId)?;

@@ -6,6 +6,7 @@ use api::{
     Application, Configuration, get_connection_pool,
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
+use chrono::Utc;
 use fake::{Fake, faker::lorem::en::Sentence};
 use sqlx::SqlitePool;
 use tracing::level_filters::LevelFilter;
@@ -291,6 +292,8 @@ async fn configure_database(pool: &SqlitePool) {
     let gold = (2000..5000).fake::<i64>();
     let silver = (50..100).fake::<i64>();
     let sp = (5000..9000).fake::<i64>();
+    let date = Utc::now().format("%Y-%m-%d").to_string();
+
     sqlx::query!(
         r#"
         INSERT OR IGNORE INTO prices
@@ -301,7 +304,7 @@ async fn configure_database(pool: &SqlitePool) {
         gold,
         silver,
         sp,
-        "2026-01-01",
+        date,
     )
     .execute(pool)
     .await
