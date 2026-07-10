@@ -1,6 +1,6 @@
 use anyhow::Result;
-use api::Application;
-use api::get_configuration;
+use api::configuration::get_configuration;
+use api::startup::Application;
 use api::telemetry::SubscriberConfig;
 use api::telemetry::get_subscriber;
 use api::telemetry::init_subscriber;

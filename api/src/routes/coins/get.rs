@@ -3,9 +3,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use sqlx::SqlitePool;
 
-use crate::model::coin::Coin;
-use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::utils::dto::coins_dto::CoinDataDto;
+use crate::routes::coins::{CoinResponse, CoinRow};
 
 /***** ENDPOINT *****/
 
@@ -19,26 +17,53 @@ use crate::utils::dto::coins_dto::CoinDataDto;
 pub(crate) async fn get_coin(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
-) -> Result<Json<CoinDataDto>, GetCoinError> {
-    let coin = query_coin(&pool, id)
+) -> Result<Json<CoinResponse>, GetCoinError> {
+    let row = query_coin(&pool, id)
         .await
         .context("Failed to fetch coin")?
         .ok_or(GetCoinError::InvalidId)?;
 
-    let coin = convert_coin_model_to_coin_response(coin, &pool)
-        .await
-        .context("Failed to convert coin model to coin response")?;
-
-    Ok(Json(coin))
+    Ok(Json(row.into()))
 }
 
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn query_coin(pool: &SqlitePool, id: i64) -> Result<Option<Coin>> {
-    let coin = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", id)
-        .fetch_optional(pool)
-        .await?;
+async fn query_coin(pool: &SqlitePool, id: i64) -> Result<Option<CoinRow>> {
+    // Joined image columns get `AS "..?"`: a LEFT JOIN can yield all-NULL rows,
+    // which sqlx cannot infer, so `?` forces each into Option<T>.
+    let coin = sqlx::query_as!(
+        CoinRow,
+        r#"
+            SELECT
+                c.id, c.numista_id, c.name, c.weight, c.size, c.thickness,
+                c.min_year, c.max_year, c.composition, c.purity,
+                c.obverse, c.reverse, c.edge,
+                o.image_url     AS "o_image_url?",
+                o.thumbnail_url AS "o_thumbnail_url?",
+                o.lettering     AS "o_lettering?",
+                o.description   AS "o_description?",
+                o.copyright     AS "o_copyright?",
+                r.image_url     AS "r_image_url?",
+                r.thumbnail_url AS "r_thumbnail_url?",
+                r.lettering     AS "r_lettering?",
+                r.description   AS "r_description?",
+                r.copyright     AS "r_copyright?",
+                e.image_url     AS "e_image_url?",
+                e.thumbnail_url AS "e_thumbnail_url?",
+                e.lettering     AS "e_lettering?",
+                e.description   AS "e_description?",
+                e.copyright     AS "e_copyright?"
+            FROM coins c
+            LEFT JOIN coin_images o ON o.id = c.obverse
+            LEFT JOIN coin_images r ON r.id = c.reverse
+            LEFT JOIN coin_images e ON e.id = c.edge
+            WHERE c.id = $1
+        "#,
+        id
+    )
+    .fetch_optional(pool)
+    .await?;
 
     Ok(coin)
 }

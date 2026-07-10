@@ -5,9 +5,7 @@ use serde::Deserialize;
 use sqlx::SqlitePool;
 
 use crate::domain::CoinSearchQuery;
-use crate::model::coin::Coin;
-use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::utils::dto::coins_dto::CoinDataDto;
+use crate::routes::coins::{CoinResponse, CoinRow};
 
 /***** REQUEST *****/
 
@@ -28,19 +26,12 @@ pub(crate) struct QueryParams {
 pub(crate) async fn search_coins(
     Query(query): Query<QueryParams>,
     State(pool): State<SqlitePool>,
-) -> Result<Json<Vec<CoinDataDto>>, SearchCoinsError> {
+) -> Result<Json<Vec<CoinResponse>>, SearchCoinsError> {
     let query = CoinSearchQuery::parse(query.q).map_err(SearchCoinsError::ValidationError)?;
 
-    let coins = query_coins(&pool, query).await.context("Failed to fetch coins")?;
+    let rows = query_coins(&pool, query).await.context("Failed to fetch coins")?;
 
-    let mut response = Vec::with_capacity(coins.len());
-    for coin in coins {
-        let coin = convert_coin_model_to_coin_response(coin, &pool)
-            .await
-            .context("Failed to convert coin model to coin response")?;
-
-        response.push(coin);
-    }
+    let response = rows.into_iter().map(Into::into).collect();
 
     Ok(Json(response))
 }
@@ -48,14 +39,41 @@ pub(crate) async fn search_coins(
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<Coin>> {
+async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<CoinRow>> {
     // TODO migrate back to query_as! macro then comptime extension is merged :
     // - https://github.com/launchbadge/sqlx/issues/3330
     // - https://github.com/launchbadge/sqlx/pull/3713
-    let coins = sqlx::query_as("SELECT * FROM coins WHERE instr(UNACCENT(LOWER(name)), UNACCENT(LOWER(?))) > 0")
-        .bind(query.as_ref())
-        .fetch_all(pool)
-        .await?;
+    let coins = sqlx::query_as(
+        r"
+            SELECT
+                c.id, c.numista_id, c.name, c.weight, c.size, c.thickness,
+                c.min_year, c.max_year, c.composition, c.purity,
+                c.obverse, c.reverse, c.edge,
+                o.image_url     AS o_image_url,
+                o.thumbnail_url AS o_thumbnail_url,
+                o.lettering     AS o_lettering,
+                o.description   AS o_description,
+                o.copyright     AS o_copyright,
+                r.image_url     AS r_image_url,
+                r.thumbnail_url AS r_thumbnail_url,
+                r.lettering     AS r_lettering,
+                r.description   AS r_description,
+                r.copyright     AS r_copyright,
+                e.image_url     AS e_image_url,
+                e.thumbnail_url AS e_thumbnail_url,
+                e.lettering     AS e_lettering,
+                e.description   AS e_description,
+                e.copyright     AS e_copyright
+            FROM coins c
+            LEFT JOIN coin_images o ON o.id = c.obverse
+            LEFT JOIN coin_images r ON r.id = c.reverse
+            LEFT JOIN coin_images e ON e.id = c.edge
+            WHERE instr(UNACCENT(LOWER(c.name)), UNACCENT(LOWER(?))) > 0
+        ",
+    )
+    .bind(query.as_ref())
+    .fetch_all(pool)
+    .await?;
 
     Ok(coins)
 }

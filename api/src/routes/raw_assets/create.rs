@@ -11,6 +11,7 @@ use crate::middleware::AuthenticatedUserId;
 /***** REQUEST *****/
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct CreateRawAssetRequest {
     name: String,
     possessed: i64,

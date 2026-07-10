@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::Serialize;
 use sqlx::SqlitePool;
 
 use crate::model::cash_asset::CashAsset;
@@ -13,6 +14,8 @@ pub(crate) use delete::delete_cash_asset;
 pub(crate) use get::get_cash_asset;
 pub(crate) use update::update_cash_asset;
 
+/***** DATABASE *****/
+
 #[tracing::instrument(skip_all)]
 async fn query_cash_asset(pool: &SqlitePool, asset_id: i64, user_id: i64) -> Result<Option<CashAsset>> {
     let cash_asset = sqlx::query_as!(
@@ -25,4 +28,14 @@ async fn query_cash_asset(pool: &SqlitePool, asset_id: i64, user_id: i64) -> Res
     .await?;
 
     Ok(cash_asset)
+}
+
+/***** RESPONSE *****/
+
+#[derive(Serialize)]
+pub(crate) struct CashAssetResponse {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) possessed: i64,
+    pub(crate) unit_value: i64,
 }

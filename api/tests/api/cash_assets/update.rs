@@ -80,5 +80,5 @@ async fn update_cash_asset_fails_and_returns_500_if_there_is_a_fatal_database_er
 
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
-    assert_eq!(json_response["reason"], "Failed to fetch cash asset");
+    assert_eq!(json_response["reason"], "Failed to update cash asset");
 }

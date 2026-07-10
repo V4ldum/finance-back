@@ -7,12 +7,11 @@ use sqlx::SqlitePool;
 
 use crate::domain::AssetPossessed;
 use crate::middleware::AuthenticatedUserId;
-use crate::model::coin_asset::CoinAsset;
-use crate::routes::coin_assets::query_coin_asset;
 
 /***** REQUEST *****/
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct UpdateCoinAssetRequest {
     possessed: i64,
 }
@@ -36,34 +35,25 @@ pub(crate) async fn update_coin_asset(
 ) -> Result<StatusCode, UpdateCoinAssetError> {
     let asset_possessed = AssetPossessed::parse(request.possessed).map_err(UpdateCoinAssetError::ValidationError)?;
 
-    let coin_asset = query_coin_asset(&pool, id, user.id())
+    let rows_affected = update_coin_asset_(&pool, user.id(), id, asset_possessed)
         .await
-        .context("Failed to fetch coin asset")?
-        .ok_or(UpdateCoinAssetError::InvalidId)?;
+        .context("Failed to update coin asset")?;
 
-    // Only write if the provided value actually differs from the stored one
-    if has_changes(asset_possessed, &coin_asset) {
-        update_coin_asset_(&pool, user.id(), id, asset_possessed)
-            .await
-            .context("Failed to update coin asset")?;
+    // No row matched coin_id + user_id, so the asset does not exist for this user
+    if rows_affected == 0 {
+        return Err(UpdateCoinAssetError::InvalidId);
     }
 
     Ok(StatusCode::NO_CONTENT)
 }
 
-/***** HELPERS *****/
-
-fn has_changes(possessed: AssetPossessed, current: &CoinAsset) -> bool {
-    *possessed.as_ref() != current.possessed
-}
-
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn update_coin_asset_(pool: &SqlitePool, user_id: i64, coin_id: i64, possessed: AssetPossessed) -> Result<()> {
+async fn update_coin_asset_(pool: &SqlitePool, user_id: i64, coin_id: i64, possessed: AssetPossessed) -> Result<u64> {
     let possessed = possessed.as_ref();
 
-    sqlx::query!(
+    let result = sqlx::query!(
         "UPDATE coin_assets SET possessed = $1 WHERE coin_id = $2 AND user_id = $3",
         possessed,
         coin_id,
@@ -72,7 +62,7 @@ async fn update_coin_asset_(pool: &SqlitePool, user_id: i64, coin_id: i64, posse
     .execute(pool)
     .await?;
 
-    Ok(())
+    Ok(result.rows_affected())
 }
 
 /***** ERRORS *****/

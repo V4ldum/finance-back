@@ -4,8 +4,7 @@ use axum::{Extension, Json};
 use sqlx::SqlitePool;
 
 use crate::middleware::AuthenticatedUserId;
-use crate::routes::cash_assets::query_cash_asset;
-use crate::utils::dto::assets_dto::CashAssetsDto;
+use crate::routes::cash_assets::{CashAssetResponse, query_cash_asset};
 
 /***** ENDPOINT *****/
 
@@ -21,13 +20,13 @@ pub(crate) async fn get_cash_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(user): Extension<AuthenticatedUserId>,
-) -> Result<Json<CashAssetsDto>, GetCashAssetError> {
+) -> Result<Json<CashAssetResponse>, GetCashAssetError> {
     let asset = query_cash_asset(&pool, id, user.id())
         .await
         .context("Failed to fetch cash asset")?
         .ok_or(GetCashAssetError::InvalidId)?;
 
-    Ok(Json(CashAssetsDto {
+    Ok(Json(CashAssetResponse {
         id: asset.id,
         name: asset.name,
         possessed: asset.possessed,

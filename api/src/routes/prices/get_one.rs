@@ -5,7 +5,7 @@ use sqlx::SqlitePool;
 
 use crate::domain::AssetPrice;
 use crate::model::price::PriceDb;
-use crate::routes::prices::PriceDto;
+use crate::routes::prices::PriceResponse;
 
 /***** ENDPOINT *****/
 
@@ -19,7 +19,7 @@ use crate::routes::prices::PriceDto;
 pub(crate) async fn get_one_price(
     Path(query): Path<String>,
     State(pool): State<SqlitePool>,
-) -> Result<Json<PriceDto>, GetPriceError> {
+) -> Result<Json<PriceResponse>, GetPriceError> {
     let price = AssetPrice::parse(&query).map_err(GetPriceError::UnknownPrice)?;
 
     let value = query_price(&pool, &price)
@@ -33,10 +33,7 @@ pub(crate) async fn get_one_price(
             ))
         })?;
 
-    Ok(Json(PriceDto {
-        price: value.value,
-        last_update: value.date.to_string(),
-    }))
+    Ok(Json(PriceResponse::from(&value)))
 }
 
 /***** DATABASE *****/

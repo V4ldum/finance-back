@@ -7,12 +7,11 @@ use sqlx::SqlitePool;
 
 use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, UpdateCashAsset};
 use crate::middleware::AuthenticatedUserId;
-use crate::model::cash_asset::CashAsset;
-use crate::routes::cash_assets::query_cash_asset;
 
 /***** REQUEST *****/
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct UpdateCashAssetRequest {
     name: Option<String>,
     possessed: Option<i64>,
@@ -56,32 +55,16 @@ pub(crate) async fn update_cash_asset(
 ) -> Result<StatusCode, UpdateCashAssetError> {
     let update_cash_asset: UpdateCashAsset = request.try_into().map_err(UpdateCashAssetError::ValidationError)?;
 
-    let asset = query_cash_asset(&pool, id, user.id())
+    let rows_affected = update_cash_asset_(&pool, user.id(), id, &update_cash_asset)
         .await
-        .context("Failed to fetch cash asset")?
-        .ok_or(UpdateCashAssetError::InvalidId)?;
+        .context("Failed to update cash asset")?;
 
-    // Only write if a provided field actually differs from the stored value
-    if has_changes(&update_cash_asset, &asset) {
-        update_cash_asset_(&pool, user.id(), id, &update_cash_asset)
-            .await
-            .context("Failed to update cash asset")?;
+    // No row matched id + user_id, so the asset does not exist for this user
+    if rows_affected == 0 {
+        return Err(UpdateCashAssetError::InvalidId);
     }
 
     Ok(StatusCode::NO_CONTENT)
-}
-
-/***** HELPERS *****/
-fn has_changes(update: &UpdateCashAsset, current: &CashAsset) -> bool {
-    update.name.as_ref().is_some_and(|v| v.as_ref() != current.name)
-        || update
-            .possessed
-            .as_ref()
-            .is_some_and(|v| *v.as_ref() != current.possessed)
-        || update
-            .unit_value
-            .as_ref()
-            .is_some_and(|v| *v.as_ref() != current.unit_value)
 }
 
 /***** DATABASE *****/
@@ -92,13 +75,13 @@ async fn update_cash_asset_(
     user_id: i64,
     asset_id: i64,
     cash_asset: &UpdateCashAsset,
-) -> Result<()> {
+) -> Result<u64> {
     let cash_asset_name = cash_asset.name.as_ref().map(|n| n.as_ref());
     let cash_asset_possessed = cash_asset.possessed.as_ref().map(|p| p.as_ref());
     let cash_asset_unit_value = cash_asset.unit_value.as_ref().map(|v| v.as_ref());
 
     // COALESCE writes the first non-null argument in the pair
-    sqlx::query!(
+    let result = sqlx::query!(
         r#"
             UPDATE cash_assets
             SET name = COALESCE($1, name),
@@ -115,7 +98,7 @@ async fn update_cash_asset_(
     .execute(pool)
     .await?;
 
-    Ok(())
+    Ok(result.rows_affected())
 }
 
 /***** ERRORS *****/

@@ -7,12 +7,11 @@ use sqlx::SqlitePool;
 
 use crate::domain::{AssetComposition, AssetName, AssetPossessed, AssetPurity, AssetUnitWeight, UpdateRawAsset};
 use crate::middleware::AuthenticatedUserId;
-use crate::model::raw_asset::RawAsset;
-use crate::routes::raw_assets::query_raw_asset;
 
 /***** REQUEST *****/
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub(crate) struct UpdateRawAssetRequest {
     name: Option<String>,
     possessed: Option<i64>,
@@ -64,44 +63,22 @@ pub(crate) async fn update_raw_asset(
 ) -> Result<StatusCode, UpdateRawAssetError> {
     let update_raw_asset: UpdateRawAsset = request.try_into().map_err(UpdateRawAssetError::ValidationError)?;
 
-    let asset = query_raw_asset(&pool, id, user.id())
+    let rows_affected = update_raw_asset_(&pool, user.id(), id, &update_raw_asset)
         .await
-        .context("Failed to fetch raw asset")?
-        .ok_or(UpdateRawAssetError::InvalidId)?;
+        .context("Failed to update raw asset")?;
 
-    // Only write if a provided field actually differs from the stored value
-    if has_changes(&update_raw_asset, &asset) {
-        update_raw_asset_(&pool, user.id(), id, &update_raw_asset)
-            .await
-            .context("Failed to update raw asset")?;
+    // No row matched id + user_id, so the asset does not exist for this user
+    if rows_affected == 0 {
+        return Err(UpdateRawAssetError::InvalidId);
     }
 
     Ok(StatusCode::NO_CONTENT)
 }
 
-/***** HELPERS *****/
-
-fn has_changes(update: &UpdateRawAsset, current: &RawAsset) -> bool {
-    update.name.as_ref().is_some_and(|v| v.as_ref() != current.name)
-        || update
-            .possessed
-            .as_ref()
-            .is_some_and(|v| *v.as_ref() != current.possessed)
-        || update
-            .unit_weight
-            .as_ref()
-            .is_some_and(|v| *v.as_ref() != current.unit_weight)
-        || update
-            .composition
-            .as_ref()
-            .is_some_and(|v| v.as_ref() != current.composition)
-        || update.purity.as_ref().is_some_and(|v| *v.as_ref() != current.purity)
-}
-
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_asset: &UpdateRawAsset) -> Result<()> {
+async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_asset: &UpdateRawAsset) -> Result<u64> {
     let raw_asset_name = raw_asset.name.as_ref().map(|n| n.as_ref());
     let raw_asset_possessed = raw_asset.possessed.as_ref().map(|p| p.as_ref());
     let raw_asset_unit_weight = raw_asset.unit_weight.as_ref().map(|w| w.as_ref());
@@ -109,7 +86,7 @@ async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_a
     let raw_asset_purity = raw_asset.purity.as_ref().map(|p| p.as_ref());
 
     // COALESCE writes the first non-null argument in the pair
-    sqlx::query!(
+    let result = sqlx::query!(
         r#"
             UPDATE raw_assets
             SET name = COALESCE($1, name),
@@ -130,7 +107,7 @@ async fn update_raw_asset_(pool: &SqlitePool, user_id: i64, asset_id: i64, raw_a
     .execute(pool)
     .await?;
 
-    Ok(())
+    Ok(result.rows_affected())
 }
 
 /***** ERRORS *****/

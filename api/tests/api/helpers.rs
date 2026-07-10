@@ -3,7 +3,8 @@ use std::process::Command;
 use std::sync::LazyLock;
 
 use api::{
-    Application, Configuration, get_connection_pool,
+    configuration::Configuration,
+    startup::{Application, get_connection_pool},
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
 use chrono::Utc;

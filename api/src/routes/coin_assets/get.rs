@@ -4,10 +4,7 @@ use axum::{Extension, Json};
 use sqlx::SqlitePool;
 
 use crate::middleware::AuthenticatedUserId;
-use crate::model::coin::Coin;
-use crate::routes::coin_assets::query_coin_asset;
-use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::utils::dto::assets_dto::CoinAssetsDto;
+use crate::routes::coin_assets::{CoinAssetResponse, CoinAssetRow};
 
 /***** ENDPOINT *****/
 
@@ -23,41 +20,58 @@ pub(crate) async fn get_coin_asset(
     Path(id): Path<i64>,
     State(pool): State<SqlitePool>,
     Extension(user): Extension<AuthenticatedUserId>,
-) -> Result<Json<CoinAssetsDto>, GetCoinAssetError> {
-    let coin_asset = query_coin_asset(&pool, id, user.id())
+) -> Result<Json<CoinAssetResponse>, GetCoinAssetError> {
+    let row = query_coin_asset_row(&pool, id, user.id())
         .await
         .context("Failed to fetch coin asset")?
         .ok_or(GetCoinAssetError::InvalidId)?;
 
-    let coin_data = query_coin(&pool, id)
-        .await
-        .context("Failed to fetch coin")?
-        // There should not be any orphan coin_assets so this should not happen
-        .ok_or_else(|| {
-            GetCoinAssetError::UnexpectedError(anyhow::anyhow!(
-                "Coin associated with coin_asset not found, this should not happen"
-            ))
-        })?;
-
-    let coin_data = convert_coin_model_to_coin_response(coin_data, &pool)
-        .await
-        .context("Failed to convert coin model to coin response")?;
-
-    Ok(Json(CoinAssetsDto {
-        possessed: coin_asset.possessed,
-        coin_data,
-    }))
+    Ok(Json(row.into()))
 }
 
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn query_coin(pool: &SqlitePool, coin_id: i64) -> Result<Option<Coin>> {
-    let coin = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_id)
-        .fetch_optional(pool)
-        .await?;
+async fn query_coin_asset_row(pool: &SqlitePool, coin_id: i64, user_id: i64) -> Result<Option<CoinAssetRow>> {
+    // INNER JOIN coins: an orphan coin_asset can't exist (FK). Joined image
+    // columns get `AS "..?"` to force Option<T> (LEFT JOIN nullability).
+    let row = sqlx::query_as!(
+        CoinAssetRow,
+        r#"
+            SELECT
+                ca.possessed,
+                c.id, c.numista_id, c.name, c.weight, c.size, c.thickness,
+                c.min_year, c.max_year, c.composition, c.purity,
+                c.obverse, c.reverse, c.edge,
+                o.image_url     AS "o_image_url?",
+                o.thumbnail_url AS "o_thumbnail_url?",
+                o.lettering     AS "o_lettering?",
+                o.description   AS "o_description?",
+                o.copyright     AS "o_copyright?",
+                r.image_url     AS "r_image_url?",
+                r.thumbnail_url AS "r_thumbnail_url?",
+                r.lettering     AS "r_lettering?",
+                r.description   AS "r_description?",
+                r.copyright     AS "r_copyright?",
+                e.image_url     AS "e_image_url?",
+                e.thumbnail_url AS "e_thumbnail_url?",
+                e.lettering     AS "e_lettering?",
+                e.description   AS "e_description?",
+                e.copyright     AS "e_copyright?"
+            FROM coin_assets ca
+            JOIN coins c ON c.id = ca.coin_id
+            LEFT JOIN coin_images o ON o.id = c.obverse
+            LEFT JOIN coin_images r ON r.id = c.reverse
+            LEFT JOIN coin_images e ON e.id = c.edge
+            WHERE ca.coin_id = $1 AND ca.user_id = $2
+        "#,
+        coin_id,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await?;
 
-    Ok(coin)
+    Ok(row)
 }
 
 /***** ERRORS *****/

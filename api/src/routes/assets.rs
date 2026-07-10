@@ -1,15 +1,15 @@
 use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::{Extension, Json};
+use serde::Serialize;
 use sqlx::SqlitePool;
 
 use crate::middleware::AuthenticatedUserId;
 use crate::model::cash_asset::CashAsset;
-use crate::model::coin::Coin;
-use crate::model::coin_asset::CoinAsset;
 use crate::model::raw_asset::RawAsset;
-use crate::utils::convert_coin_model_to_coin_response::convert_coin_model_to_coin_response;
-use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, RawAssetsDto};
+use crate::routes::cash_assets::CashAssetResponse;
+use crate::routes::coin_assets::{CoinAssetResponse, CoinAssetRow};
+use crate::routes::raw_assets::RawAssetResponse;
 
 /***** ENDPOINT *****/
 
@@ -23,7 +23,7 @@ use crate::utils::dto::assets_dto::{AssetsDto, CashAssetsDto, CoinAssetsDto, Raw
 pub(crate) async fn get_assets(
     State(pool): State<SqlitePool>,
     Extension(user): Extension<AuthenticatedUserId>,
-) -> Result<Json<AssetsDto>, GetAssetsError> {
+) -> Result<Json<AssetsResponse>, GetAssetsError> {
     // Query Raw Assets
     let raw_assets = query_raw_assets(&pool, user.id())
         .await
@@ -39,32 +39,10 @@ pub(crate) async fn get_assets(
         .await
         .context("Failed to fetch coin assets")?;
 
-    let mut coins = Vec::with_capacity(coin_assets.len());
-    for coin_asset in coin_assets {
-        let coin_model = query_coin(&pool, coin_asset.coin_id)
-            .await
-            .context("Failed to fetch coin")?
-            // There should not be any orphan coin_assets so this should not happen
-            .ok_or_else(|| {
-                GetAssetsError::UnexpectedError(anyhow::anyhow!(
-                    "Coin associated with coin_asset not found, this should not happen"
-                ))
-            })?;
-
-        let coin_data = convert_coin_model_to_coin_response(coin_model, &pool)
-            .await
-            .context("Failed to convert coin model to coin response")?;
-
-        coins.push(CoinAssetsDto {
-            possessed: coin_asset.possessed,
-            coin_data,
-        });
-    }
-
-    Ok(Json(AssetsDto {
+    Ok(Json(AssetsResponse {
         raw_assets: raw_assets
             .into_iter()
-            .map(|asset| RawAssetsDto {
+            .map(|asset| RawAssetResponse {
                 id: asset.id,
                 name: asset.name,
                 possessed: asset.possessed,
@@ -75,14 +53,14 @@ pub(crate) async fn get_assets(
             .collect(),
         cash_assets: cash_assets
             .into_iter()
-            .map(|asset| CashAssetsDto {
+            .map(|asset| CashAssetResponse {
                 id: asset.id,
                 name: asset.name,
                 possessed: asset.possessed,
                 unit_value: asset.unit_value,
             })
             .collect(),
-        coin_assets: coins,
+        coin_assets: coin_assets.into_iter().map(Into::into).collect(),
     }))
 }
 
@@ -107,21 +85,56 @@ async fn query_cash_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<CashAs
 }
 
 #[tracing::instrument(skip_all)]
-async fn query_coin_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<CoinAsset>> {
-    let assets = sqlx::query_as!(CoinAsset, "SELECT * FROM coin_assets WHERE user_id = $1", user_id)
-        .fetch_all(pool)
-        .await?;
+async fn query_coin_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<CoinAssetRow>> {
+    // INNER JOIN coins: an orphan coin_asset can't exist (FK) and, if it did,
+    // would simply be dropped rather than 500 the whole request. Joined image
+    // columns get `AS "..?"` to force Option<T> (LEFT JOIN nullability).
+    let rows = sqlx::query_as!(
+        CoinAssetRow,
+        r#"
+            SELECT
+                ca.possessed,
+                c.id, c.numista_id, c.name, c.weight, c.size, c.thickness,
+                c.min_year, c.max_year, c.composition, c.purity,
+                c.obverse, c.reverse, c.edge,
+                o.image_url     AS "o_image_url?",
+                o.thumbnail_url AS "o_thumbnail_url?",
+                o.lettering     AS "o_lettering?",
+                o.description   AS "o_description?",
+                o.copyright     AS "o_copyright?",
+                r.image_url     AS "r_image_url?",
+                r.thumbnail_url AS "r_thumbnail_url?",
+                r.lettering     AS "r_lettering?",
+                r.description   AS "r_description?",
+                r.copyright     AS "r_copyright?",
+                e.image_url     AS "e_image_url?",
+                e.thumbnail_url AS "e_thumbnail_url?",
+                e.lettering     AS "e_lettering?",
+                e.description   AS "e_description?",
+                e.copyright     AS "e_copyright?"
+            FROM coin_assets ca
+            JOIN coins c ON c.id = ca.coin_id
+            LEFT JOIN coin_images o ON o.id = c.obverse
+            LEFT JOIN coin_images r ON r.id = c.reverse
+            LEFT JOIN coin_images e ON e.id = c.edge
+            WHERE ca.user_id = $1
+        "#,
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
 
-    Ok(assets)
+    Ok(rows)
 }
 
-#[tracing::instrument(skip_all)]
-async fn query_coin(pool: &SqlitePool, coin_id: i64) -> Result<Option<Coin>> {
-    let coin = sqlx::query_as!(Coin, "SELECT * FROM coins WHERE id = $1", coin_id)
-        .fetch_optional(pool)
-        .await?;
+/***** RESPONSE *****/
 
-    Ok(coin)
+#[allow(clippy::struct_field_names)]
+#[derive(Serialize)]
+pub(crate) struct AssetsResponse {
+    pub(crate) raw_assets: Vec<RawAssetResponse>,
+    pub(crate) cash_assets: Vec<CashAssetResponse>,
+    pub(crate) coin_assets: Vec<CoinAssetResponse>,
 }
 
 /***** ERRORS *****/

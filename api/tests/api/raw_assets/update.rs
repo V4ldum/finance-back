@@ -80,5 +80,5 @@ async fn update_raw_asset_fails_and_returns_500_if_there_is_a_fatal_database_err
 
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
-    assert_eq!(json_response["reason"], "Failed to fetch raw asset");
+    assert_eq!(json_response["reason"], "Failed to update raw asset");
 }
