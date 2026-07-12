@@ -12,10 +12,11 @@ on_success = "job:run"
 command = ["cargo", "test"]
 need_stdout = true
 
-# Audit
-[jobs.audit]
-command = ["cargo", "deny", "check", "advisories"]
+# Tests with logs
+[jobs.test_log]
+command = ["cargo", "test"]
 need_stdout = true
+env.TEST_LOG = "true"
 
 # Run API
 [jobs.run]
