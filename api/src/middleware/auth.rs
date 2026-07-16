@@ -4,6 +4,7 @@ use axum::extract::{Request, State};
 use axum::http::HeaderMap;
 use axum::middleware::Next;
 use axum::response::Response;
+use sha3::Digest;
 use sqlx::SqlitePool;
 use std::fmt::Debug;
 
@@ -22,7 +23,8 @@ pub(crate) async fn check_api_key(
         .to_str()
         .map_err(|_| CheckApiKeyError::InvalidApiKey)?;
 
-    let user_id = fetch_user_id(&pool, key)
+    let hashed_key = hex::encode(sha3::Sha3_256::digest(key.as_bytes()));
+    let user_id = fetch_user_id(&pool, &hashed_key)
         .await
         .context("Failed to fetch api key")?
         .ok_or(CheckApiKeyError::InvalidApiKey)?;

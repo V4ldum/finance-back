@@ -8,13 +8,37 @@ use api::{
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
 use fake::{Fake, faker::lorem::en::Sentence};
+use sha3::Digest;
 use sqlx::SqlitePool;
 use tracing::level_filters::LevelFilter;
 use uuid::Uuid;
 
+pub struct TestUser {
+    pub api_key: String,
+}
+
+impl TestUser {
+    pub fn generate() -> Self {
+        Self {
+            api_key: Uuid::new_v4().to_string(),
+        }
+    }
+
+    async fn store(&self, pool: &SqlitePool) {
+        let password_hash = sha3::Sha3_256::digest(self.api_key.as_bytes());
+        let password_hash = hex::encode(password_hash);
+
+        sqlx::query!("INSERT OR IGNORE INTO users(api_key) VALUES ($1)", password_hash)
+            .execute(pool)
+            .await
+            .expect("Failed to insert user into database");
+    }
+}
+
 pub struct TestApp {
     pub address: String,
     pub pool: SqlitePool,
+    pub test_user: TestUser,
 }
 
 impl TestApp {
@@ -39,7 +63,7 @@ impl TestApp {
     pub async fn post_raw_asset(&self, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .post(format!("{}/assets/raw", self.address))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .json(body)
             .send()
             .await
@@ -49,7 +73,7 @@ impl TestApp {
     pub async fn delete_raw_asset(&self, id: i64) -> reqwest::Response {
         reqwest::Client::new()
             .delete(format!("{}/assets/raw/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -58,7 +82,7 @@ impl TestApp {
     pub async fn patch_raw_asset(&self, id: i64, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .patch(format!("{}/assets/raw/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .json(body)
             .send()
             .await
@@ -68,7 +92,7 @@ impl TestApp {
     pub async fn get_raw_asset(&self, id: i64) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/assets/raw/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -77,7 +101,7 @@ impl TestApp {
     pub async fn post_cash_asset(&self, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .post(format!("{}/assets/cash", self.address))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .json(body)
             .send()
             .await
@@ -87,7 +111,7 @@ impl TestApp {
     pub async fn delete_cash_asset(&self, id: i64) -> reqwest::Response {
         reqwest::Client::new()
             .delete(format!("{}/assets/cash/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -96,7 +120,7 @@ impl TestApp {
     pub async fn patch_cash_asset(&self, id: i64, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .patch(format!("{}/assets/cash/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .json(body)
             .send()
             .await
@@ -106,7 +130,7 @@ impl TestApp {
     pub async fn get_cash_asset(&self, id: i64) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/assets/cash/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -115,7 +139,7 @@ impl TestApp {
     pub async fn post_coin_asset(&self, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .post(format!("{}/assets/coin", self.address))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .json(body)
             .send()
             .await
@@ -125,7 +149,7 @@ impl TestApp {
     pub async fn delete_coin_asset(&self, id: i64) -> reqwest::Response {
         reqwest::Client::new()
             .delete(format!("{}/assets/coin/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -134,7 +158,7 @@ impl TestApp {
     pub async fn patch_coin_asset(&self, id: i64, body: &serde_json::Value) -> reqwest::Response {
         reqwest::Client::new()
             .patch(format!("{}/assets/coin/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .json(body)
             .send()
             .await
@@ -144,7 +168,7 @@ impl TestApp {
     pub async fn get_coin_asset(&self, id: i64) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/assets/coin/{}", self.address, id))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -153,7 +177,7 @@ impl TestApp {
     pub async fn get_price(&self, name: &str) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/prices/{}", self.address, name))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -162,7 +186,7 @@ impl TestApp {
     pub async fn get_prices(&self) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/prices", self.address))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -171,7 +195,7 @@ impl TestApp {
     pub async fn get_assets(&self) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/assets", self.address))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -180,7 +204,7 @@ impl TestApp {
     pub async fn get_coin(&self) -> reqwest::Response {
         reqwest::Client::new()
             .get(format!("{}/coins/1", self.address))
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -190,7 +214,7 @@ impl TestApp {
         reqwest::Client::new()
             .get(format!("{}/coins/search", self.address))
             .query(&[("q", query)])
-            .header("X-API-KEY", "123")
+            .header("X-API-KEY", &self.test_user.api_key)
             .send()
             .await
             .expect("Failed to execute request")
@@ -293,14 +317,6 @@ static UNACCENT_EXTENSION: LazyLock<String> = LazyLock::new(|| -> String {
         .expect("Extension path should be valid UTF-8")
 });
 
-async fn configure_database(pool: &SqlitePool) {
-    // Insert a test user into the database
-    sqlx::query!("INSERT OR IGNORE INTO users(api_key) VALUES ('123')")
-        .execute(pool)
-        .await
-        .expect("Failed to insert user into database");
-}
-
 pub async fn spawn_app() -> TestApp {
     // Setup telemetry
     LazyLock::force(&TRACING);
@@ -317,7 +333,6 @@ pub async fn spawn_app() -> TestApp {
     let pool = get_connection_pool(&configuration.database_url, &configuration.sqlite_extension)
         .await
         .expect("Failed to get connection pool");
-    configure_database(&pool).await;
 
     // Run the server in the background
     let server = Application::build(configuration)
@@ -326,5 +341,12 @@ pub async fn spawn_app() -> TestApp {
     let address = format!("http://127.0.0.1:{}", server.port());
     tokio::spawn(server.run_until_stopped().into_future());
 
-    TestApp { address, pool }
+    let test_app = TestApp {
+        address,
+        pool,
+        test_user: TestUser::generate(),
+    };
+    test_app.test_user.store(&test_app.pool).await;
+
+    test_app
 }
