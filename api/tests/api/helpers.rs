@@ -7,7 +7,6 @@ use api::{
     startup::{Application, get_connection_pool},
     telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
 };
-use chrono::Utc;
 use fake::{Fake, faker::lorem::en::Sentence};
 use sqlx::SqlitePool;
 use tracing::level_filters::LevelFilter;
@@ -226,6 +225,18 @@ pub fn purity() -> i64 {
     (1..=9999).fake()
 }
 
+pub fn gold_price() -> f64 {
+    (2000.0..5000.0).fake()
+}
+
+pub fn silver_price() -> f64 {
+    (50.0..100.0).fake()
+}
+
+pub fn sp_price() -> f64 {
+    (5000.0..9000.0).fake()
+}
+
 // Ensure the telemetry stack is only initialized once
 static TRACING: LazyLock<()> = LazyLock::new(|| {
     let default_filter_level = LevelFilter::INFO;
@@ -288,28 +299,6 @@ async fn configure_database(pool: &SqlitePool) {
         .execute(pool)
         .await
         .expect("Failed to insert user into database");
-
-    // Insert fake prices into the database
-    let gold = (2000..5000).fake::<i64>();
-    let silver = (50..100).fake::<i64>();
-    let sp = (5000..9000).fake::<i64>();
-    let date = Utc::now().format("%Y-%m-%d").to_string();
-
-    sqlx::query!(
-        r#"
-        INSERT OR IGNORE INTO prices
-        VALUES ('Gold', $1, $4),
-               ('Silver', $2, $4),
-               ('SP500', $3, $4)
-        "#,
-        gold,
-        silver,
-        sp,
-        date,
-    )
-    .execute(pool)
-    .await
-    .expect("Failed to insert user into database");
 }
 
 pub async fn spawn_app() -> TestApp {

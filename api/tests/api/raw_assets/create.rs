@@ -6,60 +6,6 @@ use crate::{
 };
 
 #[tokio::test]
-async fn create_raw_asset_returns_201_for_valid_data() {
-    // Arrange
-    let app = spawn_app().await;
-    let json = json!({
-        "name": name(),
-        "possessed": possessed(),
-        "unit_weight": unit_weight(),
-        "composition": composition(),
-        "purity": purity(),
-    });
-
-    // Act
-    let response = app.post_raw_asset(&json).await;
-
-    // Assert
-    assert_eq!(response.status().as_u16(), 201);
-}
-
-#[tokio::test]
-async fn create_raw_asset_persists_the_asset() {
-    // Arrange
-    let app = spawn_app().await;
-
-    let name = name();
-    let possessed = possessed();
-    let unit_weight = unit_weight();
-    let composition = composition();
-    let purity = purity();
-
-    let json = json!({
-        "name": name,
-        "possessed": possessed,
-        "unit_weight": unit_weight,
-        "composition": composition,
-        "purity": purity,
-    });
-
-    // Act
-    app.post_raw_asset(&json).await;
-
-    // Assert
-    let saved = sqlx::query!("SELECT name, possessed, unit_weight, composition, purity FROM raw_assets")
-        .fetch_one(&app.pool)
-        .await
-        .expect("Failed to fetch raw_assets");
-
-    assert_eq!(saved.name, name);
-    assert_eq!(saved.possessed, possessed);
-    assert_eq!(saved.unit_weight, unit_weight);
-    assert_eq!(saved.composition, composition);
-    assert_eq!(saved.purity, purity);
-}
-
-#[tokio::test]
 async fn create_raw_asset_returns_422_when_data_is_missing() {
     // Arrange
     let app = spawn_app().await;
@@ -228,4 +174,42 @@ async fn create_raw_asset_fails_and_returns_500_if_there_is_a_fatal_database_err
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
     assert_eq!(json_response["reason"], "Failed to insert raw asset");
+}
+
+#[tokio::test]
+async fn create_raw_asset_persists_the_asset() {
+    // Arrange
+    let app = spawn_app().await;
+
+    let name = name();
+    let possessed = possessed();
+    let unit_weight = unit_weight();
+    let composition = composition();
+    let purity = purity();
+
+    let json = json!({
+        "name": name,
+        "possessed": possessed,
+        "unit_weight": unit_weight,
+        "composition": composition,
+        "purity": purity,
+    });
+
+    // Act
+    let response = app.post_raw_asset(&json).await;
+
+    // Assert
+    let status = response.status().as_u16();
+    assert_eq!(status, 201);
+
+    let saved = sqlx::query!("SELECT name, possessed, unit_weight, composition, purity FROM raw_assets")
+        .fetch_one(&app.pool)
+        .await
+        .expect("Failed to fetch raw_assets");
+
+    assert_eq!(saved.name, name);
+    assert_eq!(saved.possessed, possessed);
+    assert_eq!(saved.unit_weight, unit_weight);
+    assert_eq!(saved.composition, composition);
+    assert_eq!(saved.purity, purity);
 }

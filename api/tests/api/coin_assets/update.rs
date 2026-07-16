@@ -1,8 +1,8 @@
 use serde_json::json;
 
 use crate::{
-    coin_assets::nuke_coin_assets_table,
-    helpers::{fake_id, spawn_app},
+    coin_assets::{insert_coin_asset, nuke_coin_assets_table},
+    helpers::{fake_id, possessed, spawn_app},
 };
 
 #[tokio::test]
@@ -32,7 +32,7 @@ async fn update_coin_asset_returns_400_when_data_is_invalid() {
 
     // Assert
     let status = response.status().as_u16();
-    assert_eq!(status, 400,);
+    assert_eq!(status, 400);
 
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
@@ -79,4 +79,34 @@ async fn update_coin_asset_returns_404_when_id_is_not_in_database() {
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
     assert_eq!(json_response["reason"], "The provided id is invalid");
+}
+
+#[tokio::test]
+async fn update_coin_asset_updates_the_asset() {
+    // Arrange
+    let app = spawn_app().await;
+    insert_coin_asset(&app).await;
+
+    let new_possessed = possessed();
+
+    // Act
+    let response = app
+        .patch_coin_asset(
+            1,
+            &json!({
+                "possessed": new_possessed,
+            }),
+        )
+        .await;
+
+    // Assert
+    let status = response.status().as_u16();
+    assert_eq!(status, 204);
+
+    let saved = sqlx::query!("SELECT possessed FROM coin_assets")
+        .fetch_one(&app.pool)
+        .await
+        .expect("Failed to fetch coin_assets");
+
+    assert_eq!(saved.possessed, new_possessed);
 }

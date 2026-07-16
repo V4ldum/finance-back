@@ -12,7 +12,7 @@ on_success = "job:run"
 command = ["cargo", "test"]
 need_stdout = true
 
-# Tests with logs
+# Tests with logging
 [jobs.test_log]
 command = ["cargo", "test"]
 need_stdout = true

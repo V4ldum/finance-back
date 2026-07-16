@@ -25,6 +25,7 @@ unicode-segmentation = "1.13.3"
 thiserror = "2.0.18"
 
 [dev-dependencies]
+approx = "0.5.1"
 claims = "0.8.0"
 fake = "5.1.0"
 proptest = "1.11.0"

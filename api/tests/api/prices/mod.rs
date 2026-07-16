@@ -1,3 +1,5 @@
+use chrono::Utc;
+
 use crate::helpers::TestApp;
 
 mod get_all;
@@ -12,4 +14,24 @@ async fn remove_value_from(app: &TestApp, name: &str) {
         .execute(&app.pool)
         .await
         .unwrap();
+}
+
+async fn insert_prices(app: &TestApp, gold: f64, silver: f64, sp: f64) {
+    let date = Utc::now().format("%Y-%m-%d").to_string();
+
+    sqlx::query!(
+        r#"
+            INSERT OR IGNORE INTO prices
+            VALUES ('Gold', $1, $4),
+                   ('Silver', $2, $4),
+                   ('SP500', $3, $4)
+            "#,
+        gold,
+        silver,
+        sp,
+        date,
+    )
+    .execute(&app.pool)
+    .await
+    .expect("Failed to insert user into database");
 }

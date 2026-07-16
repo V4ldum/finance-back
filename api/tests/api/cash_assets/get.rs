@@ -1,4 +1,7 @@
-use crate::{cash_assets::nuke_cash_assets_table, helpers::spawn_app};
+use crate::{
+    cash_assets::{insert_cash_asset, nuke_cash_assets_table},
+    helpers::{name, possessed, spawn_app, unit_value},
+};
 
 #[tokio::test]
 async fn get_cash_asset_fails_and_returns_500_if_there_is_a_fatal_database_error() {
@@ -34,4 +37,22 @@ async fn get_cash_asset_returns_404_when_id_is_not_in_database() {
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
     assert_eq!(json_response["reason"], "The provided id is invalid");
+}
+
+#[tokio::test]
+async fn get_cash_asset_returns_the_correct_asset() {
+    // Arrange
+    let app = spawn_app().await;
+    let name = name();
+    insert_cash_asset(&app, &name, possessed(), unit_value()).await;
+
+    // Act
+    let response = app.get_cash_asset(1).await;
+
+    // Assert
+    let status = response.status().as_u16();
+    assert_eq!(status, 200);
+
+    let json_response = response.json::<serde_json::Value>().await.unwrap();
+    assert_eq!(json_response["name"], name);
 }

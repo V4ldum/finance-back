@@ -27,23 +27,6 @@ async fn auth_middleware_returns_401_for_missing_api_key() {
 }
 
 #[tokio::test]
-async fn auth_middleware_returns_401_for_invalid_api_key() {
-    // Arrange
-    let app = spawn_app().await;
-
-    // Act
-    let response = app.get_auth_middleware(Some("invalid")).await;
-
-    // Assert
-    let status = response.status().as_u16();
-    assert_eq!(status, 401);
-
-    let json_response = response.json::<serde_json::Value>().await.unwrap();
-    assert_eq!(json_response["status"], status);
-    assert_eq!(json_response["reason"], "Invalid X-API-KEY provided");
-}
-
-#[tokio::test]
 async fn auth_middleware_returns_401_for_non_ascii_api_key() {
     // Arrange
     let app = spawn_app().await;
@@ -76,6 +59,23 @@ async fn auth_middleware_fails_and_returns_500_if_there_is_a_fatal_database_erro
     let json_response = response.json::<serde_json::Value>().await.unwrap();
     assert_eq!(json_response["status"], status);
     assert_eq!(json_response["reason"], "Failed to fetch api key");
+}
+
+#[tokio::test]
+async fn auth_middleware_returns_401_for_invalid_api_key() {
+    // Arrange
+    let app = spawn_app().await;
+
+    // Act
+    let response = app.get_auth_middleware(Some("invalid")).await;
+
+    // Assert
+    let status = response.status().as_u16();
+    assert_eq!(status, 401);
+
+    let json_response = response.json::<serde_json::Value>().await.unwrap();
+    assert_eq!(json_response["status"], status);
+    assert_eq!(json_response["reason"], "Invalid X-API-KEY provided");
 }
 
 #[tokio::test]

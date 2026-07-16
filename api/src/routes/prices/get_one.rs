@@ -20,7 +20,7 @@ pub(crate) async fn get_one_price(
     Path(query): Path<String>,
     State(pool): State<SqlitePool>,
 ) -> Result<Json<PriceResponse>, GetPriceError> {
-    let price = AssetPrice::parse(&query).map_err(GetPriceError::UnknownPrice)?;
+    let price = AssetPrice::parse(&query).map_err(GetPriceError::UnknownPriceKey)?;
 
     let value = query_price(&pool, &price)
         .await
@@ -55,7 +55,7 @@ async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<Pri
 pub(crate) enum GetPriceError {
     #[error("{0}")]
     #[status(NOT_FOUND)]
-    UnknownPrice(String),
+    UnknownPriceKey(String),
     #[error(transparent)]
     #[status(INTERNAL_SERVER_ERROR)]
     UnexpectedError(#[from] anyhow::Error),
