@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM raw_assets WHERE id = $1 AND user_id = $2",
+  "query": "SELECT id, name, possessed, unit_value FROM cash_assets WHERE id = $1 AND user_id = $2",
   "describe": {
     "columns": [
       {
@@ -19,23 +19,8 @@
         "type_info": "Integer"
       },
       {
-        "name": "unit_weight",
+        "name": "unit_value",
         "ordinal": 3,
-        "type_info": "Integer"
-      },
-      {
-        "name": "composition",
-        "ordinal": 4,
-        "type_info": "Text"
-      },
-      {
-        "name": "purity",
-        "ordinal": 5,
-        "type_info": "Integer"
-      },
-      {
-        "name": "user_id",
-        "ordinal": 6,
         "type_info": "Integer"
       }
     ],
@@ -46,11 +31,8 @@
       false,
       false,
       false,
-      false,
-      false,
-      false,
       false
     ]
   },
-  "hash": "82aade5e9bf4d20dc13ae2bf63a17a35853d036700ae034b87a82ae8001054cb"
+  "hash": "7da3a6ec4c673955a96e2c7620f7ee5c04212ebe9259192df8f31f8b7b65e629"
 }
