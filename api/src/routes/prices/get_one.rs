@@ -4,8 +4,7 @@ use axum::extract::{Path, State};
 use sqlx::SqlitePool;
 
 use crate::domain::AssetPrice;
-use crate::model::price::PriceDb;
-use crate::routes::prices::PriceResponse;
+use crate::routes::prices::{Price, PriceResponse};
 
 /***** ENDPOINT *****/
 
@@ -39,10 +38,10 @@ pub(crate) async fn get_one_price(
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<PriceDb>> {
+async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<Price>> {
     let price_key = price.as_ref();
 
-    let price = sqlx::query_as!(PriceDb, "SELECT * FROM prices WHERE name = $1", price_key)
+    let price = sqlx::query_as!(Price, "SELECT * FROM prices WHERE name = $1", price_key)
         .fetch_optional(pool)
         .await?;
 

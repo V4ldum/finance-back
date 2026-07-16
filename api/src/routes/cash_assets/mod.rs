@@ -2,8 +2,6 @@ use anyhow::Result;
 use serde::Serialize;
 use sqlx::SqlitePool;
 
-use crate::model::cash_asset::CashAsset;
-
 mod create;
 mod delete;
 mod get;
@@ -16,11 +14,18 @@ pub(crate) use update::update_cash_asset;
 
 /***** DATABASE *****/
 
+pub(crate) struct CashAsset {
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) possessed: i64,
+    pub(crate) unit_value: i64,
+}
+
 #[tracing::instrument(skip_all)]
 async fn query_cash_asset(pool: &SqlitePool, asset_id: i64, user_id: i64) -> Result<Option<CashAsset>> {
     let cash_asset = sqlx::query_as!(
         CashAsset,
-        "SELECT * FROM cash_assets WHERE id = $1 AND user_id = $2",
+        "SELECT id, name, possessed, unit_value FROM cash_assets WHERE id = $1 AND user_id = $2",
         asset_id,
         user_id
     )

@@ -1,7 +1,6 @@
 pub mod configuration;
 mod domain;
 mod middleware;
-mod model;
 mod router;
 mod routes;
 pub mod startup;

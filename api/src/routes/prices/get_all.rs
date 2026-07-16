@@ -4,8 +4,7 @@ use axum::extract::State;
 use serde::Serialize;
 use sqlx::SqlitePool;
 
-use crate::model::price::PriceDb;
-use crate::routes::prices::PriceResponse;
+use crate::routes::prices::{Price, PriceResponse};
 
 /***** ENDPOINT *****/
 
@@ -31,8 +30,8 @@ pub(crate) async fn get_all_prices(State(pool): State<SqlitePool>) -> Result<Jso
 /***** DATABASE *****/
 
 #[tracing::instrument(skip_all)]
-async fn query_prices(pool: &SqlitePool) -> Result<Vec<PriceDb>> {
-    let prices = sqlx::query_as!(PriceDb, "SELECT * FROM prices").fetch_all(pool).await?;
+async fn query_prices(pool: &SqlitePool) -> Result<Vec<Price>> {
+    let prices = sqlx::query_as!(Price, "SELECT * FROM prices").fetch_all(pool).await?;
 
     Ok(prices)
 }

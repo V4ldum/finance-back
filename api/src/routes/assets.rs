@@ -5,11 +5,9 @@ use serde::Serialize;
 use sqlx::SqlitePool;
 
 use crate::middleware::AuthenticatedUserId;
-use crate::model::cash_asset::CashAsset;
-use crate::model::raw_asset::RawAsset;
-use crate::routes::cash_assets::CashAssetResponse;
+use crate::routes::cash_assets::{CashAsset, CashAssetResponse};
 use crate::routes::coin_assets::{CoinAssetResponse, CoinAssetRow};
-use crate::routes::raw_assets::RawAssetResponse;
+use crate::routes::raw_assets::{RawAsset, RawAssetResponse};
 
 /***** ENDPOINT *****/
 
@@ -68,18 +66,26 @@ pub(crate) async fn get_assets(
 
 #[tracing::instrument(skip_all)]
 async fn query_raw_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<RawAsset>> {
-    let assets = sqlx::query_as!(RawAsset, "SELECT * FROM raw_assets WHERE user_id = $1", user_id)
-        .fetch_all(pool)
-        .await?;
+    let assets = sqlx::query_as!(
+        RawAsset,
+        "SELECT id, name, possessed, unit_weight, composition, purity FROM raw_assets WHERE user_id = $1",
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
 
     Ok(assets)
 }
 
 #[tracing::instrument(skip_all)]
 async fn query_cash_assets(pool: &SqlitePool, user_id: i64) -> Result<Vec<CashAsset>> {
-    let assets = sqlx::query_as!(CashAsset, "SELECT * FROM cash_assets WHERE user_id = $1", user_id)
-        .fetch_all(pool)
-        .await?;
+    let assets = sqlx::query_as!(
+        CashAsset,
+        "SELECT id, name, possessed, unit_value FROM cash_assets WHERE user_id = $1",
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
 
     Ok(assets)
 }
