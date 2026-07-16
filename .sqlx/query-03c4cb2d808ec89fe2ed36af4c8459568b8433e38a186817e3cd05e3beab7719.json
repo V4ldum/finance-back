@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO prices\n            VALUES ('Gold', $1, $4),\n                   ('Silver', $2, $4),\n                   ('SP500', $3, $4)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "03c4cb2d808ec89fe2ed36af4c8459568b8433e38a186817e3cd05e3beab7719"
+}

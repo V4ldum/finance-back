@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT possessed FROM coin_assets",
+  "describe": {
+    "columns": [
+      {
+        "name": "possessed",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a946fc0bde8b9ce837ed38f248df557bdd4aa5413d731c4885e6b787a9a21cb5"
+}
