@@ -1,5 +1,5 @@
 use crate::{
-    coins::{insert_coin_by_name, nuke_coins_table},
+    coins::{insert_coin_with_name, nuke_coins_table},
     helpers::{name, spawn_app},
 };
 
@@ -44,7 +44,7 @@ async fn get_coin_returns_the_correct_coin() {
     let app = spawn_app().await;
 
     let coin_name = name();
-    insert_coin_by_name(&app, &coin_name).await;
+    insert_coin_with_name(&app, &coin_name).await;
 
     // Act
     let response = app.get_coin().await;

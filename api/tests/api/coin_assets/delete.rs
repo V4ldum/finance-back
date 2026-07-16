@@ -2,7 +2,7 @@ use claims::assert_none;
 
 use crate::{
     coin_assets::{insert_coin_asset, nuke_coin_assets_table},
-    helpers::spawn_app,
+    helpers::{name, possessed, spawn_app},
 };
 
 #[tokio::test]
@@ -27,7 +27,7 @@ async fn delete_coin_asset_fails_and_returns_500_if_there_is_a_fatal_database_er
 async fn delete_coin_asset_deletes_the_data() {
     // Arrange
     let app = spawn_app().await;
-    insert_coin_asset(&app).await;
+    insert_coin_asset(&app, &name(), possessed()).await;
 
     // Act
     let response = app.delete_coin_asset(1).await;

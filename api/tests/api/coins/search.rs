@@ -1,7 +1,7 @@
 use claims::assert_some;
 
 use crate::{
-    coins::{insert_coin_by_name, nuke_coins_table},
+    coins::{insert_coin_with_name, nuke_coins_table},
     helpers::{name, spawn_app},
 };
 
@@ -48,9 +48,9 @@ async fn search_coins_returns_the_correct_coins() {
     let coin_name = name();
     let coin_name_variant1 = format!("{coin_name}{}", name());
     let coin_name_variant2 = format!("{coin_name}{}", name());
-    insert_coin_by_name(&app, &coin_name_variant1).await;
-    insert_coin_by_name(&app, &coin_name_variant2).await;
-    insert_coin_by_name(&app, &name()).await;
+    insert_coin_with_name(&app, &coin_name_variant1).await;
+    insert_coin_with_name(&app, &coin_name_variant2).await;
+    insert_coin_with_name(&app, &name()).await;
 
     // Act
     let response = app.search_coins(&coin_name).await;

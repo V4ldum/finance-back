@@ -11,7 +11,7 @@ async fn nuke_cash_assets_table(app: &TestApp) {
     sqlx::query!("DROP TABLE cash_assets").execute(&app.pool).await.unwrap();
 }
 
-async fn insert_cash_asset(app: &TestApp, name: &str, possessed: i64, unit_value: i64) {
+pub(crate) async fn insert_cash_asset(app: &TestApp, name: &str, possessed: i64, unit_value: i64) {
     app.post_cash_asset(&json!({
         "name": name,
         "possessed": possessed,

@@ -1,7 +1,8 @@
 use serde_json::json;
 
 use crate::{
-    coin_assets::{insert_coin, nuke_coin_assets_table},
+    coin_assets::nuke_coin_assets_table,
+    coins::insert_coin_with_id,
     helpers::{fake_id, possessed, spawn_app},
 };
 
@@ -89,7 +90,7 @@ async fn create_coin_asset_returns_409_when_adding_a_coin_you_already_possess() 
         "coin_id": coin_id,
         "possessed": possessed(),
     });
-    insert_coin(&app, coin_id).await;
+    insert_coin_with_id(&app, coin_id).await;
 
     // Act
     let _ = app.post_coin_asset(&json).await; // Insert twice
@@ -119,7 +120,7 @@ async fn create_coin_asset_persists_the_asset() {
         "coin_id": coin_id,
         "possessed": possessed,
     });
-    insert_coin(&app, coin_id).await;
+    insert_coin_with_id(&app, coin_id).await;
 
     // Act
     let response = app.post_coin_asset(&json).await;

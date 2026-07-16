@@ -1,6 +1,6 @@
 use crate::{
-    coin_assets::{insert_coin_asset_by_name, nuke_coin_assets_table},
-    helpers::{name, spawn_app},
+    coin_assets::{insert_coin_asset, nuke_coin_assets_table},
+    helpers::{name, possessed, spawn_app},
 };
 
 #[tokio::test]
@@ -44,7 +44,7 @@ async fn get_coin_asset_returns_the_correct_asset() {
     // Arrange
     let app = spawn_app().await;
     let name = name();
-    insert_coin_asset_by_name(&app, &name).await;
+    insert_coin_asset(&app, &name, possessed()).await;
 
     // Act
     let response = app.get_coin_asset(1).await;

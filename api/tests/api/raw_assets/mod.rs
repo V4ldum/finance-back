@@ -11,7 +11,7 @@ async fn nuke_raw_assets_table(app: &TestApp) {
     sqlx::query!("DROP TABLE raw_assets").execute(&app.pool).await.unwrap();
 }
 
-async fn insert_raw_asset(app: &TestApp, name: &str, possessed: i64, unit_weight: i64, composition: &str, purity: i64) {
+pub(crate) async fn insert_raw_asset(app: &TestApp, name: &str, possessed: i64, unit_weight: i64, composition: &str, purity: i64) {
     app.post_raw_asset(&json!({
         "name": name,
         "possessed": possessed,

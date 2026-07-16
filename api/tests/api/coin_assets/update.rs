@@ -2,7 +2,7 @@ use serde_json::json;
 
 use crate::{
     coin_assets::{insert_coin_asset, nuke_coin_assets_table},
-    helpers::{fake_id, possessed, spawn_app},
+    helpers::{fake_id, name, possessed, spawn_app},
 };
 
 #[tokio::test]
@@ -85,7 +85,7 @@ async fn update_coin_asset_returns_404_when_id_is_not_in_database() {
 async fn update_coin_asset_updates_the_asset() {
     // Arrange
     let app = spawn_app().await;
-    insert_coin_asset(&app).await;
+    insert_coin_asset(&app, &name(), possessed()).await;
 
     let new_possessed = possessed();
 
