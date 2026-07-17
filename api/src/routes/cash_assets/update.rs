@@ -40,10 +40,7 @@ impl TryFrom<UpdateCashAssetRequest> for UpdateCashAsset {
     skip_all,
     fields(
         id = %id,
-        user_id = %user.id(),
-        name = ?request.name,
-        possessed = ?request.possessed,
-        unit_value = ?request.unit_value,
+        user_id = %user.id()
     ),
     err(Debug)
 )]

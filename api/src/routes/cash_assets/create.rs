@@ -39,10 +39,7 @@ impl TryFrom<CreateCashAssetRequest> for CreateCashAsset {
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = %user.id(),
-        name = %request.name,
-        possessed = %request.possessed,
-        unit_value = %request.unit_value
+        user_id = %user.id()
     ),
     err(Debug)
 )]

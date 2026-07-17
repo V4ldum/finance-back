@@ -11,12 +11,14 @@ on_success = "job:run"
 [jobs.test]
 command = ["cargo", "test"]
 need_stdout = true
+scroll_anchor = "last"
 
 # Tests with logging
 [jobs.test_log]
 command = ["cargo", "test"]
 need_stdout = true
 env.TEST_LOG = "true"
+scroll_anchor = "last"
 
 # Unused dependencies
 [jobs.udeps]

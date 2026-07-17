@@ -45,12 +45,7 @@ impl TryFrom<CreateRawAssetRequest> for CreateRawAsset {
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = %user.id(),
-        name = %request.name,
-        possessed = %request.possessed,
-        unit_weight = %request.unit_weight,
-        composition = %request.composition,
-        purity = %request.purity
+        user_id = %user.id()
     ),
     err(Debug)
 )]

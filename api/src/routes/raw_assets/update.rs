@@ -46,12 +46,7 @@ impl TryFrom<UpdateRawAssetRequest> for UpdateRawAsset {
     skip_all,
     fields(
         id = %id,
-        user_id = %user.id(),
-        name = ?request.name,
-        possessed = ?request.possessed,
-        unit_weight = ?request.unit_weight,
-        composition = ?request.composition,
-        purity = ?request.purity
+        user_id = %user.id()
     ),
     err(Debug)
 )]

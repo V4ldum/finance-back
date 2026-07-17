@@ -37,8 +37,7 @@ impl TryFrom<CreateCoinAssetRequest> for CreateCoinAsset {
     skip_all,
     fields(
         id = %request.coin_id,
-        user_id = %user.id(),
-        possessed = %request.possessed,
+        user_id = %user.id()
     ),
     err(Debug)
 )]

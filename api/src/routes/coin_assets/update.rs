@@ -22,8 +22,7 @@ pub(crate) struct UpdateCoinAssetRequest {
     skip_all,
     fields(
         id = %id,
-        user_id = %user.id(),
-        possessed = %request.possessed
+        user_id = %user.id()
     ),
     err(Debug)
 )]
