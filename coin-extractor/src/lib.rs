@@ -141,7 +141,7 @@ mod tests {
         let mut db = SqliteConnection::connect(&db_url)
             .await
             .expect("Failed to open database");
-        sqlx::migrate!("../api/migrations")
+        sqlx::migrate!("../migrations")
             .run(&mut db)
             .await
             .expect("Failed to run migrations");

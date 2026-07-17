@@ -52,7 +52,7 @@ pub async fn get_connection_pool(database_url: &str, extension: &str) -> Result<
     let pool = SqlitePool::connect_with(options).await?;
 
     // Automatically migrate the database
-    sqlx::migrate!().run(&pool).await?;
+    sqlx::migrate!("../migrations").run(&pool).await?;
 
     Ok(pool)
 }

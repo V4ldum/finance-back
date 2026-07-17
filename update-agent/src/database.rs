@@ -20,7 +20,7 @@ impl Database {
         let db = SqlitePool::connect(database_url)
             .await
             .context("Failed to connect to database")?;
-        sqlx::migrate!("../api/migrations")
+        sqlx::migrate!("../migrations")
             .run(&db)
             .await
             .context("Failed to run migrations")?;
