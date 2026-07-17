@@ -18,6 +18,12 @@ command = ["cargo", "test"]
 need_stdout = true
 env.TEST_LOG = "true"
 
+# Unused dependencies
+[jobs.udeps]
+command = ["cargo", "+nightly", "udeps", "--workspace", "--all-targets"]
+need_stdout = false
+scroll_anchor = "last"
+
 # Run API
 [jobs.run]
 command = [
