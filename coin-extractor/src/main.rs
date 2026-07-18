@@ -15,14 +15,13 @@ async fn main() -> Result<()> {
     let api_key = SecretString::from(dotenvy::var("API_KEY").context("API_KEY not set")?);
     let database_url = dotenvy::var("DATABASE_URL").context("DATABASE_URL not set")?;
 
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() != 2 {
-        eprintln!("Usage : {} <numista_coin_id>", args[0]);
+    let mut args = env::args();
+    let program_name = args.next().unwrap_or_default();
+    let (Some(first_arg), None) = (args.next(), args.next()) else {
+        eprintln!("Usage : {program_name} <numista_coin_id>");
         exit(1);
-    }
+    };
 
-    let first_arg = &args[1];
     let Ok(coin_id) = first_arg.parse() else {
         eprintln!("Invalid argument {first_arg}, argument should be a number");
         exit(1);

@@ -33,7 +33,7 @@ impl EURUSDExchangeRate {
             .indicators
             .quote
             .iter()
-            .find_map(|quote| quote.close.iter().rfind(|item| item.is_some())?.to_owned())
+            .find_map(|quote| quote.close.iter().copied().rfind(|item| item.is_some())?)
     }
 }
 

@@ -1,5 +1,4 @@
 use std::fmt::Formatter;
-use std::ops::Deref;
 
 use serde::de::MapAccess;
 use serde::{Deserialize, Deserializer};
@@ -91,14 +90,13 @@ impl<'de> Deserialize<'de> for CoinQueryComposition {
                 }
 
                 // Get metal & purity
-                let composition = <&str>::deref(parts.first().expect("We should have parts")).to_owned();
-                let mut purity = <&str>::deref(
-                    parts
-                        .iter()
-                        .find(|&&e| e.ends_with('‰'))
-                        .ok_or_else(|| serde::de::Error::custom("the char ‰ was expected"))?,
-                )
-                .to_owned();
+                let composition = parts[0].to_owned();
+                let mut purity = parts
+                    .iter()
+                    .copied()
+                    .find(|e| e.ends_with('‰'))
+                    .ok_or_else(|| serde::de::Error::custom("the char ‰ was expected"))?
+                    .to_owned();
                 purity.pop().expect("purity should not be empty"); // Remove the ‰ sign to parse it to int
 
                 // Parse it first to float in case there is a comma, multiply it by 10 then hard cast it to i32
