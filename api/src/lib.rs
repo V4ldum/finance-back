@@ -8,3 +8,4 @@ pub mod telemetry;
 mod utils;
 
 pub(crate) use utils::errors::{ApiErrorResponse, error_chain_fmt, response};
+pub(crate) use utils::extract::{Json, Query};

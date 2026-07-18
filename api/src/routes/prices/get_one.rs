@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
-use axum::Json;
 use axum::extract::{Path, State};
 use sqlx::SqlitePool;
 
+use crate::Json;
 use crate::domain::AssetPrice;
 use crate::routes::prices::{Price, PriceResponse};
 

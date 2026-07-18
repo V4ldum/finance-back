@@ -37,6 +37,16 @@ pub(crate) fn response<E: ApiErrorResponse>(error: &E) -> Response {
     .into_response()
 }
 
+/// Build an `ApiError` response from a raw status and reason, for callers that
+/// don't have an `ApiErrorResponse` (e.g. extractor rejections in [`crate::utils::extract`]).
+pub(crate) fn error_response(status: StatusCode, reason: impl Into<String>) -> Response {
+    ApiError {
+        status: status.as_u16(),
+        reason: reason.into(),
+    }
+    .into_response()
+}
+
 /// Iterates over the whole chain of errors that led to `e`, printing each `source()`.
 pub(crate) fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{e}")?;

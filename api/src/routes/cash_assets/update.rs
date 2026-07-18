@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
+use axum::Extension;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
+use crate::Json;
 use crate::domain::{AssetName, AssetPossessed, AssetUnitValue, UpdateCashAsset};
 use crate::middleware::AuthenticatedUserId;
 

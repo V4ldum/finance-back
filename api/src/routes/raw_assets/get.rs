@@ -1,8 +1,9 @@
 use anyhow::{Context, Result};
+use axum::Extension;
 use axum::extract::{Path, State};
-use axum::{Extension, Json};
 use sqlx::SqlitePool;
 
+use crate::Json;
 use crate::middleware::AuthenticatedUserId;
 use crate::routes::raw_assets::{RawAssetResponse, query_raw_asset};
 

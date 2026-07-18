@@ -17,6 +17,13 @@ async fn update_coin_asset_returns_422_when_data_is_missing() {
     // Assert
     let status = response.status().as_u16();
     assert_eq!(status, 422);
+
+    let json_response = response.json::<serde_json::Value>().await.unwrap();
+    assert_eq!(json_response["status"], status);
+    assert_eq!(
+        json_response["reason"],
+        "Failed to deserialize the JSON body into the target type: missing field `possessed`"
+    );
 }
 
 #[tokio::test]

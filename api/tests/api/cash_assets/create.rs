@@ -15,6 +15,7 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
                 "possessed": possessed(),
                 "unit_value": unit_value(),
             }),
+            "missing field `name`",
             "missing name",
         ),
         (
@@ -22,6 +23,7 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
                 "name": name(),
                 "unit_value": unit_value(),
             }),
+            "missing field `possessed`",
             "missing possessed",
         ),
         (
@@ -29,11 +31,12 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
                 "name": name(),
                 "possessed": possessed(),
             }),
+            "missing field `unit_value`",
             "missing unit_value",
         ),
     ];
 
-    for (invalid_body, error_message) in test_cases {
+    for (invalid_body, missing_field, error_message) in test_cases {
         // Act
         let response = app.post_cash_asset(&invalid_body).await;
 
@@ -41,7 +44,14 @@ async fn create_cash_asset_returns_422_when_data_is_missing() {
         let status = response.status().as_u16();
         assert_eq!(
             status, 422,
-            "The API did not fail with 422 Bad Request when the payload was {error_message}"
+            "The API did not fail with 422 Unprocessable Entity when the payload was {error_message}"
+        );
+
+        let json_response = response.json::<serde_json::Value>().await.unwrap();
+        assert_eq!(json_response["status"], status);
+        assert_eq!(
+            json_response["reason"],
+            format!("Failed to deserialize the JSON body into the target type: {missing_field}")
         );
     }
 }

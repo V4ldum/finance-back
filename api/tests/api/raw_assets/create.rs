@@ -18,6 +18,7 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
                 "composition": composition(),
                 "purity": purity(),
             }),
+            "missing field `name`",
             "missing name",
         ),
         (
@@ -27,6 +28,7 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
                 "composition": composition(),
                 "purity": purity(),
             }),
+            "missing field `possessed`",
             "missing possessed",
         ),
         (
@@ -36,6 +38,7 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
                 "composition": composition(),
                 "purity": purity(),
             }),
+            "missing field `unit_weight`",
             "missing unit_weight",
         ),
         (
@@ -45,6 +48,7 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
                 "unit_weight": unit_weight(),
                 "purity": purity(),
             }),
+            "missing field `composition`",
             "missing composition",
         ),
         (
@@ -54,19 +58,27 @@ async fn create_raw_asset_returns_422_when_data_is_missing() {
                 "unit_weight": unit_weight(),
                 "composition": composition(),
             }),
+            "missing field `purity`",
             "missing purity",
         ),
     ];
 
-    for (invalid_body, error_message) in test_cases {
+    for (invalid_body, missing_field, error_message) in test_cases {
         // Act
         let response = app.post_raw_asset(&invalid_body).await;
 
         // Assert
+        let status = response.status().as_u16();
         assert_eq!(
-            response.status().as_u16(),
-            422,
-            "The API did not fail with 400 Bad Request when the payload was {error_message}"
+            status, 422,
+            "The API did not fail with 422 Unprocessable Entity when the payload was {error_message}"
+        );
+
+        let json_response = response.json::<serde_json::Value>().await.unwrap();
+        assert_eq!(json_response["status"], status);
+        assert_eq!(
+            json_response["reason"],
+            format!("Failed to deserialize the JSON body into the target type: {missing_field}")
         );
     }
 }

@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
-use axum::Json;
 use axum::extract::State;
 use serde::Serialize;
 use sqlx::SqlitePool;
 
+use crate::Json;
 use crate::routes::prices::{Price, PriceResponse};
 
 /***** ENDPOINT *****/

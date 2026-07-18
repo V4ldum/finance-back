@@ -1,9 +1,10 @@
 use anyhow::{Context, Result};
+use axum::Extension;
 use axum::extract::State;
-use axum::{Extension, Json};
 use serde::Serialize;
 use sqlx::SqlitePool;
 
+use crate::Json;
 use crate::middleware::AuthenticatedUserId;
 use crate::routes::cash_assets::{CashAsset, CashAssetResponse};
 use crate::routes::coin_assets::{CoinAssetResponse, CoinAssetRow};

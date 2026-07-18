@@ -1,11 +1,12 @@
 use anyhow::{Context, Result};
+use axum::Extension;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
 
+use crate::Json;
 use crate::domain::{AssetPossessed, CreateCoinAsset};
 use crate::middleware::AuthenticatedUserId;
 

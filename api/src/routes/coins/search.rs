@@ -1,11 +1,11 @@
 use anyhow::{Context, Result};
-use axum::Json;
-use axum::extract::{Query, State};
+use axum::extract::State;
 use serde::Deserialize;
 use sqlx::SqlitePool;
 
 use crate::domain::CoinSearchQuery;
 use crate::routes::coins::{CoinResponse, CoinRow};
+use crate::{Json, Query};
 
 /***** REQUEST *****/
 
