@@ -31,7 +31,9 @@ pub(crate) async fn get_all_prices(State(pool): State<SqlitePool>) -> Result<Jso
 
 #[tracing::instrument(skip_all)]
 async fn query_prices(pool: &SqlitePool) -> Result<Vec<Price>> {
-    let prices = sqlx::query_as!(Price, "SELECT * FROM prices").fetch_all(pool).await?;
+    let prices = sqlx::query_as!(Price, r#"SELECT name, value, date AS "date: _" FROM prices"#)
+        .fetch_all(pool)
+        .await?;
 
     Ok(prices)
 }

@@ -41,9 +41,13 @@ pub(crate) async fn get_one_price(
 async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<Price>> {
     let price_key = price.as_ref();
 
-    let price = sqlx::query_as!(Price, "SELECT * FROM prices WHERE name = $1", price_key)
-        .fetch_optional(pool)
-        .await?;
+    let price = sqlx::query_as!(
+        Price,
+        r#"SELECT name, value, date AS "date: _" FROM prices WHERE name = $1"#,
+        price_key
+    )
+    .fetch_optional(pool)
+    .await?;
 
     Ok(price)
 }

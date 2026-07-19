@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT * FROM prices",
+  "query": "SELECT name, value, date AS \"date: NaiveDate\" FROM prices WHERE name = $1",
   "describe": {
     "columns": [
       {
@@ -14,13 +14,13 @@
         "type_info": "Float"
       },
       {
-        "name": "date",
+        "name": "date: NaiveDate",
         "ordinal": 2,
-        "type_info": "Date"
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
@@ -28,5 +28,5 @@
       false
     ]
   },
-  "hash": "4964b7d4ae27199080c7d8da7cf404c1dc5b17dfd8ffae0e222ad3669ea8b166"
+  "hash": "78a96df26ee55cf96facb1fa2e25b952961e1d9c91c6e6032fee0c3fb0a36f11"
 }

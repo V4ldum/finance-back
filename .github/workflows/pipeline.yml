@@ -6,6 +6,7 @@ on:
             - "main"
         paths:
             - .sqlx/**
+            - migrations/**
             - api/**
             - sqlite3_unaccent/src/**
             - update-agent/**
@@ -44,6 +45,7 @@ jobs:
                           - 'Dockerfile'
                       redeploy:
                           - 'docker-compose.yml'
+                          - 'migrations/**'
 
     test:
         needs: detect-changes
