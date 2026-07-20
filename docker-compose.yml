@@ -21,9 +21,7 @@ services:
               source: /root/finance/finance.env
               target: /app/.env
         labels:
-            vector.enable: true
-            vector.target: "finance"
-            vector.elasticsearch: true
+            dozzle.enable: true
             traefik.enable: true
             traefik.http.routers.finance.tls: true
             traefik.http.routers.finance.entrypoints: websecure
