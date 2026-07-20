@@ -43,7 +43,7 @@ async fn query_price(pool: &SqlitePool, price: &AssetPrice) -> Result<Option<Pri
 
     let price = sqlx::query_as!(
         Price,
-        r#"SELECT name, value, date AS "date: _" FROM prices WHERE name = $1"#,
+        r#"SELECT name, value, date AS "date: _" FROM pricess WHERE name = $1"#,
         price_key
     )
     .fetch_optional(pool)
