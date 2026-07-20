@@ -16,27 +16,9 @@ use tracing_log::LogTracer;
 use tracing_subscriber::Layer;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::ChronoUtc;
-use tracing_subscriber::{Registry, fmt::MakeWriter, layer::SubscriberExt};
+use tracing_subscriber::{Registry, layer::SubscriberExt};
 
-pub struct SubscriberConfig<Sink1, Sink2> {
-    pub json_filter: LevelFilter,
-    pub json_sink: Sink1,
-    pub text_filter: LevelFilter,
-    pub text_sink: Sink2,
-}
-
-pub fn get_subscriber<Sink1, Sink2>(config: SubscriberConfig<Sink1, Sink2>) -> impl Subscriber + Send + Sync
-where
-    Sink1: for<'a> MakeWriter<'a> + Clone + Send + Sync + 'static,
-    Sink2: for<'a> MakeWriter<'a> + Send + Sync + 'static,
-{
-    let SubscriberConfig {
-        json_filter,
-        json_sink,
-        text_filter,
-        text_sink,
-    } = config;
-
+pub fn get_subscriber(filter: LevelFilter) -> impl Subscriber + Send + Sync {
     // Json Layer
     let json_formatting_layer = tracing_subscriber::fmt::layer()
         .json()
@@ -47,20 +29,11 @@ where
         .with_target(true)
         .with_level(true)
         .with_span_events(FmtSpan::CLOSE)
-        .with_writer(json_sink)
-        .with_filter(json_filter);
-
-    // Text Layer
-    let text_formatting_layer = tracing_subscriber::fmt::layer()
-        .with_writer(text_sink)
-        .with_ansi(cfg!(debug_assertions))
-        .with_timer(ChronoUtc::new("%H:%M:%S".into()))
-        .with_filter(text_filter);
+        .with_writer(std::io::stdout)
+        .with_filter(filter);
 
     // Registry
-    Registry::default()
-        .with(json_formatting_layer)
-        .with(text_formatting_layer)
+    Registry::default().with(json_formatting_layer)
 }
 
 pub fn init_subscriber(subscriber: impl Subscriber + Send + Sync) {
