@@ -12,7 +12,7 @@ async fn main() -> Result<()> {
     let subscriber = get_subscriber(SubscriberConfig {
         json_filter: LevelFilter::INFO,
         json_sink: std::io::stdout,
-        text_filter: LevelFilter::WARN,
+        text_filter: LevelFilter::INFO,
         text_sink: std::io::stderr,
     });
     init_subscriber(subscriber);
