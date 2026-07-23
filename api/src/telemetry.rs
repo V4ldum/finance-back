@@ -15,7 +15,6 @@ use tracing::{Subscriber, subscriber::set_global_default};
 use tracing_log::LogTracer;
 use tracing_subscriber::Layer;
 use tracing_subscriber::fmt::MakeWriter;
-use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::ChronoUtc;
 use tracing_subscriber::{Registry, layer::SubscriberExt};
 
@@ -45,9 +44,8 @@ where
         .with_current_span(true)
         .with_span_list(true)
         .with_timer(ChronoUtc::rfc_3339())
-        .with_target(true)
+        .with_target(false)
         .with_level(true)
-        .with_span_events(FmtSpan::CLOSE)
         .with_writer(json_sink)
         .with_filter(json_filter);
 
@@ -56,6 +54,7 @@ where
     // and needs to be human-readable without advanced parsing capabilities
     let text_formatting_layer = tracing_subscriber::fmt::layer()
         .with_writer(text_sink)
+        .with_target(false)
         .with_ansi(cfg!(debug_assertions))
         .with_timer(ChronoUtc::new("%H:%M:%S".into()))
         .with_filter(text_filter);

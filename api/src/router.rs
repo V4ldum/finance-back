@@ -23,6 +23,10 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
     // Telemetry Middleware
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(|req: &Request<_>| {
+            // Don't trace the healthcheck endpoint
+            if req.uri().path().trim_end_matches('/') == "/health" {
+                return tracing::Span::none();
+            }
             tracing::info_span!(
                 "request",
                 request_id = %Uuid::new_v4(),
@@ -30,7 +34,11 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
                 uri = %req.uri(),
             )
         })
-        .on_response(|response: &Response<_>, latency: Duration, _span: &Span| {
+        .on_response(|response: &Response<_>, latency: Duration, span: &Span| {
+            // Don't trace a disabled span
+            if span.is_disabled() {
+                return;
+            }
             tracing::info!(
                 latency_ms = latency.as_millis(),
                 status = response.status().as_u16(),
