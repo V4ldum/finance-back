@@ -17,9 +17,11 @@ services:
             - type: bind
               source: /root/finance/db/
               target: /app/db/
+              # Volume instead of env_file because the deploy user don't have read permission on the environment files
             - type: bind
               source: /root/finance/finance.env
               target: /app/.env
+              read_only: true
         labels:
             dozzle.enable: true
             traefik.enable: true
