@@ -9,8 +9,6 @@ services:
             retries: 1
         networks:
             - netv6
-        env_file:
-            - /root/finance/finance.env
         environment:
             - TZ=Europe/Paris
             - HOST=0.0.0.0
