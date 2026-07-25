@@ -3,8 +3,8 @@ use chrono::{NaiveDate, Utc};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::{Sqlite, SqlitePool};
 
-static GOLD_PRICE_LABEL: &str = "GOLD";
-static SILVER_PRICE_LABEL: &str = "SILVER";
+static GOLD_PRICE_LABEL: &str = "Gold";
+static SILVER_PRICE_LABEL: &str = "Silver";
 static SP500_PRICE_LABEL: &str = "SP500";
 
 pub struct Database {
@@ -160,10 +160,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,GOLD_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved gold price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            GOLD_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved gold price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -184,10 +187,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,GOLD_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved gold price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            GOLD_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved gold price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -205,10 +211,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,GOLD_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved gold price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            GOLD_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved gold price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -229,10 +238,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,GOLD_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved gold price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            GOLD_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved gold price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -250,10 +262,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SILVER_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved silver price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SILVER_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved silver price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -274,10 +289,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SILVER_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved silver price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SILVER_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved silver price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -295,10 +313,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SILVER_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved silver price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SILVER_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved silver price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -319,10 +340,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SILVER_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved silver price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SILVER_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved silver price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -340,10 +364,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SP500_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved sp500 price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SP500_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved sp500 price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -364,10 +391,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SP500_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved sp500 price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SP500_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved sp500 price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -385,10 +415,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SP500_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved sp500 price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SP500_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved sp500 price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
@@ -409,10 +442,13 @@ mod tests {
 
         // Assert
         assert_ok!(result);
-        let saved = sqlx::query!(r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,SP500_PRICE_LABEL)
-            .fetch_one(&db.db)
-            .await
-            .expect("Failed to fetch saved sp500 price");
+        let saved = sqlx::query!(
+            r#"SELECT name, value, date AS "date: NaiveDate" FROM prices WHERE name = $1"#,
+            SP500_PRICE_LABEL
+        )
+        .fetch_one(&db.db)
+        .await
+        .expect("Failed to fetch saved sp500 price");
 
         assert_relative_eq!(saved.value, price);
         assert_eq!(saved.date, date);
