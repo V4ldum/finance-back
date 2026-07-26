@@ -49,17 +49,17 @@ pub(crate) fn error_response(status: StatusCode, reason: impl Into<String>) -> R
 
 /// Iterates over the whole chain of errors that led to `e`, printing each `source()`.
 pub(crate) fn error_chain_fmt(e: &impl std::error::Error, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    writeln!(f, "{e}")?;
+    write!(f, "{e}")?;
 
     let mut current = e.source();
     let mut level = 0;
 
     if current.is_some() {
-        writeln!(f, "Caused by:")?;
+        write!(f, "\n\nCaused by:")?;
     }
 
     while let Some(cause) = current {
-        writeln!(f, "\t{level}: {cause}")?;
+        write!(f, "\n\t{level}: {cause}")?;
 
         current = cause.source();
         level += 1;

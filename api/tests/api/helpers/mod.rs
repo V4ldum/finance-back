@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use api::{
     configuration::Configuration,
     startup::{Application, get_connection_pool},
-    telemetry::{SubscriberConfig, get_subscriber, init_subscriber},
+    telemetry::{get_subscriber, init_subscriber},
 };
 use tracing::level_filters::LevelFilter;
 use uuid::Uuid;
@@ -22,20 +22,10 @@ static TRACING: LazyLock<()> = LazyLock::new(|| {
 
     // If the environment variable TEST_LOG is set, output INFO logs, otherwise don't output anything
     if std::env::var("TEST_LOG").is_ok() {
-        let subscriber = get_subscriber(SubscriberConfig {
-            json_filter: default_filter_level,
-            json_sink: std::io::sink,
-            text_filter: default_filter_level,
-            text_sink: std::io::stdout,
-        });
+        let subscriber = get_subscriber(default_filter_level, std::io::stdout);
         init_subscriber(subscriber);
     } else {
-        let subscriber = get_subscriber(SubscriberConfig {
-            json_filter: default_filter_level,
-            json_sink: std::io::sink,
-            text_filter: default_filter_level,
-            text_sink: std::io::sink,
-        });
+        let subscriber = get_subscriber(default_filter_level, std::io::sink);
         init_subscriber(subscriber);
     }
 });
