@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+export CARGO_TERM_COLOR=always
+
+# Rebuild le offline sqlx cache
+echo "[pre-commit] cargo sqlx prepare --check"
+if cargo sqlx prepare --workspace --check -- --all-targets; then
+    echo "[pre-commit] sqlx cache is up to date"
+else
+    echo "[pre-commit] sqlx cache is stale, rebuilding"
+    cargo sqlx prepare --workspace -- --all-targets
+    git add .sqlx
+fi
