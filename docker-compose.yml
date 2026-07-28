@@ -13,6 +13,8 @@ services:
             - TZ=Europe/Paris
             - HOST=0.0.0.0
             - PORT=7878
+            # API logs as info, everything else as warn
+            - RUST_LOG=warn,api=info
         volumes:
             - type: bind
               source: /root/finance/db/

@@ -13,15 +13,18 @@
 use tracing::level_filters::LevelFilter;
 use tracing::{Subscriber, subscriber::set_global_default};
 use tracing_log::LogTracer;
-use tracing_subscriber::Layer;
 use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::fmt::time::ChronoLocal;
+use tracing_subscriber::{EnvFilter, Layer};
 use tracing_subscriber::{Registry, layer::SubscriberExt};
 
 pub fn get_subscriber<Sink1>(filter: LevelFilter, sink: Sink1) -> impl Subscriber + Send + Sync
 where
     Sink1: for<'a> MakeWriter<'a> + Clone + Send + Sync + 'static,
 {
+    // Log filtering
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(filter.to_string()));
+
     // Layer
     let layer = tracing_subscriber::fmt::layer()
         .compact()
@@ -29,7 +32,7 @@ where
         .with_target(false)
         .with_ansi(true)
         .with_timer(ChronoLocal::new("%H:%M:%S%.3f".into()))
-        .with_filter(filter);
+        .with_filter(env_filter);
 
     // Registry
     Registry::default().with(layer)
