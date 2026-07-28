@@ -23,7 +23,7 @@ scroll_anchor = "last"
 # Unused dependencies
 [jobs.udeps]
 command = ["cargo", "+nightly", "udeps", "--workspace", "--all-targets"]
-need_stdout = false
+need_stdout = true
 scroll_anchor = "last"
 
 # Run API
