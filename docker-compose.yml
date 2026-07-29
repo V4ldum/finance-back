@@ -21,7 +21,7 @@ services:
               target: /app/db/
               # Volume instead of env_file because the deploy user don't have read permission on the environment files
             - type: bind
-              source: /root/finance/finance.env
+              source: /root/finance/secrets.env
               target: /app/.env
               read_only: true
         labels:
