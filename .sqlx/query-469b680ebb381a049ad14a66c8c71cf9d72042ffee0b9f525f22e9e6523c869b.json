@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO coins_fts(coins_fts) VALUES('rebuild')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "469b680ebb381a049ad14a66c8c71cf9d72042ffee0b9f525f22e9e6523c869b"
+}

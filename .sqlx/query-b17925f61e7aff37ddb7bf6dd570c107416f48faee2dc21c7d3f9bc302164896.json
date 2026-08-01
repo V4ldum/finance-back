@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM coins WHERE name = 'Silver Krugerrand'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "b17925f61e7aff37ddb7bf6dd570c107416f48faee2dc21c7d3f9bc302164896"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE coins SET name = 'Gold Krugerrand' WHERE name = 'Silver Krugerrand'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "8d6f55a8c1d5cc92156f89814a79147a7cb0e0f7a0d458d4b1d44ed846b27ab8"
+}

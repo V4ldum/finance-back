@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DROP TRIGGER insert_coins_fts",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "e2bdaa726f61de5d3d950a34f6bc80c822f02984f7d4a9698a47b28da17343b9"
+}

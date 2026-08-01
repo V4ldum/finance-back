@@ -65,3 +65,81 @@ async fn search_coins_returns_the_correct_coins() {
     assert!(array.iter().any(|v| v["name"] == coin_name_variant1));
     assert!(array.iter().any(|v| v["name"] == coin_name_variant2));
 }
+
+#[tokio::test]
+async fn search_coins_partial_search_returns_the_correct_coins() {
+    // Arrange
+    let app = spawn_app().await;
+
+    let coin_name1 = "Silver Krugerrand";
+    let coin_name2 = "5 francs Napoléon";
+    let coin_name3 = "5 francs Napoleon";
+    let coin_name4 = "5 francs \"Semeuse\"";
+
+    insert_coin_with_name(&app, coin_name1).await;
+    insert_coin_with_name(&app, coin_name2).await;
+    insert_coin_with_name(&app, coin_name3).await;
+    insert_coin_with_name(&app, coin_name4).await;
+
+    let test_cases = vec![
+        (coin_name1, "Silver", "only the beginning of the full name"),
+        (coin_name1, "Krugerrand", "only the end of the full name"),
+        (coin_name1, "Kruger", "only the beginning of a word of the full name"),
+        (coin_name1, "rrand", "only the end of a word of the full name"), // This will fail once FTS5 is in place
+        (coin_name1, coin_name1, "the full name"),
+        (coin_name1, "silver", "all in lowercase"),
+        (coin_name1, "SILVER", "all in uppercase"),
+        (coin_name2, "Napoléon", "with an accent in the query"),
+        (coin_name2, "Napoleon", "without an accent in the query"),
+        (coin_name3, "Napoléon", "with an accent in the query not the name"),
+        (coin_name4, "semeuse", "quoted word without quotes"),
+        (coin_name4, "\"semeuse\"", "quoted word with quotes"),
+        (
+            coin_name4,
+            "francs \"semeuse\"",
+            "quoted word with quotes and another word",
+        ),
+    ];
+
+    for (name, query, error_message) in test_cases {
+        // Act
+        let response = app.search_coins(query).await;
+
+        // Assert
+        let json_response = response.json::<serde_json::Value>().await.unwrap();
+        let array = assert_some!(json_response.as_array());
+        assert!(
+            array.iter().any(|v| v["name"] == name),
+            "Failed to find the coin when searching {error_message}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn search_coins_doesnt_fail_on_special_character_queries() {
+    // Arrange
+    let app = spawn_app().await;
+    let test_cases = vec![
+        "AND",
+        "OR",
+        "NOT",
+        "NEAR",
+        "foo-bar",
+        "\"quoted\"",
+        "star*",
+        "(paren)",
+        "colon:",
+        "^caret",
+    ];
+
+    for query in test_cases {
+        insert_coin_with_name(&app, &format!("prefix-{query}")).await;
+
+        // Act
+        let response = app.search_coins(query).await;
+
+        // Assert
+        let status = response.status().as_u16();
+        assert_eq!(status, 200);
+    }
+}
