@@ -40,10 +40,39 @@ pub(crate) async fn search_coins(
 
 #[tracing::instrument(skip_all)]
 async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<CoinRow>> {
-    // TODO migrate back to query_as! macro then comptime extension is merged :
-    // - https://github.com/launchbadge/sqlx/issues/3330
-    // - https://github.com/launchbadge/sqlx/pull/3713
-    let coins = sqlx::query_as(
+    fn convert_to_fts5_format(query: &CoinSearchQuery) -> String {
+        let query = query.as_ref();
+        let mut formatted = String::new();
+
+        for word in query.split_whitespace() {
+            // Skip words that don't contain any alphanumeric characters
+            if !word.chars().any(char::is_alphanumeric) {
+                continue;
+            }
+
+            // Add a space between words
+            if !formatted.is_empty() {
+                formatted.push(' ');
+            }
+
+            formatted.push('"');
+            for character in word.chars() {
+                // Escape double quotes
+                if character == '"' {
+                    formatted.push('"');
+                }
+                formatted.push(character);
+            }
+            formatted.push_str("\"*");
+        }
+
+        // Output something in the form of "word1"* "word2"* "word3"*
+        formatted
+    }
+    let fts5_formatted = convert_to_fts5_format(&query);
+
+    let coins = sqlx::query_as!(
+        CoinRow,
         r"
             SELECT
                 c.id, c.numista_id, c.name, c.weight, c.size, c.thickness,
@@ -65,13 +94,15 @@ async fn query_coins(pool: &SqlitePool, query: CoinSearchQuery) -> Result<Vec<Co
                 e.description   AS e_description,
                 e.copyright     AS e_copyright
             FROM coins c
+            JOIN coins_fts ON coins_fts.rowid = c.id
             LEFT JOIN coin_images o ON o.id = c.obverse
             LEFT JOIN coin_images r ON r.id = c.reverse
             LEFT JOIN coin_images e ON e.id = c.edge
-            WHERE instr(UNACCENT(LOWER(c.name)), UNACCENT(LOWER(?))) > 0
+            WHERE coins_fts MATCH $1
+            ORDER BY bm25(coins_fts)
         ",
+        fts5_formatted
     )
-    .bind(query.as_ref())
     .fetch_all(pool)
     .await?;
 

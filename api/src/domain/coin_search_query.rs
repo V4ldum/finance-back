@@ -7,9 +7,10 @@ pub(crate) struct CoinSearchQuery(String);
 impl CoinSearchQuery {
     pub(crate) fn parse(query: String) -> Result<Self, String> {
         let is_empty_or_whitespace = query.trim().is_empty();
+        let contains_no_alphanumeric = !query.chars().any(char::is_alphanumeric);
         let is_too_long = query.graphemes(true).count() > 256;
 
-        if is_empty_or_whitespace || is_too_long {
+        if is_empty_or_whitespace || contains_no_alphanumeric || is_too_long {
             return Err(format!("Invalid search query: '{query}'"));
         }
 
@@ -48,6 +49,12 @@ mod tests {
     }
 
     #[test]
+    fn a_non_alphanumeric_only_query_is_rejected() {
+        let query = "!".to_string();
+        assert_err!(CoinSearchQuery::parse(query));
+    }
+
+    #[test]
     fn an_empty_string_is_rejected() {
         let query = String::new();
         assert_err!(CoinSearchQuery::parse(query));
@@ -57,6 +64,7 @@ mod tests {
         proptest::collection::vec(any::<char>(), 1..=256)
             .prop_map(|chars| chars.into_iter().collect::<String>())
             .prop_filter("not whitespace-only", |s| !s.trim().is_empty())
+            .prop_filter("contains alphanumeric", |s| s.chars().any(|c| c.is_alphanumeric()))
     }
 
     proptest! {

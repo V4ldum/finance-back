@@ -19,7 +19,7 @@ pub struct Application {
 impl Application {
     pub async fn build(configuration: Configuration) -> Result<Self> {
         // Setup the database connection
-        let pool = get_connection_pool(&configuration.database_url, &configuration.sqlite_extension).await?;
+        let pool = get_connection_pool(&configuration.database_url).await?;
 
         // Bind the listener to the IP and port
         let address = format!("{}:{}", configuration.application_host, configuration.application_port);
@@ -43,10 +43,9 @@ impl Application {
     }
 }
 
-pub async fn get_connection_pool(database_url: &str, extension: &str) -> Result<SqlitePool> {
+pub async fn get_connection_pool(database_url: &str) -> Result<SqlitePool> {
     // Setup the database connection
     let options = SqliteConnectOptions::from_str(database_url)?
-        .extension(extension.to_owned())
         .create_if_missing(true)
         .foreign_keys(true);
     let pool = SqlitePool::connect_with(options).await?;

@@ -8,9 +8,6 @@ pub(crate) use search::search_coins;
 
 /***** DATABASE *****/
 
-// TODO remove the FromRow derive once the comptime UNACCENT extension is merged
-// Check search_coins for details
-#[derive(sqlx::FromRow)]
 pub(crate) struct CoinRow {
     pub(crate) id: i64,
     pub(crate) numista_id: String,

@@ -73,7 +73,7 @@ async fn search_coins_partial_search_returns_the_correct_coins() {
 
     let coin_name1 = "Silver Krugerrand";
     let coin_name2 = "5 francs Napoléon";
-    let coin_name3 = "5 francs Napoleon";
+    let coin_name3 = "tete lauree";
     let coin_name4 = "5 francs \"Semeuse\"";
 
     insert_coin_with_name(&app, coin_name1).await;
@@ -83,15 +83,16 @@ async fn search_coins_partial_search_returns_the_correct_coins() {
 
     let test_cases = vec![
         (coin_name1, "Silver", "only the beginning of the full name"),
+        (coin_name1, "Silver ", "a query with a trailing whitespace"),
         (coin_name1, "Krugerrand", "only the end of the full name"),
         (coin_name1, "Kruger", "only the beginning of a word of the full name"),
-        (coin_name1, "rrand", "only the end of a word of the full name"), // This will fail once FTS5 is in place
         (coin_name1, coin_name1, "the full name"),
+        (coin_name1, "Krugerrand Silver", "the full name with reversed order"),
         (coin_name1, "silver", "all in lowercase"),
         (coin_name1, "SILVER", "all in uppercase"),
         (coin_name2, "Napoléon", "with an accent in the query"),
         (coin_name2, "Napoleon", "without an accent in the query"),
-        (coin_name3, "Napoléon", "with an accent in the query not the name"),
+        (coin_name3, "tête", "with an accent in the query not the name"),
         (coin_name4, "semeuse", "quoted word without quotes"),
         (coin_name4, "\"semeuse\"", "quoted word with quotes"),
         (
@@ -108,6 +109,7 @@ async fn search_coins_partial_search_returns_the_correct_coins() {
         // Assert
         let json_response = response.json::<serde_json::Value>().await.unwrap();
         let array = assert_some!(json_response.as_array());
+        assert_eq!(array.len(), 1, "Failed to find the coin when searching {error_message}");
         assert!(
             array.iter().any(|v| v["name"] == name),
             "Failed to find the coin when searching {error_message}"
@@ -130,6 +132,7 @@ async fn search_coins_doesnt_fail_on_special_character_queries() {
         "(paren)",
         "colon:",
         "^caret",
+        "dash-",
     ];
 
     for query in test_cases {

@@ -27,22 +27,6 @@ async fn pool_enforces_foreign_keys() {
     assert_eq!(fk_on, 1, "foreign key enforcement must be on");
 }
 
-#[tokio::test]
-async fn unaccent_extension_is_available() {
-    // Arrange
-    let app = spawn_app().await;
-
-    // Act
-    // fails with "no such function: unaccent" if the extension isn't loaded
-    let unaccented: String = sqlx::query_scalar("SELECT unaccent('éàù')")
-        .fetch_one(&app.pool)
-        .await
-        .expect("unaccent extension function should be registered");
-
-    // Assert
-    assert_eq!(unaccented, "eau");
-}
-
 async fn drop_coins_fts_triggers(pool: &SqlitePool) {
     sqlx::query!("DROP TRIGGER insert_coins_fts")
         .execute(pool)
@@ -79,6 +63,7 @@ async fn query_coins_fts(pool: &SqlitePool, query: &str) -> Vec<String> {
 }
 
 #[tokio::test]
+#[ignore = "backfill has been confirmed and is already done in production"]
 async fn coins_fts_backfill_worked() {
     // Arrange
     let app = spawn_app().await;

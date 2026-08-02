@@ -7,7 +7,6 @@ on:
         paths:
             - migrations/**
             - api/**
-            - sqlite3_unaccent/src/**
             - update-agent/**
             - Dockerfile
             - docker-compose.yml
@@ -38,7 +37,6 @@ jobs:
                   filters: |
                       rebuild:
                           - 'api/**'
-                          - 'sqlite3_unaccent/src/**'
                           - 'update-agent/**'
                           - 'Dockerfile'
                       redeploy:

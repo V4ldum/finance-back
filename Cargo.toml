@@ -6,9 +6,6 @@ members = [
     "coin-extractor",
     "update-agent",
 ]
-exclude = [
-    "sqlite3_unaccent",
-]
 
 [workspace.lints.clippy]
 pedantic = {level = "warn", priority = -1 }
