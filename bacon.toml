@@ -15,7 +15,7 @@ scroll_anchor = "last"
 
 # Tests with logging
 [jobs.test_log]
-command = ["cargo", "nextest", "run", "--workspace", "--all-targets" "--no-fail-fast"]
+command = ["cargo", "nextest", "run", "--workspace", "--all-targets", "--no-fail-fast"]
 need_stdout = true
 env.TEST_LOG = "true"
 scroll_anchor = "last"
