@@ -38,6 +38,7 @@ RUN mkdir -p /tools && \
 
 ## RUN ##
 FROM gcr.io/distroless/cc-debian13:nonroot
+ARG RUST_TARGET
 WORKDIR /app
 
 COPY --from=tools /tools/ /bin/
