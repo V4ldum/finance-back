@@ -2,10 +2,11 @@ ARG RUST_TARGET=x86_64-unknown-linux-gnu
 
 ## CARGO CHEF ##
 FROM lukemathwalker/cargo-chef:latest-rust-slim AS chef
+WORKDIR /work
+
 ARG RUST_TARGET
 ENV SQLX_OFFLINE=true
-ENV CARGO_BUILD_TARGET=${RUST_TARGET}
-WORKDIR /work
+ENV BUILD_ARGS="--release --locked --target ${RUST_TARGET}"
 
 
 ## PLAN ##
@@ -19,11 +20,11 @@ FROM chef AS build
 COPY --from=plan /work/recipe.json recipe.json
 
 # Build dependencies
-RUN cargo chef cook --release --locked -p api -p update-agent --recipe-path recipe.json
+RUN cargo chef cook ${BUILD_ARGS} -p api -p update-agent --recipe-path recipe.json
 
 # Build application
 COPY . .
-RUN cargo build --release --locked -p api -p update-agent
+RUN cargo build ${BUILD_ARGS} -p api -p update-agent
 
 
 ## TOOLS ##
