@@ -1,0 +1,52 @@
+# Build artifacts
+target/
+**/target/
+debug/
+**/*.rs.bk
+*.pdb
+
+# VCS & CI
+.git/
+.gitignore
+.gitattributes
+.github/
+.cargo-husky/
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Secrets & local runtime state
+.env
+.env.*
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Dev tooling / docs
+bacon.toml
+rustfmt.toml
+clippy.toml
+README.md
+LICENSE*
+docs/
+
+# Tests
+**/tests/
+**/benches/
+**/examples/
+**/proptest-regressions/
+
+# Editors & OS noise
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+Thumbs.db
+*.swp
+*.log
