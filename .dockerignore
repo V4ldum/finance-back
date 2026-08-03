@@ -4,6 +4,7 @@ target/
 debug/
 **/*.rs.bk
 *.pdb
+recipe.json
 
 # VCS & CI
 .git/
@@ -11,11 +12,15 @@ debug/
 .gitattributes
 .github/
 .cargo-husky/
+.cargo/audit.toml
 
 # Docker
 Dockerfile*
 .dockerignore
 docker-compose*.yml
+docker-compose*.yaml
+compose*.yml
+compose*.yaml
 
 # Secrets & local runtime state
 .env
@@ -29,10 +34,13 @@ docker-compose*.yml
 # Dev tooling / docs
 bacon.toml
 rustfmt.toml
+rust-analyzer.toml
 clippy.toml
 README.md
 LICENSE*
 docs/
+.claude/
+CLAUDE.md
 
 # Tests
 **/tests/
