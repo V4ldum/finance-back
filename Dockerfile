@@ -3,16 +3,16 @@ FROM lukemathwalker/cargo-chef:latest-rust-slim AS chef
 WORKDIR /work
 
 
-## PLANNER ##
-FROM chef AS planner
+## PLAN ##
+FROM chef AS plan
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 
-## BUILDER ##
-FROM chef AS builder
+## BUILD ##
+FROM chef AS build
 ENV SQLX_OFFLINE=true
-COPY --from=planner /work/recipe.json recipe.json
+COPY --from=plan /work/recipe.json recipe.json
 
 # Build dependencies
 RUN cargo chef cook --release --recipe-path recipe.json
