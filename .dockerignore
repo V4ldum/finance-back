@@ -1,60 +1,18 @@
-# Build artifacts
-target/
-**/target/
-debug/
-**/*.rs.bk
-*.pdb
-recipe.json
+# Whitelist: exclude everything and only add what's needed
 
-# VCS & CI
-.git/
-.gitignore
-.gitattributes
-.github/
-.cargo-husky/
-.cargo/audit.toml
+# Exclude everything
+*
 
-# Docker
-Dockerfile*
-.dockerignore
-docker-compose*.yml
-docker-compose*.yaml
-compose*.yml
-compose*.yaml
+# Workspace manifests
+!Cargo.toml
+!Cargo.lock
 
-# Secrets & local runtime state
-.env
-.env.*
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
+# Sqlx migrations
+!.sqlx/
+!migrations/
 
-# Dev tooling / docs
-bacon.toml
-rustfmt.toml
-rust-analyzer.toml
-clippy.toml
-README.md
-LICENSE*
-docs/
-.claude/
-CLAUDE.md
-
-# Tests
-**/tests/
-**/benches/
-**/examples/
-**/proptest-regressions/
-
-# Editors & OS noise
-.idea/
-.vscode/
-*.iml
-*.ipr
-*.iws
-.DS_Store
-Thumbs.db
-*.swp
-*.log
+# Workspace members
+!api
+!api-error-derive
+!coin-extractor
+!update-agent
