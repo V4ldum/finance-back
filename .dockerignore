@@ -3,16 +3,22 @@
 # Exclude everything
 *
 
-# Workspace manifests
+# Cargo related
 !Cargo.toml
 !Cargo.lock
+.cargo/*
+!.cargo/config.toml
 
-# Sqlx migrations
+# Sqlx related
 !.sqlx/
 !migrations/
 
-# Workspace members
+# Sources
 !api
 !api-error-derive
 !coin-extractor
 !update-agent
+
+# Exclude tests
+**/tests
+**/proptest-regressions
