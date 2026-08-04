@@ -1,7 +1,7 @@
-use fake::{Fake, faker::lorem::en::Sentence};
+use fake::{Fake, faker::lorem::en::Words};
 
 pub fn name() -> String {
-    Sentence(1..3).fake()
+    Words(1..3).fake::<Vec<String>>().join(" ")
 }
 
 pub fn fake_id() -> i64 {

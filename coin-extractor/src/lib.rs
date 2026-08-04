@@ -119,7 +119,7 @@ async fn insert_coin_side(side: CoinQuerySide, transaction: &mut SqliteConnectio
 mod tests {
     use approx::assert_relative_eq;
     use claims::assert_ok;
-    use fake::{faker::lorem::en::Sentence, Fake};
+    use fake::{faker::lorem::en::Words, Fake};
     use secrecy::{ExposeSecret, SecretString};
     use sqlx::{Connection, SqliteConnection};
     use uuid::Uuid;
@@ -186,7 +186,7 @@ mod tests {
                 }}
                 "#,
                 params.coin_id,
-                Sentence(1..3).fake::<String>(),
+                Words(1..3).fake::<Vec<String>>().join(" "),
                 (1.0..100.0).fake::<f64>(),
                 (10.0..50.0).fake::<f64>(),
                 (0.5..5.0).fake::<f64>(),
@@ -219,30 +219,30 @@ mod tests {
         let TestApp { params, mut db } = test_app(mock_server.address().to_string()).await;
 
         let id = params.coin_id;
-        let title = Sentence(1..3).fake::<String>();
+        let title = Words(1..3).fake::<Vec<String>>().join(" ");
         let weight = (1.0..100.0).fake::<f64>();
         let size = (10.0..50.0).fake::<f64>();
         let thickness = (0.5..5.0).fake::<f64>();
         let min_year = (1800..1900).fake::<u32>();
         let max_year = (1900..2024).fake::<u32>();
 
-        let obverse_description = Sentence(1..3).fake::<String>();
-        let obverse_lettering = Sentence(1..3).fake::<String>();
-        let obverse_picture = Sentence(1..3).fake::<String>();
-        let obverse_thumbnail = Sentence(1..3).fake::<String>();
-        let obverse_picture_copyright = Sentence(1..3).fake::<String>();
+        let obverse_description = Words(1..3).fake::<Vec<String>>().join(" ");
+        let obverse_lettering = Words(1..3).fake::<Vec<String>>().join(" ");
+        let obverse_picture = Words(1..3).fake::<Vec<String>>().join(" ");
+        let obverse_thumbnail = Words(1..3).fake::<Vec<String>>().join(" ");
+        let obverse_picture_copyright = Words(1..3).fake::<Vec<String>>().join(" ");
 
-        let reverse_description = Sentence(1..3).fake::<String>();
-        let reverse_lettering = Sentence(1..3).fake::<String>();
-        let reverse_picture = Sentence(1..3).fake::<String>();
-        let reverse_thumbnail = Sentence(1..3).fake::<String>();
-        let reverse_picture_copyright = Sentence(1..3).fake::<String>();
+        let reverse_description = Words(1..3).fake::<Vec<String>>().join(" ");
+        let reverse_lettering = Words(1..3).fake::<Vec<String>>().join(" ");
+        let reverse_picture = Words(1..3).fake::<Vec<String>>().join(" ");
+        let reverse_thumbnail = Words(1..3).fake::<Vec<String>>().join(" ");
+        let reverse_picture_copyright = Words(1..3).fake::<Vec<String>>().join(" ");
 
-        let edge_description = Sentence(1..3).fake::<String>();
-        let edge_lettering = Sentence(1..3).fake::<String>();
-        let edge_picture = Sentence(1..3).fake::<String>();
-        let edge_thumbnail = Sentence(1..3).fake::<String>();
-        let edge_picture_copyright = Sentence(1..3).fake::<String>();
+        let edge_description = Words(1..3).fake::<Vec<String>>().join(" ");
+        let edge_lettering = Words(1..3).fake::<Vec<String>>().join(" ");
+        let edge_picture = Words(1..3).fake::<Vec<String>>().join(" ");
+        let edge_thumbnail = Words(1..3).fake::<Vec<String>>().join(" ");
+        let edge_picture_copyright = Words(1..3).fake::<Vec<String>>().join(" ");
 
         Mock::given(method("GET"))
             .respond_with(ResponseTemplate::new(200).set_body_string(format!(
@@ -348,18 +348,18 @@ mod tests {
         let TestApp { params, .. } = test_app(mock_server.address().to_string()).await;
 
         let id = params.coin_id;
-        let title = Sentence(1..3).fake::<String>();
+        let title = Words(1..3).fake::<Vec<String>>().join(" ");
         let weight = (1.0..100.0).fake::<f64>();
         let size = (10.0..50.0).fake::<f64>();
         let thickness = (0.5..5.0).fake::<f64>();
         let min_year = (1800..1900).fake::<u32>();
         let max_year = (1900..2024).fake::<u32>();
 
-        let watermark_description = Sentence(1..3).fake::<String>();
-        let watermark_lettering = Sentence(1..3).fake::<String>();
-        let watermark_picture = Sentence(1..3).fake::<String>();
-        let watermark_thumbnail = Sentence(1..3).fake::<String>();
-        let watermark_picture_copyright = Sentence(1..3).fake::<String>();
+        let watermark_description = Words(1..3).fake::<Vec<String>>().join(" ");
+        let watermark_lettering = Words(1..3).fake::<Vec<String>>().join(" ");
+        let watermark_picture = Words(1..3).fake::<Vec<String>>().join(" ");
+        let watermark_thumbnail = Words(1..3).fake::<Vec<String>>().join(" ");
+        let watermark_picture_copyright = Words(1..3).fake::<Vec<String>>().join(" ");
 
         Mock::given(method("GET"))
             .respond_with(ResponseTemplate::new(200).set_body_string(format!(
