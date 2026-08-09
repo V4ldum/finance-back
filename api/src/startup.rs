@@ -5,6 +5,7 @@ use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnectOptions;
 use std::str::FromStr;
 use tokio::net::TcpListener;
+use tokio::signal;
 
 use crate::configuration::Configuration;
 use crate::router::router;
@@ -38,7 +39,7 @@ impl Application {
     }
 
     pub async fn run_until_stopped(self) -> Result<()> {
-        self.server.await?;
+        self.server.with_graceful_shutdown(shutdown_signal()).await?;
         Ok(())
     }
 }
@@ -59,4 +60,26 @@ pub async fn get_connection_pool(database_url: &str) -> Result<SqlitePool> {
 fn run(listener: TcpListener, pool: SqlitePool) -> Server {
     let router = router(pool);
     axum::serve(listener, router)
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
 }

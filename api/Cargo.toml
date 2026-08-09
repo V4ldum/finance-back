@@ -14,8 +14,8 @@ anyhow = "1.0.103"
 chrono = "0.4.45"
 dotenvy = "0.15.7"
 serde = { version = "1.0.228", features = ["derive"] }
-tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread", "macros"] }
-tower-http = { version = "0.6.11", features = ["cors", "trace"] }
+tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread", "macros", "signal"] }
+tower-http = { version = "0.6.11", features = ["cors", "trace", "timeout"] }
 tracing = "0.1.44"
 sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio-rustls", "chrono"] }
 tracing-subscriber = { version = "0.3.23", features = ["registry", "chrono", "json", "env-filter"] }

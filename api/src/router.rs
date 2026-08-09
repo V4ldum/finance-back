@@ -1,12 +1,13 @@
 use std::time::Duration;
 
-use axum::http::{Method, Request, Response};
+use axum::http::{Method, Request, Response, StatusCode};
 use axum::routing::{get, post};
 use axum::{Router, middleware};
 use axum_extra::routing::RouterExt;
 use middleware::from_fn_with_state;
 use sqlx::SqlitePool;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
 use uuid::Uuid;
@@ -47,6 +48,12 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
         })
         .on_failure(());
 
+    // Timeout Middleware
+    // Graceful shutdown will wait for outstanding requests to complete.
+    // A 10 seconds timeout is added so requests don't hang forever.
+    // 10 seconds is the delay for Docker to kill a container.
+    let timeout_layer = TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(10));
+
     Router::new()
         .route_with_tsr("/prices", get(prices::get_all_prices))
         .route_with_tsr("/prices/{query}", get(prices::get_one_price))
@@ -79,6 +86,7 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
         .route_with_tsr("/health", get(health_check::health_check))
         // Anything above can use the state
         .with_state(pool)
+        .layer(timeout_layer)
         .layer(cors)
         .layer(trace_layer)
 }
