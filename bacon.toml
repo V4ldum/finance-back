@@ -6,22 +6,18 @@ env.CARGO_TERM_COLOR = "always"
 command = ["cargo", "clippy", "-p", "api"]
 need_stdout = false
 on_success = "job:run"
+scroll_anchor = "auto"
 
 # Tests
 [jobs.test]
 command = ["cargo", "nextest", "run", "--workspace", "--all-targets", "--no-fail-fast"]
+analyzer = "nextest"
 need_stdout = true
-scroll_anchor = "last"
-
-# Tests with logging
-[jobs.test_log]
-command = ["cargo", "nextest", "run", "--workspace", "--all-targets", "--no-fail-fast", "--no-capture"]
-need_stdout = true
-scroll_anchor = "last"
+scroll_anchor = "auto"
 
 # Unused dependencies
 [jobs.udeps]
-command = ["cargo", "+nightly", "udeps", "--workspace", "--all-targets"]
+command = ["cargo", "+nightly", "udeps", "--workspace", "--all-targets", "--all-features"]
 need_stdout = true
 scroll_anchor = "last"
 
@@ -29,7 +25,7 @@ scroll_anchor = "last"
 [jobs.audit]
 command = ["cargo", "deny", "check", "advisories"]
 need_stdout = true
-scroll_anchor = "last"
+scroll_anchor = "first"
 
 # Run API
 [jobs.run]
@@ -40,4 +36,4 @@ need_stdout = true
 allow_warnings = true
 background = false # For long-running applications (server)
 on_change_strategy = "kill_then_restart"
-scroll_anchor = "last"
+scroll_anchor = "auto"
