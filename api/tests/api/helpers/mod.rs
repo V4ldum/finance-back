@@ -16,16 +16,8 @@ pub use test_app::{TestApp, TestUser};
 
 // Ensure the telemetry stack is only initialized once
 static TRACING: LazyLock<()> = LazyLock::new(|| {
-    let default_filter_level = LevelFilter::INFO;
-
-    // If the environment variable TEST_LOG is set, output INFO logs, otherwise don't output anything
-    if std::env::var("TEST_LOG").is_ok() {
-        let subscriber = get_subscriber(default_filter_level, std::io::stdout);
-        init_subscriber(subscriber);
-    } else {
-        let subscriber = get_subscriber(default_filter_level, std::io::sink);
-        init_subscriber(subscriber);
-    }
+    let subscriber = get_subscriber(LevelFilter::INFO, std::io::stdout);
+    init_subscriber(subscriber);
 });
 
 pub async fn spawn_app() -> TestApp {

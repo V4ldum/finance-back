@@ -1,0 +1,25 @@
+[graph]
+targets = []
+all-features = true
+no-default-features = false
+
+[output]
+# When outputting inclusion graphs in diagnostics that include features, this
+# option can be used to specify the depth at which feature edges will be added.
+# This option is included since the graphs can be quite large and the addition
+# of features from the crate(s) to all of the graph roots can be far too verbose.
+# This option can be overridden via `--feature-depth` on the cmd line
+feature-depth = 1
+
+[advisories]
+# advisories to ignore. Can be:
+# * a string ID: "RUSTSEC-0000-0000"
+# * a struct with `id` and `reason`: { id = "RUSTSEC-0000-0000", reason = "you can specify a reason the advisory is ignored" },
+# * a crate version: "a-crate-that-is-yanked@0.1.1"
+# * a struct with `crate` and `reason`: { crate = "a-crate-that-is-yanked@0.1.1", reason = "you can specify why you are ignoring the yanked crate" },
+ignore = [
+
+]
+unmaintained = "all"
+unsound = "all"
+yanked = "deny"
