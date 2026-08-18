@@ -122,11 +122,11 @@ spec:
             volumes:
                 - name: db
                   hostPath:
-                      path: /home/valdum/db
+                      path: /home/valdum/db/finance
                       type: Directory
                 - name: env
                   hostPath:
-                      path: /home/valdum/secrets.env
+                      path: /home/valdum/secrets_finance.env
                       type: File
 
 ---
@@ -175,9 +175,9 @@ spec:
                     volumes:
                         - name: db
                           hostPath:
-                              path: /home/valdum/db
+                              path: /home/valdum/db/finance
                               type: Directory
                         - name: env
                           hostPath:
-                              path: /home/valdum/secrets.env
+                              path: /home/valdum/secrets_finance.env
                               type: File
