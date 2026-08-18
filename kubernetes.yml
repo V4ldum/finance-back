@@ -52,8 +52,8 @@ data:
     HOST: 0.0.0.0
     PORT: "7878" # Needs stay in sync with containerPort in Deployment
     RUST_LOG: warn,api=info # API logs as info, everything else as warn
-    # TODO fix pour que ça marche
-    DATABASE_URL: /app/db/finance.db?mode=rwc
+    # TODO remove .env volume and pass it as environment variable when dotenvy 0.16 releases
+    #DATABASE_URL: /app/db/finance.db?mode=rwc
 
 ---
 apiVersion: apps/v1
@@ -96,23 +96,20 @@ spec:
                             name: finance
 
                   # Test every 5s for ~150s. Some migrations can take a while and we want to make sure they are finished before considering the pod won't start properly
-                  # TODO /health/ready
                   startupProbe:
                       periodSeconds: 5
                       failureThreshold: 30
                       httpGet:
-                          path: /health
+                          path: /health/ready
                           port: api
-                  # TODO /health/live
                   livenessProbe:
                       httpGet:
-                          path: /health
+                          path: /health/live
                           port: api
-                  # TODO /health/ready
                   readinessProbe:
                       timeoutSeconds: 3
                       httpGet:
-                          path: /health
+                          path: /health/ready
                           port: api
 
                   volumeMounts:

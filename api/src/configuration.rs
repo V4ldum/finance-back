@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 pub struct Configuration {
     pub database_url: String,
@@ -7,7 +7,7 @@ pub struct Configuration {
 }
 
 pub fn get_configuration() -> Result<Configuration> {
-    dotenvy::dotenv()?;
+    dotenvy::dotenv().context("Failed to read environment variables")?;
 
     let database_url = dotenvy::var("DATABASE_URL")?;
     let application_host = dotenvy::var("HOST")?;

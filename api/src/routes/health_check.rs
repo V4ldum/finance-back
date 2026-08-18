@@ -5,8 +5,13 @@ use sqlx::SqlitePool;
 
 /***** ENDPOINT *****/
 
+#[tracing::instrument(skip_all)]
+pub(crate) async fn live() -> Response {
+    "OK".into_response()
+}
+
 #[tracing::instrument(skip_all, err(Debug))]
-pub(crate) async fn health_check(State(pool): State<SqlitePool>) -> Result<Response, HealthCheckError> {
+pub(crate) async fn ready(State(pool): State<SqlitePool>) -> Result<Response, HealthCheckError> {
     ping_database(&pool).await.context("Failed to reach the database")?;
 
     Ok("OK".into_response())

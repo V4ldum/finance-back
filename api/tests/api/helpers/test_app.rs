@@ -31,9 +31,17 @@ pub struct TestApp {
 }
 
 impl TestApp {
-    pub async fn get_healthcheck(&self) -> reqwest::Response {
+    pub async fn get_live(&self) -> reqwest::Response {
         reqwest::Client::new()
-            .get(format!("{}/health", self.address))
+            .get(format!("{}/health/live", self.address))
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+
+    pub async fn get_ready(&self) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(format!("{}/health/ready", self.address))
             .send()
             .await
             .expect("Failed to execute request")

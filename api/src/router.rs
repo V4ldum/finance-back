@@ -83,9 +83,10 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
         )
         // Anything above needs authentication
         .route_layer(from_fn_with_state(pool.clone(), check_api_key))
-        .route_with_tsr("/health", get(health_check::health_check))
+        .route_with_tsr("/health/ready", get(health_check::ready))
         // Anything above can use the state
         .with_state(pool)
+        .route_with_tsr("/health/live", get(health_check::live))
         .layer(timeout_layer)
         .layer(cors)
         .layer(trace_layer)
