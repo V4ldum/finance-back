@@ -2,25 +2,25 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 
 metadata:
-  name: finance
-  annotations:
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: api-prefix@file
+    name: finance
+    annotations:
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.middlewares: api-prefix@file
 
 spec:
-  ingressClassName: traefik
-  rules:
-    - host: finance.lan
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: finance
-                port:
-                  name: http
+    ingressClassName: traefik
+    rules:
+        - host: finance.lan
+          http:
+              paths:
+                  - path: /api
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: finance
+                            port:
+                                name: http
 
 ---
 apiVersion: v1
@@ -45,142 +45,142 @@ apiVersion: v1
 kind: ConfigMap
 
 metadata:
-  name: finance
+    name: finance
 
 data:
-  TZ: Europe/Paris
-  HOST: 0.0.0.0
-  PORT: "7878" # Needs stay in sync with containerPort in Deployment
-  RUST_LOG: warn,api=info # API logs as info, everything else as warn
-  # TODO fix pour que ça marche
-  DATABASE_URL: /app/db/finance.db?mode=rwc
+    TZ: Europe/Paris
+    HOST: 0.0.0.0
+    PORT: "7878" # Needs stay in sync with containerPort in Deployment
+    RUST_LOG: warn,api=info # API logs as info, everything else as warn
+    # TODO fix pour que ça marche
+    DATABASE_URL: /app/db/finance.db?mode=rwc
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: finance
+    name: finance
 
 spec:
-  replicas: 1
-  minReadySeconds: 15
-  revisionHistoryLimit: 1
+    replicas: 1
+    minReadySeconds: 15
+    revisionHistoryLimit: 1
 
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+    strategy:
+        rollingUpdate:
+            maxSurge: 1
+            maxUnavailable: 0
 
-  selector:
-    matchLabels:
-      app: finance
+    selector:
+        matchLabels:
+            app: finance
 
-  template:
-    metadata:
-      labels:
-        app: finance
+    template:
+        metadata:
+            labels:
+                app: finance
 
-    spec:
-      containers:
-        - name: finance
-          image: ghcr.io/v4ldum/finance:latest
-          imagePullPolicy: Always
+        spec:
+            containers:
+                - name: finance
+                  image: ghcr.io/v4ldum/finance:latest
+                  imagePullPolicy: Always
 
-          ports:
-            - name: api
-              containerPort: 7878 # Needs to stay in sync with PORT in ConfigMap
+                  ports:
+                      - name: api
+                        containerPort: 7878 # Needs to stay in sync with PORT in ConfigMap
 
-          envFrom:
-            - configMapRef:
-                name: finance
+                  envFrom:
+                      - configMapRef:
+                            name: finance
 
-          # Test every 5s for ~150s. Some migrations can take a while and we want to make sure they are finished before considering the pod won't start properly
-          # TODO /health/ready
-          startupProbe:
-            periodSeconds: 5
-            failureThreshold: 30
-            httpGet:
-              path: /health
-              port: api
-          # TODO /health/live
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: api
-          # TODO /health/ready
-          readinessProbe:
-            timeoutSeconds: 3
-            httpGet:
-              path: /health
-              port: api
+                  # Test every 5s for ~150s. Some migrations can take a while and we want to make sure they are finished before considering the pod won't start properly
+                  # TODO /health/ready
+                  startupProbe:
+                      periodSeconds: 5
+                      failureThreshold: 30
+                      httpGet:
+                          path: /health
+                          port: api
+                  # TODO /health/live
+                  livenessProbe:
+                      httpGet:
+                          path: /health
+                          port: api
+                  # TODO /health/ready
+                  readinessProbe:
+                      timeoutSeconds: 3
+                      httpGet:
+                          path: /health
+                          port: api
 
-          volumeMounts:
-            - mountPath: /app/db
-              name: db
-            - mountPath: /app/.env
-              name: env
-              readOnly: true
+                  volumeMounts:
+                      - mountPath: /app/db
+                        name: db
+                      - mountPath: /app/.env
+                        name: env
+                        readOnly: true
 
-      volumes:
-        - name: db
-          hostPath:
-            path: /home/valdum/db
-            type: Directory
-        - name: env
-          hostPath:
-            path: /home/valdum/secrets.env
-            type: File
+            volumes:
+                - name: db
+                  hostPath:
+                      path: /home/valdum/db
+                      type: Directory
+                - name: env
+                  hostPath:
+                      path: /home/valdum/secrets.env
+                      type: File
 
 ---
 apiVersion: batch/v1
 kind: CronJob
 
 metadata:
-  name: finance-update
+    name: finance-update
 
 spec:
-  schedule: "12 4 * * *"
-  timeZone: Europe/Paris
-  concurrencyPolicy: Forbid
-  startingDeadlineSeconds: 300
-  successfulJobsHistoryLimit: 0
-  failedJobsHistoryLimit: 0
+    schedule: "12 4 * * *"
+    timeZone: Europe/Paris
+    concurrencyPolicy: Forbid
+    startingDeadlineSeconds: 300
+    successfulJobsHistoryLimit: 0
+    failedJobsHistoryLimit: 0
 
-  jobTemplate:
-    spec:
-      backoffLimit: 0
-      activeDeadlineSeconds: 120
-
-      template:
+    jobTemplate:
         spec:
-          restartPolicy: Never
+            backoffLimit: 0
+            activeDeadlineSeconds: 120
 
-          containers:
-            - name: finance-update
-              image: ghcr.io/v4ldum/finance:latest
-              imagePullPolicy: IfNotPresent
+            template:
+                spec:
+                    restartPolicy: Never
 
-              envFrom:
-                - configMapRef:
-                    name: finance
+                    containers:
+                        - name: finance-update
+                          image: ghcr.io/v4ldum/finance:latest
+                          imagePullPolicy: IfNotPresent
 
-              command:
-                - /app/update-agent
+                          envFrom:
+                              - configMapRef:
+                                    name: finance
 
-              volumeMounts:
-                - mountPath: /app/db
-                  name: db
-                - mountPath: /app/.env
-                  name: env
-                  readOnly: true
+                          command:
+                              - /app/update-agent
 
-          volumes:
-            - name: db
-              hostPath:
-                path: /home/valdum/db
-                type: Directory
-            - name: env
-              hostPath:
-                path: /home/valdum/secrets.env
-                type: File
+                          volumeMounts:
+                              - mountPath: /app/db
+                                name: db
+                              - mountPath: /app/.env
+                                name: env
+                                readOnly: true
+
+                    volumes:
+                        - name: db
+                          hostPath:
+                              path: /home/valdum/db
+                              type: Directory
+                        - name: env
+                          hostPath:
+                              path: /home/valdum/secrets.env
+                              type: File
