@@ -12,6 +12,8 @@ services:
             test: /bin/test ! -f /tmp/drain # && some other healthcheck
             interval: 5s
             retries: 1
+        networks:
+            - netv6
         environment:
             - TZ=Europe/Paris
             - HOST=0.0.0.0
