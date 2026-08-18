@@ -50,9 +50,9 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
 
     // Timeout Middleware
     // Graceful shutdown will wait for outstanding requests to complete.
-    // A 10 seconds timeout is added so requests don't hang forever.
-    // 10 seconds is the delay for Docker to kill a container.
-    let timeout_layer = TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(10));
+    // A 5 seconds timeout is added so requests don't hang forever.
+    // Kubernetes will SIGKILL a container after 30 seconds. We want this timeout to be shorter.
+    let timeout_layer = TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(5));
 
     Router::new()
         .route_with_tsr("/prices", get(prices::get_all_prices))
