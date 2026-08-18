@@ -9,9 +9,9 @@ pub struct Configuration {
 pub fn get_configuration() -> Result<Configuration> {
     dotenvy::dotenv().context("Failed to read environment variables")?;
 
-    let database_url = dotenvy::var("DATABASE_URL")?;
-    let application_host = dotenvy::var("HOST")?;
-    let application_port = dotenvy::var("PORT")?;
+    let database_url = dotenvy::var("DATABASE_URL").context("Failed to read DATABASE_URL")?;
+    let application_host = dotenvy::var("HOST").context("Failed to read HOST")?;
+    let application_port = dotenvy::var("PORT").context("Failed to read PORT")?;
 
     Ok(Configuration {
         database_url,
