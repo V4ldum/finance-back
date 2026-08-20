@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use axum::http::{Method, Request, Response, StatusCode};
 use axum::routing::{get, post};
-use axum::{Router, middleware};
+use axum::{middleware, Router};
 use axum_extra::routing::RouterExt;
 use middleware::from_fn_with_state;
 use sqlx::SqlitePool;
@@ -25,7 +25,7 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(|req: &Request<_>| {
             // Don't trace the healthcheck endpoint
-            if req.uri().path().trim_end_matches('/') == "/health" {
+            if req.uri().path().contains("/health") {
                 return tracing::Span::none();
             }
             tracing::info_span!(
