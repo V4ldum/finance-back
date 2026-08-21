@@ -1,15 +1,15 @@
 name: CI/CD
 on:
     workflow_dispatch:
-    push:
-        branches:
-            - "main"
-        paths:
-            - migrations/**
-            - api/**
-            - update-agent/**
-            - Dockerfile
-            - docker-compose.yml
+    #push:
+    #    branches:
+    #        - "main"
+    #    paths:
+    #        - migrations/**
+    #        - api/**
+    #        - update-agent/**
+    #        - Dockerfile
+    #        - docker-compose.yml
 
 permissions:
     contents: read
