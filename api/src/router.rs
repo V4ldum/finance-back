@@ -25,7 +25,7 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(|req: &Request<_>| {
             // Don't trace the healthcheck endpoint
-            if req.uri().path().trim_end_matches('/') == "/health" {
+            if req.uri().path().contains("/health") {
                 return tracing::Span::none();
             }
             tracing::info_span!(
@@ -50,9 +50,9 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
 
     // Timeout Middleware
     // Graceful shutdown will wait for outstanding requests to complete.
-    // A 10 seconds timeout is added so requests don't hang forever.
-    // 10 seconds is the delay for Docker to kill a container.
-    let timeout_layer = TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(10));
+    // A 5 seconds timeout is added so requests don't hang forever.
+    // Kubernetes will SIGKILL a pod after 30 seconds. We want this timeout to be shorter.
+    let timeout_layer = TimeoutLayer::with_status_code(StatusCode::GATEWAY_TIMEOUT, Duration::from_secs(5));
 
     Router::new()
         .route_with_tsr("/prices", get(prices::get_all_prices))
@@ -83,9 +83,10 @@ pub(crate) fn router(pool: SqlitePool) -> Router {
         )
         // Anything above needs authentication
         .route_layer(from_fn_with_state(pool.clone(), check_api_key))
-        .route_with_tsr("/health", get(health_check::health_check))
+        .route_with_tsr("/health/ready", get(health_check::ready))
         // Anything above can use the state
         .with_state(pool)
+        .route_with_tsr("/health/live", get(health_check::live))
         .layer(timeout_layer)
         .layer(cors)
         .layer(trace_layer)
