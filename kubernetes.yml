@@ -49,7 +49,7 @@ metadata:
 
 data:
     TZ: Europe/Paris
-    HOST: 0.0.0.0
+    HOST: "[::]"
     PORT: "7878" # Needs stay in sync with containerPort in Deployment
     RUST_LOG: warn,api=info # API logs as info, everything else as warn
     DATABASE_URL: /app/db/finance.db?mode=rwc
