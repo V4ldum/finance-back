@@ -11,7 +11,7 @@ metadata:
 spec:
     ingressClassName: traefik
     rules:
-      - host: finance.lan
+      - host: finance.valdum.dev
         http:
             paths:
               - path: /api
