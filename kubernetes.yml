@@ -79,6 +79,7 @@ spec:
         metadata:
             labels:
                 app: finance
+                dozzle: "true"
 
         spec:
             containers:
