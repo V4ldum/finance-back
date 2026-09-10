@@ -54,7 +54,6 @@ jobs:
     deploy:
         needs: [detect-changes, build]
         if: >-
-            always() &&
             needs.build.result == 'success' ||
               needs.build.result == 'skipped' &&
               needs.detect-changes.outputs.deploy == 'true'
