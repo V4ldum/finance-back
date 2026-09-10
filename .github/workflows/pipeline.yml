@@ -69,7 +69,7 @@ jobs:
             drain: true
 
     cleanup:
-        needs: [detect-changes, build]
+        needs: [detect-changes, deploy]
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
         secrets: inherit
