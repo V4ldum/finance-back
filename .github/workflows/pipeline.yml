@@ -49,19 +49,19 @@ jobs:
         uses: v4ldum/shared-workflows/.github/workflows/test-rust.yml@main
 
     build:
-        needs: [detect-changes, test]
+        needs: test
         uses: v4ldum/shared-workflows/.github/workflows/build.yml@main
         secrets: inherit
         with:
             project: ${{ needs.detect-changes.outputs.project }}
 
     deploy:
-        needs: [detect-changes, test, build]
+        needs: [detect-changes, build]
         if: >-
             always() &&
-            ((needs.test.result == 'success' && needs.build.result == 'success') ||
-             (needs.test.result == 'skipped' && needs.build.result == 'skipped' &&
-              needs.detect-changes.outputs.redeploy == 'true'))
+            needs.build.result == 'success' ||
+              needs.build.result == 'skipped' &&
+              needs.detect-changes.outputs.redeploy == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
         with:
@@ -69,7 +69,7 @@ jobs:
             drain: true
 
     cleanup:
-        needs: [detect-changes, deploy]
+        needs: [build, deploy]
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
         secrets: inherit
