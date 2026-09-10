@@ -19,14 +19,10 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
-env:
-    PROJECT: finance
-
 jobs:
     detect-changes:
         runs-on: ubuntu-latest
         outputs:
-            project: ${{ env.PROJECT }}
             build: ${{ steps.filter.outputs.build }}
             deploy: ${{ steps.filter.outputs.deploy }}
         steps:
@@ -53,7 +49,7 @@ jobs:
         uses: v4ldum/shared-workflows/.github/workflows/build.yml@main
         secrets: inherit
         with:
-            project: ${{ env.PROJECT }}
+            project: finance
 
     deploy:
         needs: [detect-changes, build]
@@ -64,9 +60,6 @@ jobs:
               needs.detect-changes.outputs.deploy == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
-        with:
-            project: ${{ needs.detect-changes.outputs.project }}
-            drain: true
 
     cleanup:
         needs: [build, deploy]
@@ -74,4 +67,4 @@ jobs:
         uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
         secrets: inherit
         with:
-            project: ${{ needs.detect-changes.outputs.project }}
+            project: finance
