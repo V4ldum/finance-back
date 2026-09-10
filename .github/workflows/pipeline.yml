@@ -27,25 +27,25 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             project: ${{ env.PROJECT }}
-            rebuild: ${{ steps.filter.outputs.rebuild }}
-            redeploy: ${{ steps.filter.outputs.redeploy }}
+            build: ${{ steps.filter.outputs.build }}
+            deploy: ${{ steps.filter.outputs.deploy }}
         steps:
             - uses: actions/checkout@v7
             - uses: dorny/paths-filter@v4
               id: filter
               with:
                   filters: |
-                      rebuild:
+                      build:
                           - 'api/**'
                           - 'update-agent/**'
                           - 'Dockerfile'
-                      redeploy:
+                      deploy:
                           - 'docker-compose.yml'
                           - 'migrations/**'
 
     test:
         needs: detect-changes
-        if: needs.detect-changes.outputs.rebuild == 'true'
+        if: needs.detect-changes.outputs.build == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/test-rust.yml@main
 
     build:
@@ -53,7 +53,7 @@ jobs:
         uses: v4ldum/shared-workflows/.github/workflows/build.yml@main
         secrets: inherit
         with:
-            project: ${{ needs.detect-changes.outputs.project }}
+            project: ${{ env.PROJECT }}
 
     deploy:
         needs: [detect-changes, build]
@@ -61,7 +61,7 @@ jobs:
             always() &&
             needs.build.result == 'success' ||
               needs.build.result == 'skipped' &&
-              needs.detect-changes.outputs.redeploy == 'true'
+              needs.detect-changes.outputs.deploy == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
         with:
