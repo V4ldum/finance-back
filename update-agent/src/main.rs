@@ -18,7 +18,9 @@ async fn main() -> Result<()> {
     let sp500 = update_agent.get_sp500_price().await;
 
     // Save them in local db
-    dotenvy::dotenv().context("Failed to load .env file")?;
+    // dotenvy returns an error if the .env file is not found
+    // We don't use a .env in production so we need to ignore it
+    let _ = dotenvy::dotenv();
     let database_url = dotenvy::var("DATABASE_URL").context("DATABASE_URL not set")?;
     let database = Database::build(&database_url)
         .await

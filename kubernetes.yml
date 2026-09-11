@@ -130,14 +130,18 @@ metadata:
     name: finance-update
 
 spec:
-    schedule: "12 4 * * *"
+    schedule: "12 5 * * *"
     timeZone: Europe/Paris
     concurrencyPolicy: Forbid
     startingDeadlineSeconds: 300
-    successfulJobsHistoryLimit: 0
-    failedJobsHistoryLimit: 0
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 1
 
     jobTemplate:
+        metadata:
+            labels:
+                dozzle: "true"
+
         spec:
             backoffLimit: 0
             activeDeadlineSeconds: 120
