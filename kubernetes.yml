@@ -130,7 +130,7 @@ metadata:
     name: finance-update
 
 spec:
-    schedule: "12 5 * * *"
+    schedule: "12 4 * * *"
     timeZone: Europe/Paris
     concurrencyPolicy: Forbid
     startingDeadlineSeconds: 300
