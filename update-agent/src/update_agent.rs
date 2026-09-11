@@ -43,7 +43,7 @@ impl UpdateAgent {
     pub async fn get_sp500_price(&self) -> Result<SP500Price> {
         let result = Client::builder()
             .user_agent(USER_AGENT)
-            .timeout(Duration::from_secs(1))
+            .timeout(Duration::from_secs(10))
             .build()
             .context("Failed to build HTTP client")?
             .get(&self.sp500)
@@ -70,7 +70,7 @@ impl UpdateAgent {
         let result = Client::new()
             .post(&self.metal)
             .json(&json_body)
-            .timeout(Duration::from_secs(1))
+            .timeout(Duration::from_secs(10))
             .send()
             .await
             .context("Failed to get metal price")?;
@@ -82,7 +82,7 @@ impl UpdateAgent {
     pub async fn get_usd_to_eur_exchange_rate(&self) -> Result<EURUSDExchangeRate> {
         let result = Client::builder()
             .user_agent(USER_AGENT)
-            .timeout(Duration::from_secs(1))
+            .timeout(Duration::from_secs(10))
             .build()
             .context("Failed to build HTTP client")?
             .get(&self.exchange_rate)

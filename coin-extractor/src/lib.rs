@@ -14,7 +14,7 @@ pub async fn run(mut params: ProgramParameters) -> Result<()> {
     let response = Client::new()
         .get(format!("{}{}?lang=fr", params.numista_url, params.coin_id))
         .header("Numista-API-Key", params.numista_api_key.expose_secret())
-        .timeout(Duration::from_secs(1))
+        .timeout(Duration::from_secs(10))
         .send()
         .await
         .context("Failed to fetch coin data from numista API")?;
