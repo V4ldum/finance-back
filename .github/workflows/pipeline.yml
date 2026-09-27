@@ -32,12 +32,12 @@ jobs:
               with:
                   filters: |
                       build:
+                          - 'migrations/**'
                           - 'api/**'
                           - 'update-agent/**'
                           - 'Dockerfile'
                       deploy:
                           - 'kubernetes.yml'
-                          - 'migrations/**'
 
     test:
         needs: detect-changes
@@ -54,9 +54,10 @@ jobs:
     deploy:
         needs: [detect-changes, build]
         if: >-
-            needs.build.result == 'success' ||
-              needs.build.result == 'skipped' &&
-              needs.detect-changes.outputs.deploy == 'true'
+            !cancelled() && !failure() &&
+            (needs.build.result == 'success' ||
+              (needs.build.result == 'skipped' &&
+                needs.detect-changes.outputs.deploy == 'true'))
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
 
