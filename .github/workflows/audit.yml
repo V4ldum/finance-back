@@ -2,7 +2,8 @@ name: Security audit
 on:
     workflow_dispatch:
     schedule:
-        - cron: "52 2 10 * *"
+        - cron: "52 4 10 * *"
+          timezone: "Europe/Paris"
 
 jobs:
     audit:
