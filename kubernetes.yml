@@ -93,7 +93,7 @@ spec:
 
                 envFrom:
                   - configMapRef:
-                        name: finance
+                        name: finance-env
 
                 # Test every 1s for 30s
                 # Some migrations can take a while and we want to make sure they are finished before considering the pod won't start properly
