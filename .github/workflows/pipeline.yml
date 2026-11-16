@@ -63,6 +63,8 @@ jobs:
         secrets: inherit
         with:
             project: finance
+            apply: ${{ needs.detect-changes.outputs.deploy == 'true' }}
+            rollout: ${{ needs.detect-changes.outputs.build == 'true' }}
 
     cleanup:
         needs: [build, deploy]
