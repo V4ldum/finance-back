@@ -27,22 +27,11 @@ COPY . .
 RUN cargo build ${BUILD_ARGS} -p api -p update-agent
 
 
-## TOOLS ##
-FROM busybox:musl AS tools
-RUN mkdir -p /tools && \
-    cp /bin/busybox /tools/ && \
-    cd /tools && \
-    ln -s busybox sh && \
-    ln -s busybox test && \
-    ln -s busybox touch
-
-
 ## RUN ##
 FROM gcr.io/distroless/cc-debian13:nonroot
 ARG RUST_TARGET
 WORKDIR /app
 
-COPY --from=tools /tools/ /bin/
 COPY --from=build /work/target/${RUST_TARGET}/release/api .
 COPY --from=build /work/target/${RUST_TARGET}/release/update-agent .
 
