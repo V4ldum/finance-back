@@ -1,4 +1,4 @@
-name: CI/CD
+name: Build & Deploy
 on:
     workflow_dispatch:
     push:
@@ -11,11 +11,6 @@ on:
             - Dockerfile
             - kubernetes.yml
 
-permissions:
-    contents: read
-    packages: write
-    id-token: write
-
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
@@ -23,6 +18,8 @@ concurrency:
 jobs:
     detect-changes:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
         outputs:
             build: ${{ steps.filter.outputs.build }}
             deploy: ${{ steps.filter.outputs.deploy }}
@@ -44,6 +41,8 @@ jobs:
         needs: detect-changes
         if: needs.detect-changes.outputs.build == 'true'
         uses: v4ldum/shared-workflows/.github/workflows/test-rust.yml@main
+        permissions:
+            contents: read
 
     build:
         needs: test
@@ -51,6 +50,9 @@ jobs:
         secrets: inherit
         with:
             project: finance
+        permissions:
+            contents: read
+            packages: write
 
     deploy:
         needs: [detect-changes, build]
@@ -65,6 +67,9 @@ jobs:
             project: finance
             apply: ${{ needs.detect-changes.outputs.deploy == 'true' }}
             rollout: ${{ needs.detect-changes.outputs.build == 'true' }}
+        permissions:
+            contents: read
+            id-token: write
 
     cleanup:
         needs: [build, deploy]
@@ -73,3 +78,5 @@ jobs:
         secrets: inherit
         with:
             project: finance
+        permissions:
+            packages: write
